@@ -174,9 +174,9 @@ void set_default_settings()
 #if ENABLE_GLES
 	settings->setDefault("near_plane", "0.1");
 #endif
-	settings->setDefault("screen_w", "1024");
-	settings->setDefault("screen_h", "600");
-	settings->setDefault("autosave_screensize", "true");
+	settings->setDefault("screen_w", "1280");
+	settings->setDefault("screen_h", "720");
+	settings->setDefault("autosave_screensize", "false");
 	settings->setDefault("fullscreen", "false");
 	settings->setDefault("vsync", "false");
 	settings->setDefault("fov", "72");
