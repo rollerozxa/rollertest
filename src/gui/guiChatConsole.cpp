@@ -95,7 +95,6 @@ GUIChatConsole::GUIChatConsole(
 
 	// track ctrl keys for mouse event
 	m_is_ctrl_down = false;
-	m_cache_clickable_chat_weblinks = g_settings->getBool("clickable_chat_weblinks");
 }
 
 GUIChatConsole::~GUIChatConsole()
@@ -633,11 +632,8 @@ bool GUIChatConsole::OnEvent(const SEvent& event)
 			m_chat_backend->scroll(rows);
 		}
 		// Middle click or ctrl-click opens weblink, if enabled in config
-		else if(m_cache_clickable_chat_weblinks && (
-				event.MouseInput.Event == EMIE_MMOUSE_PRESSED_DOWN ||
-				(event.MouseInput.Event == EMIE_LMOUSE_PRESSED_DOWN && m_is_ctrl_down)
-				))
-		{
+		else if (event.MouseInput.Event == EMIE_MMOUSE_PRESSED_DOWN ||
+				(event.MouseInput.Event == EMIE_LMOUSE_PRESSED_DOWN && m_is_ctrl_down)) {
 			// If clicked within console output region
 			if (event.MouseInput.Y / m_fontsize.Y < (m_height / m_fontsize.Y) - 1 )
 			{

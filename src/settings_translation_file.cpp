@@ -457,8 +457,6 @@ fake_function() {
 	gettext("Mute sound");
 	gettext("Whether to mute sounds. You can unmute sounds at any time, unless the\nsound system is disabled (enable_sound=false).\nIn-game, you can toggle the mute state with the mute key or by using the\npause menu.");
 	gettext("Client");
-	gettext("Chat weblinks");
-	gettext("Clickable weblinks (middle-click or Ctrl+left-click) enabled in chat console output.");
 	gettext("Weblink color");
 	gettext("Optional override for chat weblink color.");
 	gettext("Network");

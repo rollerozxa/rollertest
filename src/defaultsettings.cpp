@@ -459,9 +459,6 @@ void set_default_settings()
 	settings->setDefault("use_crosshair", "true");
 	settings->setDefault("fixed_virtual_joystick", "false");
 	settings->setDefault("virtual_joystick_triggers_aux1", "false");
-	settings->setDefault("clickable_chat_weblinks", "false");
-#else
-	settings->setDefault("clickable_chat_weblinks", "true");
 #endif
 	// Altered settings for Android
 #ifdef __ANDROID__

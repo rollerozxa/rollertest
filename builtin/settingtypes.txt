@@ -532,9 +532,6 @@ console_alpha (Console alpha) int 200 0 255
 #    Useful if there's something to be displayed right or left of hotbar.
 hud_hotbar_max_width (Maximum hotbar width) float 1.0 0.001 1.0
 
-#    Clickable weblinks (middle-click or Ctrl+left-click) enabled in chat console output.
-clickable_chat_weblinks (Chat weblinks) bool true
-
 #    Optional override for chat weblink color.
 chat_weblink_color (Weblink color) string
 

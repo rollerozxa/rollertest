@@ -36,15 +36,11 @@ ChatBuffer::ChatBuffer(u32 scrollback):
 		m_scrollback = 1;
 	m_empty_formatted_line.first = true;
 
-	m_cache_clickable_chat_weblinks = false;
 	// Curses mode cannot access g_settings here
 	if (g_settings != nullptr) {
-		m_cache_clickable_chat_weblinks = g_settings->getBool("clickable_chat_weblinks");
-		if (m_cache_clickable_chat_weblinks) {
-			std::string colorval = g_settings->get("chat_weblink_color");
-			parseColorString(colorval, m_cache_chat_weblink_color, false, 255);
-			m_cache_chat_weblink_color.setAlpha(255);
-		}
+		std::string colorval = g_settings->get("chat_weblink_color");
+		parseColorString(colorval, m_cache_chat_weblink_color, false, 255);
+		m_cache_chat_weblink_color.setAlpha(255);
 	}
 }
 
@@ -335,14 +331,12 @@ u32 ChatBuffer::formatChatLine(const ChatLine& line, u32 cols,
 			u32 frag_length = 0, space_pos = 0;
 			u32 remaining_in_input = line.text.size() - in_pos;
 
-			if (m_cache_clickable_chat_weblinks) {
-				// Note: unsigned(-1) on fail
-				http_pos = linestring.find(L"https://", in_pos);
-				if (http_pos == std::wstring::npos)
-					http_pos = linestring.find(L"http://", in_pos);
-				if (http_pos != std::wstring::npos)
-					http_pos -= in_pos;
-			}
+			// Note: unsigned(-1) on fail
+			http_pos = linestring.find(L"https://", in_pos);
+			if (http_pos == std::wstring::npos)
+				http_pos = linestring.find(L"http://", in_pos);
+			if (http_pos != std::wstring::npos)
+				http_pos -= in_pos;
 
 			while (frag_length < remaining_in_input &&
 					frag_length < remaining_in_output) {

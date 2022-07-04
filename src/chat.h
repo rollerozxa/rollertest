@@ -147,8 +147,6 @@ private:
 	// Empty formatted line, for error returns
 	ChatFormattedLine m_empty_formatted_line;
 
-	// Enable clickable chat weblinks
-	bool m_cache_clickable_chat_weblinks;
 	// Color of clickable chat weblinks
 	irr::video::SColor m_cache_chat_weblink_color;
 
