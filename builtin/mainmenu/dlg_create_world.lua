@@ -15,8 +15,6 @@
 --with this program; if not, write to the Free Software Foundation, Inc.,
 --51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
--- cf. tab_local, the gamebar already provides game selection so we hide the list from here
-local hide_gamelist = PLATFORM ~= "Android"
 
 local function table_to_flags(ftable)
 	-- Convert e.g. { jungles = true, caves = false } to "jungles,nocaves"
@@ -111,14 +109,11 @@ local function create_world_formspec(dialogdata)
 
 	local flags = dialogdata.flags
 
-	local game, gameidx = pkgmgr.find_by_gameid(gameid)
-	if game == nil and hide_gamelist then
+	local game = pkgmgr.find_by_gameid(gameid)
+	if game == nil then
 		-- should never happen but just pick the first game
 		game = pkgmgr.get_game(1)
-		gameidx = 1
 		core.settings:set("menu_last_game", game.id)
-	elseif game == nil then
-		gameidx = 0
 	end
 
 	local disallowed_mapgen_settings = {}
@@ -256,10 +251,10 @@ local function create_world_formspec(dialogdata)
 		end
 		y = y + 0.3
 
-		form = form .. "label[0,"..(y+0.1)..";" .. fgettext("Biomes") .. "]"
-		y = y + 0.6
+		form = form .. "container_end[]container[0,3.5]"..
+			"label[0,0;" .. fgettext("Biomes") .. "]"
 
-		form = form .. "dropdown[0,"..y..";6.3;mgv6_biomes;"
+		form = form .. "dropdown[0,0.4;6.3;mgv6_biomes;"
 		for b=1, #mgv6_biomes do
 			form = form .. mgv6_biomes[b][1]
 			if b < #mgv6_biomes then
@@ -269,8 +264,7 @@ local function create_world_formspec(dialogdata)
 		form = form .. ";" .. biometype.. "]"
 
 		-- biomeblend
-		y = y + 0.55
-		form = form .. "checkbox[0,"..y..";flag_v6_biomeblend;" ..
+		form = form .. "checkbox[0,1;flag_v6_biomeblend;" ..
 			fgettext("Biome blending") .. ";"..strflag(flags.v6, "biomeblend").."]" ..
 			"tooltip[flag_v6_biomeblend;" ..
 			fgettext("Smooth transition between biomes") .. "]"
@@ -298,17 +292,15 @@ local function create_world_formspec(dialogdata)
 
 	-- Warning if only devtest is installed
 	local devtest_only = ""
-	local gamelist_height = 2.3
 	if #pkgmgr.games == 1 and pkgmgr.games[1].id == "devtest" then
-		devtest_only = "box[0,0;5.8,1.7;#ff8800]" ..
-				"textarea[0.4,0.1;6,1.8;;;"..
+		devtest_only = "box[0,0;5.8,1.5;#ff8800]" ..
+				"textarea[0.4,0.1;6,1.5;;;"..
 				fgettext("Development Test is meant for developers.") .. "]" ..
-				"button[1,1;4,0.5;world_create_open_cdb;" .. fgettext("Install another game") .. "]"
-		gamelist_height = 0.5
+				"button[1,0.75;4,0.5;world_create_open_cdb;" .. fgettext("Install another game") .. "]"
 	end
 
 	local retval =
-		"size[12.25,7,true]" ..
+		"size[12.25,6,true]" ..
 
 		-- Left side
 		"container[0,0]"..
@@ -318,23 +310,24 @@ local function create_world_formspec(dialogdata)
 		"set_focus[te_world_name;false]"
 
 	if not disallowed_mapgen_settings["seed"] then
-
 		retval = retval .. "field[0.3,1.7;6,0.5;te_seed;" ..
 				fgettext("Seed") ..
 				";".. core.formspec_escape(dialogdata.seed) .. "]"
-
 	end
 
-	retval = retval ..
-		"label[0,2;" .. fgettext("Mapgen") .. "]"..
-		"dropdown[0,2.5;6.3;dd_mapgen;" .. mglist .. ";" .. selindex .. "]"
-
-	if not hide_gamelist or devtest_only ~= "" then
+	if #mapgens == 1 then
 		retval = retval ..
-			"label[0,3.35;" .. fgettext("Game") .. "]"..
-			"textlist[0,3.85;5.8,"..gamelist_height..";games;" ..
-			pkgmgr.gamelist() .. ";" .. gameidx .. ";false]" ..
-			"container[0,4.5]" ..
+			"dropdown[-10,2.5;6.3;dd_mapgen;"..mglist..";"..selindex.."]"
+	else
+		retval = retval ..
+			"label[0,2;" .. fgettext("Mapgen") .. "]"..
+			"dropdown[0,2.5;6.3;dd_mapgen;" .. mglist .. ";" .. selindex .. "]"
+	end
+
+
+	if devtest_only ~= "" then
+		retval = retval ..
+			"container[0,3.5]" ..
 			devtest_only ..
 			"container_end[]"
 	end
@@ -349,8 +342,8 @@ local function create_world_formspec(dialogdata)
 		"container_end[]"..
 
 		-- Menu buttons
-		"button[3.25,6.5;3,0.5;world_create_confirm;" .. fgettext("Create") .. "]" ..
-		"button[6.25,6.5;3,0.5;world_create_cancel;" .. fgettext("Cancel") .. "]"
+		"button[3.15,5.5;3,0.5;world_create_confirm;" .. fgettext("Create") .. "]" ..
+		"button[6.15,5.5;3,0.5;world_create_cancel;" .. fgettext("Cancel") .. "]"
 
 	return retval
 
@@ -371,13 +364,7 @@ local function create_world_buttonhandler(this, fields)
 		fields["key_enter"] then
 
 		local worldname = fields["te_world_name"]
-		local game, gameindex
-		if hide_gamelist then
-			game, gameindex = pkgmgr.find_by_gameid(core.settings:get("menu_last_game"))
-		else
-			gameindex = core.get_textlist_index("games")
-			game = pkgmgr.get_game(gameindex)
-		end
+		local game, gameindex = pkgmgr.find_by_gameid(core.settings:get("menu_last_game"))
 
 		local message
 		if game == nil then
@@ -441,12 +428,6 @@ local function create_world_buttonhandler(this, fields)
 
 	this.data.worldname = fields["te_world_name"]
 	this.data.seed = fields["te_seed"] or ""
-
-	if fields["games"] then
-		local gameindex = core.get_textlist_index("games")
-		core.settings:set("menu_last_game", pkgmgr.games[gameindex].id)
-		return true
-	end
 
 	for k,v in pairs(fields) do
 		local split = string.split(k, "_", nil, 3)

@@ -129,14 +129,8 @@ function menu_render_worldlist(show_gameid)
 	local retval = {}
 	local current_worldlist = menudata.worldlist:get_list()
 
-	local row
 	for i, v in ipairs(current_worldlist) do
-		row = v.name
-		if show_gameid == nil or show_gameid == true then
-			row = row .. " [" .. v.gameid .. "]"
-		end
-		retval[#retval+1] = core.formspec_escape(row)
-
+		retval[#retval+1] = core.formspec_escape(v.name)
 	end
 
 	return table.concat(retval, ",")
