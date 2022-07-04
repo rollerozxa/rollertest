@@ -92,6 +92,20 @@ local previous_contributors = {
 	"Jeija <jeija@mesecons.net> [HTTP, particles]",
 }
 
+local rollertest_info = {
+	"This is a custom build of Minetest called ROllerTest.",
+	"Do not report bugs specific to ROllerTest to",
+	"the Minetest core developers!"
+}
+
+local function buildInfoList(source)
+	local ret = {}
+	for i = 1, #source do
+		ret[i] = core.formspec_escape(source[i])
+	end
+	return table.concat(ret, ",#FF8888,")
+end
+
 local function buildCreditList(source)
 	local ret = {}
 	for i = 1, #source do
@@ -104,49 +118,52 @@ return {
 	name = "about",
 	caption = fgettext("About"),
 	cbf_formspec = function(tabview, name, tabdata)
-		local logofile = defaulttexturedir .. "logo.png"
+		local logofile = core.formspec_escape(defaulttexturedir.."logo.png")
 		local version = core.get_version()
-		local fs = "image[0.75,0.5;2.2,2.2;" .. core.formspec_escape(logofile) .. "]" ..
-			"style[label_button;border=false]" ..
-			"button[0.5,2;2.5,2;label_button;" .. version.project .. " " .. version.string .. "]" ..
-			"button[0.75,2.75;2,2;homepage;minetest.net]" ..
-			"tablecolumns[color;text]" ..
-			"tableoptions[background=#00000000;highlight=#00000000;border=false]" ..
-			"table[3.5,-0.25;8.5,6.05;list_credits;" ..
-			"#FFFF00," .. fgettext("Core Developers") .. ",," ..
-			buildCreditList(core_developers) .. ",,," ..
-			"#FFFF00," .. fgettext("Active Contributors") .. ",," ..
-			buildCreditList(active_contributors) .. ",,," ..
-			"#FFFF00," .. fgettext("Previous Core Developers") ..",," ..
-			buildCreditList(previous_core_developers) .. ",,," ..
-			"#FFFF00," .. fgettext("Previous Contributors") .. ",," ..
-			buildCreditList(previous_contributors) .. "," ..
-			";1]"
+		local openuserdatafolder
 
-		-- Render information
-		fs = fs .. "label[0.75,4.9;" ..
-			fgettext("Active renderer:") .. "\n" ..
-			core.formspec_escape(core.get_screen_info().render_info) .. "]"
-
-		if PLATFORM == "Android" then
-			fs = fs .. "button[0,4;3.5,1;share_debug;" .. fgettext("Share debug log") .. "]"
-		else
-			fs = fs .. "tooltip[userdata;" ..
-					fgettext("Opens the directory that contains user-provided worlds, games, mods,\n" ..
-							"and texture packs in a file manager / explorer.") .. "]"
-			fs = fs .. "button[0,4;3.5,1;userdata;" .. fgettext("Open User Data Directory") .. "]"
+		if PLATFORM ~= "Android" then
+			openuserdatafolder = [[
+				tooltip[userdata;Opens the directory that contains user-provided worlds, games, mods,
+and texture packs in a file manager / explorer.]
+				button[0,4;3.5,1;userdata;Open User Data Folder]
+			]]
 		end
 
-		return fs
+		return formspec_wrapper([[
+			image[0.75,0.2;2.2,2.2;${logofile}]
+			style[label_button;border=false]
+			button[0,1.7;3.5,2;label_button;${version_string}]
+			tablecolumns[color;text]
+			tableoptions[background=#00000000;highlight=#00000000;border=false]
+			table[3.5,-0.25;8.45,5.95;list_credits;#FF8888,${rollertest_info},
+			,,#FFFF00,${lbl_core_developers},
+			,${core_developers},
+			,,#FFFF00,${lbl_active_contributors},
+			,${active_contributors},
+			,,#FFFF00,${lbl_previous_core_developers},
+			,${previous_core_developers},
+			,,#FFFF00,${lbl_previous_contributors},
+			,${previous_contributors},;1]
+			${openuserdatafolder}
+		]], {
+			logofile = logofile,
+			version_string = version.project.." "..version.string,
+			rollertest_info = buildInfoList(rollertest_info),
+			lbl_core_developers = fgettext("Core Developers"),
+			core_developers = buildCreditList(core_developers),
+			lbl_active_contributors = fgettext("Active Contributors"),
+			active_contributors = buildCreditList(active_contributors),
+			lbl_previous_core_developers = fgettext("Previous Core Developers"),
+			previous_core_developers = buildCreditList(previous_core_developers),
+			lbl_previous_contributors = fgettext("Previous Contributors"),
+			previous_contributors = buildCreditList(previous_contributors),
+			openuserdatafolder = openuserdatafolder
+		})
 	end,
 	cbf_button_handler = function(this, fields, name, tabdata)
 		if fields.homepage then
 			core.open_url("https://www.minetest.net")
-		end
-
-		if fields.share_debug then
-			local path = core.get_user_path() .. DIR_DELIM .. "debug.txt"
-			core.share_file(path)
 		end
 
 		if fields.userdata then

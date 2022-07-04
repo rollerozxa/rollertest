@@ -237,6 +237,19 @@ function menu_worldmt_legacy(selected)
 	end
 end
 
+-- Simple formspec wrapper that does variable substitution.
+function formspec_wrapper(formspec, variables)
+	local retval = formspec
+
+	for k,v in pairs(variables) do
+		retval = retval:gsub("${"..k.."}", v)
+	end
+
+	print(retval)
+
+	return retval
+end
+
 function confirmation_formspec(message, confirm_id, confirm_label, cancel_id, cancel_label)
 	return "size[10,2.5,true]" ..
 			"label[0.5,0.5;" .. message .. "]" ..
