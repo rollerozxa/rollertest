@@ -361,8 +361,6 @@ fake_function() {
 	gettext("Crosshair alpha (opaqueness, between 0 and 255).\nThis also applies to the object crosshair.");
 	gettext("Recent Chat Messages");
 	gettext("Maximum number of recent chat messages to show");
-	gettext("Desynchronize block animation");
-	gettext("Whether node texture animations should be desynchronized per mapblock.");
 	gettext("Maximum hotbar width");
 	gettext("Maximum proportion of current window to be used for hotbar.\nUseful if there's something to be displayed right or left of hotbar.");
 	gettext("HUD scale factor");
