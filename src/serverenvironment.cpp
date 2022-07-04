@@ -410,49 +410,8 @@ ServerEnvironment::ServerEnvironment(ServerMap *map,
 	// If we open world.mt read the backend configurations.
 	if (succeeded) {
 		// Read those values before setting defaults
-		bool player_backend_exists = conf.exists("player_backend");
-		bool auth_backend_exists = conf.exists("auth_backend");
-
-		// player backend is not set, assume it's legacy file backend.
-		if (!player_backend_exists) {
-			// fall back to files
-			conf.set("player_backend", "files");
-			player_backend_name = "files";
-
-			if (!conf.updateConfigFile(conf_path.c_str())) {
-				errorstream << "ServerEnvironment::ServerEnvironment(): "
-						<< "Failed to update world.mt!" << std::endl;
-			}
-		} else {
-			conf.getNoEx("player_backend", player_backend_name);
-		}
-
-		// auth backend is not set, assume it's legacy file backend.
-		if (!auth_backend_exists) {
-			conf.set("auth_backend", "files");
-			auth_backend_name = "files";
-
-			if (!conf.updateConfigFile(conf_path.c_str())) {
-				errorstream << "ServerEnvironment::ServerEnvironment(): "
-						<< "Failed to update world.mt!" << std::endl;
-			}
-		} else {
-			conf.getNoEx("auth_backend", auth_backend_name);
-		}
-	}
-
-	if (player_backend_name == "files") {
-		warningstream << "/!\\ You are using old player file backend. "
-				<< "This backend is deprecated and will be removed in a future release /!\\"
-				<< std::endl << "Switching to SQLite3 or PostgreSQL is advised, "
-				<< "please read http://wiki.minetest.net/Database_backends." << std::endl;
-	}
-
-	if (auth_backend_name == "files") {
-		warningstream << "/!\\ You are using old auth file backend. "
-				<< "This backend is deprecated and will be removed in a future release /!\\"
-				<< std::endl << "Switching to SQLite3 is advised, "
-				<< "please read http://wiki.minetest.net/Database_backends." << std::endl;
+		conf.getNoEx("player_backend", player_backend_name);
+		conf.getNoEx("auth_backend", auth_backend_name);
 	}
 
 	m_player_database = openPlayerDatabase(player_backend_name, path_world, conf);
@@ -2241,9 +2200,6 @@ PlayerDatabase *ServerEnvironment::openPlayerDatabase(const std::string &name,
 		return new PlayerDatabaseLevelDB(savedir);
 #endif
 
-	if (name == "files")
-		return new PlayerDatabaseFiles(savedir + DIR_DELIM + "players");
-
 	throw BaseException(std::string("Database backend ") + name + " not supported.");
 }
 
@@ -2276,11 +2232,6 @@ bool ServerEnvironment::migratePlayersDatabase(const GameParams &game_params,
 	const std::string players_backup_path = game_params.world_path + DIR_DELIM
 		+ "players.bak";
 
-	if (backend == "files") {
-		// Create backup directory
-		fs::CreateDir(players_backup_path);
-	}
-
 	try {
 		PlayerDatabase *srcdb = ServerEnvironment::openPlayerDatabase(backend,
 			game_params.world_path, world_mt);
@@ -2301,13 +2252,6 @@ bool ServerEnvironment::migratePlayersDatabase(const GameParams &game_params,
 			player.setPlayerSAO(&playerSAO);
 
 			dstdb->savePlayer(&player);
-
-			// For files source, move player files to backup dir
-			if (backend == "files") {
-				fs::Rename(
-					game_params.world_path + DIR_DELIM + "players" + DIR_DELIM + (*it),
-					players_backup_path + DIR_DELIM + (*it));
-			}
 		}
 
 		actionstream << "Successfully migrated " << player_list.size() << " players"
@@ -2317,12 +2261,6 @@ bool ServerEnvironment::migratePlayersDatabase(const GameParams &game_params,
 			errorstream << "Failed to update world.mt!" << std::endl;
 		else
 			actionstream << "world.mt updated" << std::endl;
-
-		// When migration is finished from file backend, remove players directory if empty
-		if (backend == "files") {
-			fs::DeleteSingleFileOrEmptyDirectory(game_params.world_path + DIR_DELIM
-				+ "players");
-		}
 
 		delete srcdb;
 		delete dstdb;
@@ -2348,9 +2286,6 @@ AuthDatabase *ServerEnvironment::openAuthDatabase(
 	}
 #endif
 
-	if (name == "files")
-		return new AuthDatabaseFiles(savedir);
-
 #if USE_LEVELDB
 	if (name == "leveldb")
 		return new AuthDatabaseLevelDB(savedir);
@@ -2370,12 +2305,11 @@ bool ServerEnvironment::migrateAuthDatabase(
 		return false;
 	}
 
-	std::string backend = "files";
+	std::string backend = "";
 	if (world_mt.exists("auth_backend"))
 		backend = world_mt.get("auth_backend");
 	else
-		warningstream << "No auth_backend found in world.mt, "
-				"assuming \"files\"." << std::endl;
+		errorstream << "No auth_backend found in world.mt." << std::endl;
 
 	if (backend == migrate_to) {
 		errorstream << "Cannot migrate: new backend is same"
@@ -2408,25 +2342,6 @@ bool ServerEnvironment::migrateAuthDatabase(
 			errorstream << "Failed to update world.mt!" << std::endl;
 		else
 			actionstream << "world.mt updated" << std::endl;
-
-		if (backend == "files") {
-			// special-case files migration:
-			// move auth.txt to auth.txt.bak if possible
-			std::string auth_txt_path =
-					game_params.world_path + DIR_DELIM + "auth.txt";
-			std::string auth_bak_path = auth_txt_path + ".bak";
-			if (!fs::PathExists(auth_bak_path))
-				if (fs::Rename(auth_txt_path, auth_bak_path))
-					actionstream << "Renamed auth.txt to auth.txt.bak"
-							<< std::endl;
-				else
-					errorstream << "Could not rename auth.txt to "
-							"auth.txt.bak" << std::endl;
-			else
-				warningstream << "auth.txt.bak already exists, auth.txt "
-						"not renamed" << std::endl;
-		}
-
 	} catch (BaseException &e) {
 		errorstream << "An error occurred during migration: " << e.what()
 			    << std::endl;

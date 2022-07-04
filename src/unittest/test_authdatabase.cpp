@@ -52,23 +52,6 @@ private:
 	AuthDatabase *auth_db;
 };
 
-class FilesProvider : public AuthDatabaseProvider
-{
-public:
-	FilesProvider(const std::string &dir) : dir(dir){};
-	virtual ~FilesProvider() { delete auth_db; };
-	virtual AuthDatabase *getAuthDatabase()
-	{
-		delete auth_db;
-		auth_db = new AuthDatabaseFiles(dir);
-		return auth_db;
-	};
-
-private:
-	std::string dir;
-	AuthDatabase *auth_db = nullptr;
-};
-
 class SQLite3Provider : public AuthDatabaseProvider
 {
 public:
@@ -122,30 +105,9 @@ void TestAuthDatabase::runTests(IGameDef *gamedef)
 	// and one where we create a new AuthDatabase object for each call
 	// (to test actual persistence).
 
-	rawstream << "-------- Files database (same object)" << std::endl;
-
-	AuthDatabase *auth_db = new AuthDatabaseFiles(test_dir);
-	auth_provider = new FixedProvider(auth_db);
-
-	runTestsForCurrentDB();
-
-	delete auth_db;
-	delete auth_provider;
-
-	// reset database
-	fs::DeleteSingleFileOrEmptyDirectory(test_dir + DIR_DELIM + "auth.txt");
-
-	rawstream << "-------- Files database (new objects)" << std::endl;
-
-	auth_provider = new FilesProvider(test_dir);
-
-	runTestsForCurrentDB();
-
-	delete auth_provider;
-
 	rawstream << "-------- SQLite3 database (same object)" << std::endl;
 
-	auth_db = new AuthDatabaseSQLite3(test_dir);
+	AuthDatabase *auth_db = new AuthDatabaseSQLite3(test_dir);
 	auth_provider = new FixedProvider(auth_db);
 
 	runTestsForCurrentDB();
