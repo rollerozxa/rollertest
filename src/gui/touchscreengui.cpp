@@ -39,7 +39,9 @@ const char **button_imagenames = (const char *[]) {
 	"jump_btn.png",
 	"down.png",
 	"zoom.png",
-	"aux1_btn.png"
+	"aux1_btn.png",
+	"chat_btn.png",
+	"inventory_btn.png"
 };
 
 const char **joystick_imagenames = (const char *[]) {
@@ -499,17 +501,17 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 
 	// init jump button
 	initButton(jump_id,
-			rect<s32>(m_screensize.X - (1.75 * button_size),
-					m_screensize.Y - button_size,
+			rect<s32>(m_screensize.X - (1.8 * button_size),
+					m_screensize.Y - (1.5 * button_size),
 					m_screensize.X - (0.25 * button_size),
 					m_screensize.Y),
 			L"x", false);
 
 	// init crunch button
 	initButton(crunch_id,
-			rect<s32>(m_screensize.X - (3.25 * button_size),
-					m_screensize.Y - button_size,
-					m_screensize.X - (1.75 * button_size),
+			rect<s32>(m_screensize.X - (3.3 * button_size),
+					m_screensize.Y - (1.5 * button_size),
+					m_screensize.X - (1.8 * button_size),
 					m_screensize.Y),
 			L"H", false);
 
@@ -529,6 +531,20 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 						m_screensize.X - (0.25 * button_size),
 						m_screensize.Y - (1.5 * button_size)),
 				L"spc1", false);
+
+	initButton(chat_id,
+			rect<s32>(m_screensize.X - (1.25 * button_size),
+					0.25 * button_size,
+					m_screensize.X - (0.25 * button_size),
+					button_size + (0.25 * button_size)),
+			L"chat", true);
+
+	initButton(inventory_id,
+			rect<s32>(m_screensize.X/5,
+					m_screensize.Y - button_size,
+					m_screensize.X/5 + button_size,
+					m_screensize.Y),
+			L"inv", true);
 
 	m_settingsbar.init(m_texturesource, "gear_icon.png", settings_starter_id,
 		v2s32(m_screensize.X - (1.25 * button_size),
@@ -561,8 +577,6 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 				+ (0.5 * button_size)),
 		AHBB_Dir_Left_Right, 2.0);
 
-	m_rarecontrolsbar.addButton(chat_id,      L"Chat", "chat_btn.png");
-	m_rarecontrolsbar.addButton(inventory_id, L"inv",  "inventory_btn.png");
 	m_rarecontrolsbar.addButton(drop_id,      L"drop", "drop_btn.png");
 }
 
