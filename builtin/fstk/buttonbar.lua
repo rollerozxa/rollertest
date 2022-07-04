@@ -112,14 +112,14 @@ end
 local function buttonbar_buttonhandler(self, fields)
 
 	if fields["btnbar_inc_" .. self.name] ~= nil and
-		self.startbutton < #self.buttons then
+		self.startbutton < #self.buttons - 9 then
 
-		self.startbutton = self.startbutton + 1
+		self.startbutton = self.startbutton + 10
 		return true
 	end
 
 	if fields["btnbar_dec_" .. self.name] ~= nil and self.startbutton > 1 then
-		self.startbutton = self.startbutton - 1
+		self.startbutton = self.startbutton - 10
 		return true
 	end
 
