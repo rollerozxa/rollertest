@@ -62,6 +62,9 @@ by texture packs. All existing fallback textures can be found in the directory
 
 ### Gameplay textures
 
+* `background_chat.png`: tiling background image which will replace the regular
+                         coloured chat background if it exists.
+
 * `bubble.png`: the bubble texture when the player is drowning
                 (default size: 12×12)
 * `bubble_gone.png`: like `bubble.png`, but denotes lack of breath
