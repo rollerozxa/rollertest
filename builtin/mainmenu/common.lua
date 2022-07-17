@@ -125,7 +125,7 @@ os.tmpname = function()
 end
 --------------------------------------------------------------------------------
 
-function menu_render_worldlist(show_gameid)
+function menu_render_worldlist()
 	local retval = {}
 	local current_worldlist = menudata.worldlist:get_list()
 

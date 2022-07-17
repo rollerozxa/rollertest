@@ -87,7 +87,6 @@ function singleplayer_refresh_gamebar()
 		local text = nil
 		local tooltip = core.formspec_escape(game.title)
 
-
 		if (game.menuicon_path or "") ~= "" then
 			image = core.formspec_escape(game.menuicon_path)
 		else
@@ -318,7 +317,7 @@ local function main_button_handler(this, fields, name, tabdata)
 	end
 
 	if fields["world_create"] ~= nil then
-		local create_world_dlg = create_create_world_dlg(true)
+		local create_world_dlg = create_create_world_dlg()
 		create_world_dlg:set_parent(this)
 		this:hide()
 		create_world_dlg:show()
@@ -365,8 +364,7 @@ local function main_button_handler(this, fields, name, tabdata)
 	end
 end
 
-local on_change
-function on_change(type, old_tab, new_tab)
+local function on_change(type, old_tab, new_tab)
 	if (type == "ENTER") then
 		local game = current_game()
 		if game then
@@ -381,6 +379,7 @@ function on_change(type, old_tab, new_tab)
 		if gamebar then
 			gamebar:hide()
 		end
+		core.set_topleft_text("")
 		mm_game_theme.update(new_tab,nil)
 	end
 end

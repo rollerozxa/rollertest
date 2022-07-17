@@ -15,7 +15,6 @@
 --with this program; if not, write to the Free Software Foundation, Inc.,
 --51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
 local function table_to_flags(ftable)
 	-- Convert e.g. { jungles = true, caves = false } to "jungles,nocaves"
 	local str = {}
@@ -290,15 +289,6 @@ local function create_world_formspec(dialogdata)
 		label_spflags = "label[0,"..y_start..";" .. fgettext("Mapgen-specific flags") .. "]"
 	end
 
-	-- Warning if only devtest is installed
-	local devtest_only = ""
-	if #pkgmgr.games == 1 and pkgmgr.games[1].id == "devtest" then
-		devtest_only = "box[0,0;5.8,1.5;#ff8800]" ..
-				"textarea[0.4,0.1;6,1.5;;;"..
-				fgettext("Development Test is meant for developers.") .. "]" ..
-				"button[1,0.75;4,0.5;world_create_open_cdb;" .. fgettext("Install another game") .. "]"
-	end
-
 	local retval =
 		"size[12.25,6,true]" ..
 
@@ -324,11 +314,14 @@ local function create_world_formspec(dialogdata)
 			"dropdown[0,2.5;6.3;dd_mapgen;" .. mglist .. ";" .. selindex .. "]"
 	end
 
-
-	if devtest_only ~= "" then
+	-- Warning if only devtest is installed
+	if #pkgmgr.games == 1 and pkgmgr.games[1].id == "devtest" then
 		retval = retval ..
 			"container[0,3.5]" ..
-			devtest_only ..
+			"box[0,0;5.8,1.7;#ff8800]" ..
+			"textarea[0.4,0.1;6,1.8;;;"..
+			fgettext("Development Test is meant for developers.") .. "]" ..
+			"button[1,1;4,0.5;world_create_open_cdb;" .. fgettext("Install another game") .. "]" ..
 			"container_end[]"
 	end
 
@@ -413,9 +406,7 @@ local function create_world_buttonhandler(this, fields)
 
 		if message == nil then
 			core.settings:set("menu_last_game", game.id)
-			if this.data.update_worldlist_filter then
-				menudata.worldlist:set_filtercriteria(game.id)
-			end
+			menudata.worldlist:set_filtercriteria(game.id)
 			menudata.worldlist:refresh()
 			core.settings:set("mainmenu_last_selected_world",
 					menudata.worldlist:raw_index_by_uid(worldname))
@@ -467,13 +458,12 @@ local function create_world_buttonhandler(this, fields)
 end
 
 
-function create_create_world_dlg(update_worldlistfilter)
+function create_create_world_dlg()
 	local retval = dialog_create("sp_create_world",
 					create_world_formspec,
 					create_world_buttonhandler,
 					nil)
 	retval.data = {
-		update_worldlist_filter = update_worldlistfilter,
 		worldname = "",
 		-- settings the world is created with:
 		seed = core.settings:get("fixed_map_seed") or "",
