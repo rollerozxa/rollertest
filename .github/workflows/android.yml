@@ -30,11 +30,6 @@ jobs:
         sudo apt-get install -y --no-install-recommends gettext openjdk-11-jdk-headless
     - name: Build with Gradle
       run: cd android; ./gradlew assemblerelease
-    - name: Save armeabi artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: Minetest-armeabi-v7a.apk
-        path: android/app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned.apk
     - name: Save arm64 artifact
       uses: actions/upload-artifact@v3
       with:
