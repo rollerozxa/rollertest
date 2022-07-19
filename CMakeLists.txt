@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
+include(cmake/add_pch.cmake)
+
 # Set policies up to 3.9 since we want to enable the IPO option
 if(${CMAKE_VERSION} VERSION_LESS 3.9)
 	cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
