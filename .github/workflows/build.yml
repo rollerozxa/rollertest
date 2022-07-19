@@ -30,27 +30,6 @@ on:
       - '.dockerignore'
 
 jobs:
-  # Older gcc version (should be close to our minimum supported version)
-  gcc_5:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install deps
-        run: |
-          source ./util/ci/common.sh
-          install_linux_deps g++-5
-
-      - name: Build
-        run: |
-          ./util/ci/build.sh
-        env:
-          CC: gcc-5
-          CXX: g++-5
-
-      - name: Test
-        run: |
-          ./bin/minetest --run-unittests
-
   # Current gcc version
   gcc_10:
     runs-on: ubuntu-20.04
@@ -71,31 +50,6 @@ jobs:
       - name: Test
         run: |
           ./bin/minetest --run-unittests
-
-  # Older clang version (should be close to our minimum supported version)
-  clang_3_9:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install deps
-        run: |
-          source ./util/ci/common.sh
-          install_linux_deps clang-3.9 gdb
-
-      - name: Build
-        run: |
-          ./util/ci/build.sh
-        env:
-          CC: clang-3.9
-          CXX: clang++-3.9
-
-      - name: Unittest
-        run: |
-          ./bin/minetest --run-unittests
-
-      - name: Integration test + devtest
-        run: |
-          ./util/test_multiplayer.sh
 
   # Current clang version
   clang_10:
@@ -122,33 +76,6 @@ jobs:
       - name: Valgrind
         run: |
           valgrind --leak-check=full --leak-check-heuristics=all --undef-value-errors=no --error-exitcode=9 ./bin/minetest --run-unittests
-
-  # Build with prometheus-cpp (server-only)
-  clang_9_prometheus:
-    name: "clang_9 (PROMETHEUS=1)"
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install deps
-        run: |
-          source ./util/ci/common.sh
-          install_linux_deps clang-9
-
-      - name: Build prometheus-cpp
-        run: |
-          ./util/ci/build_prometheus_cpp.sh
-
-      - name: Build
-        run: |
-          ./util/ci/build.sh
-        env:
-          CC: clang-9
-          CXX: clang++-9
-          CMAKE_FLAGS: "-DENABLE_PROMETHEUS=1 -DBUILD_CLIENT=0"
-
-      - name: Test
-        run: |
-          ./bin/minetestserver --run-unittests
 
   win32:
     name: "MinGW cross-compiler (32-bit)"
