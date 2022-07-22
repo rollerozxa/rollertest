@@ -128,6 +128,8 @@ return {
 and texture packs in a file manager / explorer.]
 				button[0,4;3.5,1;userdata;Open User Data Folder]
 			]]
+		else
+			openuserdatafolder = "button[0,4;3.5,1;share_debug;" .. fgettext("Share debug log") .. "]"
 		end
 
 		return formspec_wrapper([[
@@ -164,6 +166,11 @@ and texture packs in a file manager / explorer.]
 	cbf_button_handler = function(this, fields, name, tabdata)
 		if fields.homepage then
 			core.open_url("https://www.minetest.net")
+		end
+
+		if fields.share_debug then
+			local path = core.get_user_path() .. DIR_DELIM .. "debug.txt"
+			core.share_file(path)
 		end
 
 		if fields.userdata then
