@@ -245,8 +245,6 @@ function formspec_wrapper(formspec, variables)
 		retval = retval:gsub("${"..k.."}", v)
 	end
 
-	print(retval)
-
 	return retval
 end
 
