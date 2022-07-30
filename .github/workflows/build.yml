@@ -88,9 +88,13 @@ jobs:
           wget http://minetest.kitsunemimi.pw/mingw-w64-i686_11.2.0_ubuntu20.04.tar.xz -O mingw.tar.xz
           sudo tar -xaf mingw.tar.xz -C /usr
 
+      - name: Clone Minetest Game
+        run: |
+          git clone --depth 1 https://github.com/minetest/minetest_game.git games/minetest_game
+
       - name: Build
         run: |
-           EXISTING_MINETEST_DIR=$PWD ./util/buildbot/buildwin32.sh winbuild
+          EXISTING_MINETEST_DIR=$PWD ./util/buildbot/buildwin32.sh winbuild
 
       - name: Upload output as artifact
         uses: actions/upload-artifact@v2
@@ -107,6 +111,10 @@ jobs:
           sudo apt-get update && sudo apt-get install -y gettext
           wget http://minetest.kitsunemimi.pw/mingw-w64-x86_64_11.2.0_ubuntu20.04.tar.xz -O mingw.tar.xz
           sudo tar -xaf mingw.tar.xz -C /usr
+
+      - name: Clone Minetest Game
+        run: |
+          git clone --depth 1 https://github.com/minetest/minetest_game.git games/minetest_game
 
       - name: Build
         run: |
