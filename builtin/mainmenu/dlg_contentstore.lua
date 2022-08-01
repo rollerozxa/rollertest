@@ -741,23 +741,23 @@ function store.get_formspec(dlgdata)
 		cur_page = 1
 	end
 
-	local W = 15.75
-	local H = 9.5
+	local W = 16.75
+	local H = 10.5
 	local formspec
 	if #store.packages_full > 0 then
 		formspec = {
 			"formspec_version[3]",
-			"size[15.75,9.5]",
+			"size[16.75,10.5]",
 			"position[0.5,0.55]",
 
 			"style[status,downloading,queued;border=false]",
 
 			"container[0.375,0.375]",
-			"field[0,0;7.225,0.8;search_string;;", core.formspec_escape(search_string), "]",
+			"field[0,0;8.225,0.8;search_string;;", core.formspec_escape(search_string), "]",
 			"field_close_on_enter[search_string;false]",
-			"image_button[7.3,0;0.8,0.8;", core.formspec_escape(defaulttexturedir .. "search.png"), ";search;]",
-			"image_button[8.125,0;0.8,0.8;", core.formspec_escape(defaulttexturedir .. "clear.png"), ";clear;]",
-			"dropdown[9.6,0;2.4,0.8;type;", table.concat(filter_types_titles, ","), ";", filter_type, "]",
+			"image_button[8.3,0;0.8,0.8;", core.formspec_escape(defaulttexturedir .. "search.png"), ";search;]",
+			"image_button[9.125,0;0.8,0.8;", core.formspec_escape(defaulttexturedir .. "clear.png"), ";clear;]",
+			"dropdown[10.2,0;2.7,0.8;type;", table.concat(filter_types_titles, ","), ";", filter_type, "]",
 			"container_end[]",
 
 			-- Page nav buttons
@@ -777,7 +777,7 @@ function store.get_formspec(dlgdata)
 		}
 
 		if number_downloading > 0 then
-			formspec[#formspec + 1] = "button[12.75,0.375;2.625,0.8;downloading;"
+			formspec[#formspec + 1] = "button[13.7,0.375;2.63,0.8;downloading;"
 			if #download_queue > 0 then
 				formspec[#formspec + 1] = fgettext("$1 downloading,\n$2 queued", number_downloading, #download_queue)
 			else
@@ -795,11 +795,11 @@ function store.get_formspec(dlgdata)
 			end
 
 			if num_avail_updates == 0 then
-				formspec[#formspec + 1] = "button[12.75,0.375;2.625,0.8;status;"
+				formspec[#formspec + 1] = "button[13.7,0.375;2.63,0.8;status;"
 				formspec[#formspec + 1] = fgettext("No updates")
 				formspec[#formspec + 1] = "]"
 			else
-				formspec[#formspec + 1] = "button[12.75,0.375;2.625,0.8;update_all;"
+				formspec[#formspec + 1] = "button[13.7,0.375;2.63,0.8;update_all;"
 				formspec[#formspec + 1] = fgettext("Update All [$1]", num_avail_updates)
 				formspec[#formspec + 1] = "]"
 			end
@@ -829,13 +829,13 @@ function store.get_formspec(dlgdata)
 	local start_idx = (cur_page - 1) * num_per_page + 1
 	for i=start_idx, math.min(#store.packages, start_idx+num_per_page-1) do
 		local package = store.packages[i]
-		local container_y = (i - start_idx) * 1.375 + (2*0.375 + 0.8)
+		local container_y = (i - start_idx) * 1.55 + (2*0.375 + 0.8)
 		formspec[#formspec + 1] = "container[0.375,"
 		formspec[#formspec + 1] = container_y
 		formspec[#formspec + 1] = "]"
 
 		-- image
-		formspec[#formspec + 1] = "image[0,0;1.5,1;"
+		formspec[#formspec + 1] = "image[0,-0.1;1.6,1.1;"
 		formspec[#formspec + 1] = core.formspec_escape(get_screenshot(package))
 		formspec[#formspec + 1] = "]"
 
@@ -892,7 +892,7 @@ function store.get_formspec(dlgdata)
 		local description_width = W - 0.375*5 - 0.85 - 2*0.7
 		formspec[#formspec + 1] = "textarea[1.855,0.3;"
 		formspec[#formspec + 1] = tostring(description_width)
-		formspec[#formspec + 1] = ",0.8;;;"
+		formspec[#formspec + 1] = ",1;;;"
 		formspec[#formspec + 1] = core.formspec_escape(package.short_description)
 		formspec[#formspec + 1] = "]"
 
