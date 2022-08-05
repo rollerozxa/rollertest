@@ -15,48 +15,46 @@
 --with this program; if not, write to the Free Software Foundation, Inc.,
 --51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
---------------------------------------------------------------------------------
+-- https://github.com/orgs/minetest/teams/engine/members
 
 local core_developers = {
-	"Perttu Ahola (celeron55) <celeron55@gmail.com>",
+	"Perttu Ahola (celeron55) <celeron55@gmail.com> [Project founder]",
 	"sfan5 <sfan5@live.de>",
+	"ShadowNinja <shadowninja@minetest.net>",
 	"Nathanaëlle Courant (Nore/Ekdohibs) <nore@mesecons.net>",
 	"Loic Blot (nerzhul/nrz) <loic.blot@unix-experience.fr>",
-	"paramat",
 	"Andrew Ward (rubenwardy) <rw@rubenwardy.com>",
 	"Krock/SmallJoker <mk939@ymail.com>",
 	"Lars Hofhansl <larsh@apache.org>",
-	"Pierre-Yves Rollo <dev@pyrollo.com>",
 	"v-rob <robinsonvincent89@gmail.com>",
 	"hecks",
 	"Hugues Ross <hugues.ross@gmail.com>",
 	"Dmitry Kostenko (x2048) <codeforsmile@gmail.com>",
 }
 
+local core_team = {
+	"Zughy [Issue triager]",
+}
+
 -- For updating active/previous contributors, see the script in ./util/gather_git_credits.py
 
 local active_contributors = {
-	"Wuzzy [I18n for builtin, liquid features, fixes]",
-	"Zughy [Various features and fixes]",
-	"numzero [Graphics and rendering]",
-	"Desour [Internal fixes, Clipboard on X11]",
-	"Lars Müller [Various internal fixes]",
-	"JosiahWI [CMake, cleanups and fixes]",
-	"HybridDog [builtin, documentation]",
-	"Jude Melton-Houghton [Database implementation]",
-	"savilli [Fixes]",
+	"Wuzzy [Features, translations, devtest]",
+	"Lars Müller [Lua optimizations and fixes]",
+	"Jude Melton-Houghton [Optimizations, bugfixes]",
+	"paradust7 [Performance, fixes, Irrlicht refactoring]",
+	"Desour [Fixes]",
+	"ROllerozxa [Main menu]",
+	"savilli [Bugfixes]",
+	"Lexi Hale [Particlespawner animation]",
 	"Liso [Shadow Mapping]",
-	"MoNTE48 [Build fix]",
-	"Jean-Patrick Guerrero (kilbith) [Fixes]",
-	"ROllerozxa [Code cleanups]",
-	"Lejo [bitop library integration]",
-	"LoneWolfHT [Build fixes]",
+	"JosiahWI [Fixes, build system]",
+	"numzero [Graphics and rendering]",
+	"HybridDog [Fixes]",
 	"NeroBurner [Joystick]",
-	"Elias Fleckenstein [Internal fixes]",
-	"David CARLIER [Unix & Haiku build fixes]",
 	"pecksin [Clickable web links]",
-	"srfqi [Android & rendering fixes]",
-	"EvidenceB [Formspec]",
+	"Daroc Alden [Fixes]",
+	"Jean-Patrick Guerrero (kilbith) [Fixes]",
 }
 
 local previous_core_developers = {
@@ -71,47 +69,57 @@ local previous_core_developers = {
 	"Ryan Kwolek (kwolekr) <kwolekr@minetest.net>",
 	"sapier",
 	"Zeno",
-	"ShadowNinja <shadowninja@minetest.net>",
 	"Auke Kok (sofar) <sofar@foo-projects.org>",
 	"Aaron Suen <warr1024@gmail.com>",
+	"paramat",
+	"Pierre-Yves Rollo <dev@pyrollo.com>",
 }
 
 local previous_contributors = {
-	"Nils Dagsson Moskopp (erlehmann) <nils@dieweltistgarnichtso.net> [Minetest Logo]",
+	"Nils Dagsson Moskopp (erlehmann) <nils@dieweltistgarnichtso.net> [Minetest logo]",
 	"red-001 <red-001@outlook.ie>",
 	"Giuseppe Bilotta",
+	"ClobberXD",
 	"Dániel Juhász (juhdanad) <juhdanad@gmail.com>",
 	"MirceaKitsune <mirceakitsune@gmail.com>",
+	"MoNTE48",
 	"Constantin Wenger (SpeedProg)",
 	"Ciaran Gultnieks (CiaranG)",
 	"Paul Ouellette (pauloue)",
 	"stujones11",
+	"srifqi",
 	"Rogier <rogier777@gmail.com>",
 	"Gregory Currie (gregorycu)",
 	"JacobF",
-	"Jeija <jeija@mesecons.net> [HTTP, particles]",
+	"Jeija <jeija@mesecons.net>",
 }
 
 local rollertest_info = {
 	"This is a custom build of Minetest called ROllerTest.",
 	"Do not report bugs specific to ROllerTest to",
-	"the Minetest core developers!"
+	"the Minetest core developers!",
+	""
 }
 
-local function buildInfoList(source)
-	local ret = {}
-	for i = 1, #source do
-		ret[i] = core.formspec_escape(source[i])
+local function prepare_credits(dest, source)
+	for _, s in ipairs(source) do
+		-- if there's text inside brackets make it gray-ish
+		s = s:gsub("%[.-%]", core.colorize("#aaa", "%1"))
+		dest[#dest+1] = s
 	end
-	return table.concat(ret, ",#FF8888,")
 end
 
-local function buildCreditList(source)
+local function build_hacky_list(items, spacing)
+	spacing = spacing or 0.5
+	local y = spacing / 2
 	local ret = {}
-	for i = 1, #source do
-		ret[i] = core.formspec_escape(source[i])
+	for _, item in ipairs(items) do
+		if item ~= "" then
+			ret[#ret+1] = ("label[0,%f;%s]"):format(y, core.formspec_escape(item))
+		end
+		y = y + spacing
 	end
-	return table.concat(ret, ",,")
+	return table.concat(ret, ""), y
 end
 
 return {
@@ -120,48 +128,64 @@ return {
 	cbf_formspec = function(tabview, name, tabdata)
 		local logofile = core.formspec_escape(defaulttexturedir.."logo.png")
 		local version = core.get_version()
-		local openuserdatafolder
 
-		if PLATFORM ~= "Android" then
-			openuserdatafolder = [[
-				tooltip[userdata;Opens the directory that contains user-provided worlds, games, mods,
-and texture packs in a file manager / explorer.]
-				button[0,4;3.5,1;userdata;Open User Data Folder]
-			]]
+		local credit_list = {}
+		prepare_credits(credit_list, rollertest_info)
+
+		table.insert_all(credit_list, {
+			core.colorize("#ff0", fgettext("Core Developers"))
+		})
+		prepare_credits(credit_list, core_developers)
+		table.insert_all(credit_list, {
+			"",
+			core.colorize("#ff0", fgettext("Core Team"))
+		})
+		prepare_credits(credit_list, core_team)
+		table.insert_all(credit_list, {
+			"",
+			core.colorize("#ff0", fgettext("Active Contributors"))
+		})
+		prepare_credits(credit_list, active_contributors)
+		table.insert_all(credit_list, {
+			"",
+			core.colorize("#ff0", fgettext("Previous Core Developers"))
+		})
+		prepare_credits(credit_list, previous_core_developers)
+		table.insert_all(credit_list, {
+			"",
+			core.colorize("#ff0", fgettext("Previous Contributors"))
+		})
+		prepare_credits(credit_list, previous_contributors)
+		local credit_fs, scroll_height = build_hacky_list(credit_list)
+		-- account for the visible portion
+		scroll_height = math.max(0, scroll_height - 6.9)
+
+		local fs = "image[1.5,0.6;2.5,2.5;" .. core.formspec_escape(logofile) .. "]" ..
+			"style[label_button;border=false]" ..
+			"button[0.1,3.4;5.3,0.5;label_button;" ..
+			core.formspec_escape(version.project .. " " .. version.string) .. "]" ..
+			"button[1.5,4.1;2.5,0.8;homepage;minetest.net]" ..
+			"scroll_container[5.5,0.1;9.5,6.9;scroll_credits;vertical;" ..
+			tostring(scroll_height / 1000) .. "]" .. credit_fs ..
+			"scroll_container_end[]"..
+			"scrollbar[15,0.1;0.4,6.9;vertical;scroll_credits;0]"
+
+		-- Render information
+		fs = fs .. "style[label_button2;border=false]" ..
+			"button[0.1,6;5.3,1;label_button2;" ..
+			fgettext("Active renderer:") .. "\n" ..
+			core.formspec_escape(core.get_screen_info().render_info) .. "]"
+
+		if PLATFORM == "Android" then
+			fs = fs .. "button[0.5,5.1;4.5,0.8;share_debug;" .. fgettext("Share debug log") .. "]"
 		else
-			openuserdatafolder = "button[0,4;3.5,1;share_debug;" .. fgettext("Share debug log") .. "]"
+			fs = fs .. "tooltip[userdata;" ..
+					fgettext("Opens the directory that contains user-provided worlds, games, mods,\n" ..
+							"and texture packs in a file manager / explorer.") .. "]"
+			fs = fs .. "button[0.5,5.1;4.5,0.8;userdata;" .. fgettext("Open User Data Directory") .. "]"
 		end
 
-		return formspec_wrapper([[
-			image[0.75,0.2;2.2,2.2;${logofile}]
-			style[label_button;border=false]
-			button[0,1.7;3.5,2;label_button;${version_string}]
-			tablecolumns[color;text]
-			tableoptions[background=#00000000;highlight=#00000000;border=false]
-			table[3.5,-0.25;8.45,5.95;list_credits;#FF8888,${rollertest_info},
-			,,#FFFF00,${lbl_core_developers},
-			,${core_developers},
-			,,#FFFF00,${lbl_active_contributors},
-			,${active_contributors},
-			,,#FFFF00,${lbl_previous_core_developers},
-			,${previous_core_developers},
-			,,#FFFF00,${lbl_previous_contributors},
-			,${previous_contributors},;1]
-			${openuserdatafolder}
-		]], {
-			logofile = logofile,
-			version_string = version.project.." "..version.string,
-			rollertest_info = buildInfoList(rollertest_info),
-			lbl_core_developers = fgettext("Core Developers"),
-			core_developers = buildCreditList(core_developers),
-			lbl_active_contributors = fgettext("Active Contributors"),
-			active_contributors = buildCreditList(active_contributors),
-			lbl_previous_core_developers = fgettext("Previous Core Developers"),
-			previous_core_developers = buildCreditList(previous_core_developers),
-			lbl_previous_contributors = fgettext("Previous Contributors"),
-			previous_contributors = buildCreditList(previous_contributors),
-			openuserdatafolder = openuserdatafolder
-		})
+		return fs, "size[15.5,7.1,false]real_coordinates[true]"
 	end,
 	cbf_button_handler = function(this, fields, name, tabdata)
 		if fields.homepage then
