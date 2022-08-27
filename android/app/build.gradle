@@ -40,7 +40,8 @@ android {
 		abi {
 			enable true
 			reset()
-			include 'arm64-v8a' // 'armeabi-v7a',
+			include 'arm64-v8a'
+			//include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
 		}
 	}
 
