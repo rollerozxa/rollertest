@@ -4063,7 +4063,6 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	bool draw_wield_tool = (m_game_ui->m_flags.show_hud &&
 			(player->hud_flags & HUD_FLAG_WIELDITEM_VISIBLE) &&
 			(camera->getCameraMode() == CAMERA_MODE_FIRST));
-#ifndef HAVE_TOUCHSCREENGUI
 	bool draw_crosshair = (
 			(player->hud_flags & HUD_FLAG_CROSSHAIR_VISIBLE) &&
 			(camera->getCameraMode() != CAMERA_MODE_THIRD_FRONT));
