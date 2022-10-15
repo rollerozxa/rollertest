@@ -29,7 +29,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "client/tile.h"
 #include "client/game.h"
-#include "client/camera.h"
 
 using namespace irr;
 using namespace irr::core;
@@ -216,9 +215,6 @@ private:
 	// value in degree
 	double m_camera_yaw_change = 0.0;
 	double m_camera_pitch = 0.0;
-
-	// camera mode (used for crosshair)
-	CameraMode m_camera_mode = CAMERA_MODE_FIRST;
 
 	// forward, backward, left, right
 	touch_gui_button_id m_joystick_names[5] = {

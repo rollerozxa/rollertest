@@ -427,7 +427,6 @@ TouchScreenGUI::TouchScreenGUI(IrrlichtDevice *device, IEventReceiver *receiver)
 	m_touchscreen_threshold = g_settings->getU16("touchscreen_threshold");
 	m_fixed_joystick = g_settings->getBool("fixed_virtual_joystick");
 	m_joystick_triggers_aux1 = g_settings->getBool("virtual_joystick_triggers_aux1");
-	m_use_crosshair = g_settings->getBool("use_crosshair");
 	m_screensize = m_device->getVideoDriver()->getScreenSize();
 	button_size = MYMIN(m_screensize.Y / 4.5f,
 			RenderingEngine::getDisplayDensity() *
@@ -693,6 +692,8 @@ void TouchScreenGUI::handleReleaseEvent(size_t evt_id)
 			auto *translated = new SEvent;
 			memset(translated, 0, sizeof(SEvent));
 			translated->EventType               = EET_MOUSE_INPUT_EVENT;
+			translated->MouseInput.X            = m_move_downlocation.X;
+			translated->MouseInput.Y            = m_move_downlocation.Y;
 			translated->MouseInput.Shift        = false;
 			translated->MouseInput.Control      = false;
 			translated->MouseInput.ButtonStates = 0;
@@ -820,6 +821,7 @@ void TouchScreenGUI::translateEvent(const SEvent &event)
 					m_move_id                  = event.TouchInput.ID;
 					m_move_has_really_moved    = false;
 					m_move_downtime            = porting::getTimeMs();
+					m_move_downlocation        = v2s32(event.TouchInput.X, event.TouchInput.Y);
 					m_move_sent_as_mouse_event = false;
 					if (m_draw_crosshair)
 						m_move_downlocation = v2s32(m_screensize.X / 2, m_screensize.Y / 2);
