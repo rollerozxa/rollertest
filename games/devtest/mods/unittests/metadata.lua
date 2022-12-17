@@ -12,7 +12,8 @@ compare_meta:from_table({
 })
 
 local function test_metadata(meta)
-	meta:from_table({fields = {a = 1, b = "2"}})
+	meta:from_table({fields = {a = 2, b = "2"}})
+	meta:set_string("a", 1)
 	meta:set_string("c", "3")
 	meta:set_int("d", 4)
 	meta:set_string("e", "e")
@@ -28,6 +29,14 @@ local function test_metadata(meta)
 	assert(tab.fields.c == "3")
 	assert(tab.fields.d == "4")
 	assert(tab.fields.e == "e")
+
+	local keys = meta:get_keys()
+	assert(table.indexof(keys, "a") > 0)
+	assert(table.indexof(keys, "b") > 0)
+	assert(table.indexof(keys, "c") > 0)
+	assert(table.indexof(keys, "d") > 0)
+	assert(table.indexof(keys, "e") > 0)
+	assert(#keys == 5)
 
 	assert(not meta:contains(""))
 	assert(meta:contains("a"))
@@ -56,6 +65,7 @@ local function test_metadata(meta)
 
 	meta:from_table()
 	assert(next(meta:to_table().fields) == nil)
+	assert(#meta:get_keys() == 0)
 
 	assert(not meta:equals(compare_meta))
 end

@@ -85,6 +85,8 @@ The game directory can contain the following files:
       (this does not work for `enable_server`).
       Only these settings are supported:
           `enable_damage`, `creative_mode`, `enable_server`.
+    * `map_persistent`: Specifies whether newly created worlds should use
+      a persistent map backend. Defaults to `true` (= "sqlite3")
     * `author`: The author of the game. It only appears when downloaded from
                 ContentDB.
     * `release`: Ignore this: Should only ever be set by ContentDB, as it is
@@ -1691,7 +1693,7 @@ Amount and wear
 ---------------
 
 All item stacks have an amount between 0 and 65535. It is 1 by
-default. Tool item stacks can not have an amount greater than 1.
+default. Tool item stacks cannot have an amount greater than 1.
 
 Tools use a wear (damage) value ranging from 0 to 65535. The
 value 0 is the default and is used for unworn tools. The values
@@ -1888,9 +1890,16 @@ to games.
 
 ### Node-only groups
 
-* `attached_node`: if the node under it is not a walkable block the node will be
-  dropped as an item. If the node is wallmounted the wallmounted direction is
-  checked.
+* `attached_node`: the node is 'attached' to a neighboring node. It checks
+                   whether the node it is attached to is walkable. If it
+                   isn't, the node will drop as an item.
+    * `1`: if the node is wallmounted, the node is attached in the wallmounted
+           direction. Otherwise, the node is attached to the node below.
+    * `2`: if the node is facedir or 4dir, the facedir or 4dir direction is checked.
+           No effect for other nodes.
+           Note: The "attaching face" of this node is tile no. 5 (back face).
+    * `3`: the node is always attached to the node below.
+    * `4`: the node is always attached to the node above.
 * `bouncy`: value is bounce speed in percent.
   If positive, jump/sneak on floor impact will increase/decrease bounce height.
   Negative value is the same bounciness, but non-controllable.
@@ -3546,10 +3555,10 @@ Operators can be used if all of the involved vectors have metatables:
     * Returns the additive inverse of v.
 * `v1 + v2`:
     * Returns the sum of both vectors.
-    * Note: `+` can not be used together with scalars.
+    * Note: `+` cannot be used together with scalars.
 * `v1 - v2`:
     * Returns the difference of `v1` subtracted by `v2`.
-    * Note: `-` can not be used together with scalars.
+    * Note: `-` cannot be used together with scalars.
 * `v * s` or `s * v`:
     * Returns `v` scaled by `s`.
 * `v / s`:
@@ -3650,7 +3659,7 @@ Helper functions
     * Example: `minetest.string_to_area("(1,2,3) (~5,~-5,~)", {x=10,y=10,z=10})`
       returns `{x=1,y=2,z=3}, {x=15,y=5,z=10}`
 * `minetest.formspec_escape(string)`: returns a string
-    * escapes the characters "[", "]", "\", "," and ";", which can not be used
+    * escapes the characters "[", "]", "\", "," and ";", which cannot be used
       in formspecs.
 * `minetest.is_yes(arg)`
     * returns true if passed 'y', 'yes', 'true' or a number that isn't zero.
@@ -4870,6 +4879,18 @@ Utilities
   or checking if a mod is enabled.
 * `minetest.get_modnames()`: returns a list of enabled mods, sorted alphabetically.
     * Does not include disabled mods, even if they are installed.
+* `minetest.get_game_info()`: returns a table containing information about the
+  current game. Note that other meta information (e.g. version/release number)
+  can be manually read from `game.conf` in the game's root directory.
+
+      {
+          id = string,
+          title = string,
+          author = string,
+          -- The root directory of the game
+          path = string,
+      }
+
 * `minetest.get_worldpath()`: returns e.g. `"/home/user/.minetest/world"`
     * Useful for storing custom data
 * `minetest.is_singleplayer()`
@@ -5607,6 +5628,13 @@ Environment access
       prefix `"no"` is attached, clears instead.
     * `flags` is in the same format and has the same options as `mg_flags` in
       `minetest.conf`.
+* `minetest.get_mapgen_edges([mapgen_limit[, chunksize]])`
+    * Returns the minimum and maximum possible generated node positions
+      in that order.
+    * `mapgen_limit` is an optional number. If it is absent, its value is that
+      of the *active* mapgen setting `"mapgen_limit"`.
+    * `chunksize` is an optional number. If it is absent, its value is that
+      of the *active* mapgen setting `"chunksize"`.
 * `minetest.get_mapgen_setting(name)`
     * Gets the *active* mapgen setting (or nil if none exists) in string
       format with the following order of precedence:
@@ -5812,7 +5840,7 @@ Formspec
       `minetest.close_formspec(playername, "")`.
       **USE THIS ONLY WHEN ABSOLUTELY NECESSARY!**
 * `minetest.formspec_escape(string)`: returns a string
-    * escapes the characters "[", "]", "\", "," and ";", which can not be used
+    * escapes the characters "[", "]", "\", "," and ";", which cannot be used
       in formspecs.
 * `minetest.explode_table_event(string)`: returns a table
     * returns e.g. `{type="CHG", row=1, column=2}`
@@ -6379,7 +6407,7 @@ Misc.
     * **Warning**: JSON is more strict than the Lua table format.
         1. You can only use strings and positive integers of at least one as
            keys.
-        2. You can not mix string and integer keys.
+        2. You cannot mix string and integer keys.
            This is due to the fact that JSON has two distinct array and object
            values.
     * Example: `write_json({10, {a = false}})`,
@@ -6504,12 +6532,16 @@ Misc.
     * You may want to cache and call the old function to allow multiple mods to
       change knockback behavior.
 
-* `minetest.forceload_block(pos[, transient])`
+* `minetest.forceload_block(pos[, transient[, limit]])`
     * forceloads the position `pos`.
     * returns `true` if area could be forceloaded
     * If `transient` is `false` or absent, the forceload will be persistent
       (saved between server runs). If `true`, the forceload will be transient
       (not saved between server runs).
+    * `limit` is an optional limit on the number of blocks that can be
+      forceloaded at once. If `limit` is negative, there is no limit. If it is
+      absent, the limit is the value of the setting `"max_forceloaded_blocks"`.
+      If the call would put the number of blocks over the limit, the call fails.
 
 * `minetest.forceload_free_block(pos[, transient])`
     * stops forceloading the position `pos`
@@ -6852,6 +6884,11 @@ Can be obtained via `item:get_meta()`.
 Base class used by [`StorageRef`], [`NodeMetaRef`], [`ItemStackMetaRef`],
 and [`PlayerMetaRef`].
 
+Note: If a metadata value is in the format `${k}`, an attempt to get the value
+will return the value associated with key `k`. There is a low recursion limit.
+This behavior is **deprecated** and will be removed in a future version. Usage
+of the `${k}` syntax in formspecs is not deprecated.
+
 ### Methods
 
 * `contains(key)`: Returns true if key present, otherwise false.
@@ -6863,6 +6900,7 @@ and [`PlayerMetaRef`].
 * `get_int(key)`: Returns `0` if key not present.
 * `set_float(key, value)`
 * `get_float(key)`: Returns `0` if key not present.
+* `get_keys()`: returns a list of all keys in the metadata.
 * `to_table()`: returns `nil` or a table with keys:
     * `fields`: key-value storage
     * `inventory`: `{list1 = {}, ...}}` (NodeMetaRef only)
@@ -7934,8 +7972,10 @@ gets activated (not loaded!)
         -- and not only the first time the block gets activated after the LBM
         -- was introduced.
 
-        action = function(pos, node),
+        action = function(pos, node, dtime_s),
         -- Function triggered for each qualifying node.
+        -- `dtime_s` is the in-game time (in seconds) elapsed since the block
+        -- was last active
     }
 
 Tile definition
@@ -8479,6 +8519,9 @@ Used by `minetest.register_node`.
         -- Node constructor; called after adding node.
         -- Can set up metadata and stuff like that.
         -- Not called for bulk node placement (i.e. schematics and VoxelManip).
+        -- Note: Within an on_construct callback, minetest.set_node can cause an
+        -- infinite loop if it invokes the same callback.
+        --  Consider using minetest.swap_node instead.
         -- default: nil
 
         on_destruct = function(pos),
@@ -9913,3 +9956,17 @@ Bit Library
 Functions: bit.tobit, bit.tohex, bit.bnot, bit.band, bit.bor, bit.bxor, bit.lshift, bit.rshift, bit.arshift, bit.rol, bit.ror, bit.bswap
 
 See http://bitop.luajit.org/ for advanced information.
+
+Error Handling
+--------------
+
+When an error occurs that is not caught, Minetest calls the function
+`minetest.error_handler` with the error object as its first argument. The second
+argument is the stack level where the error occurred. The return value is the
+error string that should be shown. By default this is a backtrace from
+`debug.traceback`. If the error object is not a string, it is first converted
+with `tostring` before being displayed. This means that you can use tables as
+error objects so long as you give them `__tostring` metamethods.
+
+You can override `minetest.error_handler`. You should call the previous handler
+with the correct stack level in your implementation.

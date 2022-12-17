@@ -721,8 +721,7 @@ int ObjectRef::l_set_nametag_attributes(lua_State *L)
 	}
 	lua_pop(L, 1);
 
-	std::string nametag = getstringfield_default(L, 2, "text", "");
-	prop->nametag = nametag;
+	prop->nametag = getstringfield_default(L, 2, "text", prop->nametag);
 
 	prop->validate();
 	sao->notifyObjectPropertiesModified();
@@ -1813,7 +1812,7 @@ int ObjectRef::l_set_sky(lua_State *L)
 
 		sky_params.type = luaL_checkstring(L, 3);
 
-		// Preserve old behaviour of the sun, moon and stars
+		// Preserve old behavior of the sun, moon and stars
 		// when using the old set_sky call.
 		if (sky_params.type == "regular") {
 			sun_params.visible = true;

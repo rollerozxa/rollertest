@@ -249,7 +249,8 @@ std::string LBMManager::createIntroductionTimesString()
 	return oss.str();
 }
 
-void LBMManager::applyLBMs(ServerEnvironment *env, MapBlock *block, u32 stamp)
+void LBMManager::applyLBMs(ServerEnvironment *env, MapBlock *block,
+		const u32 stamp, const float dtime_s)
 {
 	// Precondition, we need m_lbm_lookup to be initialized
 	FATAL_ERROR_IF(!m_query_mode,
@@ -280,7 +281,7 @@ void LBMManager::applyLBMs(ServerEnvironment *env, MapBlock *block, u32 stamp)
 					if (!lbm_list)
 						continue;
 					for (auto lbmdef : *lbm_list) {
-						lbmdef->trigger(env, pos + pos_of_block, n);
+						lbmdef->trigger(env, pos + pos_of_block, n, dtime_s);
 					}
 				}
 	}
@@ -592,8 +593,8 @@ PlayerSAO *ServerEnvironment::loadPlayer(RemotePlayer *player, bool *new_player,
 	/* Add object to environment */
 	addActiveObject(playersao);
 
-	// Update active blocks asap so objects in those blocks appear on the client
-	m_force_update_active_blocks = true;
+	// Update active blocks quickly for a bit so objects in those blocks appear on the client
+	m_fast_active_block_divider = 10;
 
 	return playersao;
 }
@@ -785,10 +786,10 @@ public:
 			delete aabms;
 	}
 
-	// Find out how many objects the given block and its neighbours contain.
+	// Find out how many objects the given block and its neighbors contain.
 	// Returns the number of objects in the block, and also in 'wider' the
-	// number of objects in the block and all its neighbours. The latter
-	// may an estimate if any neighbours are unloaded.
+	// number of objects in the block and all its neighbors. The latter
+	// may an estimate if any neighbors are unloaded.
 	u32 countObjects(MapBlock *block, ServerMap * map, u32 &wider)
 	{
 		wider = 0;
@@ -847,7 +848,7 @@ public:
 		for(p0.Y=0; p0.Y<MAP_BLOCKSIZE; p0.Y++)
 		for(p0.Z=0; p0.Z<MAP_BLOCKSIZE; p0.Z++)
 		{
-			const MapNode &n = block->getNodeNoCheck(p0);
+			MapNode n = block->getNodeNoCheck(p0);
 			content_t c = n.getContent();
 			// Cache content types as we go
 			if (!block->contents_cached && !block->do_not_cache_contents) {
@@ -909,6 +910,11 @@ public:
 					active_object_count = countObjects(block, map, active_object_count_wider);
 					m_env->m_added_objects = 0;
 				}
+
+				// Update and check node after possible modification
+				n = block->getNodeNoCheck(p0);
+				if (n.getContent() != c)
+					break;
 			}
 		}
 		block->contents_cached = !block->do_not_cache_contents;
@@ -951,7 +957,7 @@ void ServerEnvironment::activateBlock(MapBlock *block, u32 additional_dtime)
 	activateObjects(block, dtime_s);
 
 	/* Handle LoadingBlockModifiers */
-	m_lbm_mgr.applyLBMs(this, block, stamp);
+	m_lbm_mgr.applyLBMs(this, block, stamp, (float)dtime_s);
 
 	// Run node timers
 	block->step((float)dtime_s, [&](v3s16 p, MapNode n, f32 d) -> bool {
@@ -1040,7 +1046,7 @@ bool ServerEnvironment::swapNode(v3s16 p, const MapNode &n)
 
 u8 ServerEnvironment::findSunlight(v3s16 pos) const
 {
-	// Directions for neighbouring nodes with specified order
+	// Directions for neighboring nodes with specified order
 	static const v3s16 dirs[] = {
 		v3s16(-1, 0, 0), v3s16(1, 0, 0), v3s16(0, 0, -1), v3s16(0, 0, 1),
 		v3s16(0, -1, 0), v3s16(0, 1, 0)
@@ -1115,7 +1121,7 @@ u8 ServerEnvironment::findSunlight(v3s16 pos) const
 				// Found a valid daylight
 				found_light = possible_finlight;
 			} else {
-				// Sunlight may be darker, so walk the neighbours
+				// Sunlight may be darker, so walk the neighbors
 				stack.push({neighborPos, dist});
 			}
 		}
@@ -1286,8 +1292,7 @@ void ServerEnvironment::step(float dtime)
 	/*
 		Manage active block list
 	*/
-	if (m_active_blocks_mgmt_interval.step(dtime, m_cache_active_block_mgmt_interval) ||
-		m_force_update_active_blocks) {
+	if (m_active_blocks_mgmt_interval.step(dtime, m_cache_active_block_mgmt_interval / m_fast_active_block_divider)) {
 		ScopeProfiler sp(g_profiler, "ServerEnv: update active blocks", SPT_AVG);
 
 		/*
@@ -1356,8 +1361,10 @@ void ServerEnvironment::step(float dtime)
 
 		// Some blocks may be removed again by the code above so do this here
 		m_active_block_gauge->set(m_active_blocks.size());
+
+		if (m_fast_active_block_divider > 1)
+			--m_fast_active_block_divider;
 	}
-	m_force_update_active_blocks = false;
 
 	/*
 		Mess around in active blocks
@@ -1393,6 +1400,9 @@ void ServerEnvironment::step(float dtime)
 	if (m_active_block_modifier_interval.step(dtime, m_cache_abm_interval)) {
 		ScopeProfiler sp(g_profiler, "SEnv: modify in blocks avg per interval", SPT_AVG);
 		TimeTaker timer("modify in active blocks per interval");
+
+		// Shuffle to prevent persistent artifacts of ordering
+		std::shuffle(m_abms.begin(), m_abms.end(), m_rgen);
 
 		// Initialize handling of ActiveBlockModifiers
 		ABMHandler abmhandler(m_abms, m_cache_abm_interval, this, true);
@@ -1950,7 +1960,7 @@ void ServerEnvironment::activateObjects(MapBlock *block, u32 dtime_s)
 void ServerEnvironment::deactivateFarObjects(bool _force_delete)
 {
 	auto cb_deactivate = [this, _force_delete](ServerActiveObject *obj, u16 id) {
-		// force_delete might be overriden per object
+		// force_delete might be overridden per object
 		bool force_delete = _force_delete;
 
 		// Do not deactivate if disallowed

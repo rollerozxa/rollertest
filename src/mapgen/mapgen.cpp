@@ -82,7 +82,7 @@ struct MapgenDesc {
 //// Built-in mapgens
 ////
 
-// Order used here defines the order of appearence in mainmenu.
+// Order used here defines the order of appearance in mainmenu.
 // v6 always last to discourage selection.
 // Special mapgens flat, fractal, singlenode, next to last. Of these, singlenode
 // last to discourage selection.
@@ -745,7 +745,7 @@ void MapgenBasic::generateBiomes()
 				nplaced = 0;  // Enable top/filler placement for next surface
 				air_above = true;
 				water_above = false;
-			} else {  // Possible various nodes overgenerated from neighbouring mapchunks
+			} else {  // Possible various nodes overgenerated from neighboring mapchunks
 				nplaced = U16_MAX;  // Disable top/filler placement
 				air_above = false;
 				water_above = false;
@@ -1063,9 +1063,20 @@ void MapgenParams::writeParams(Settings *settings) const
 }
 
 
-// Calculate exact edges of the outermost mapchunks that are within the
-// set 'mapgen_limit'.
-void MapgenParams::calcMapgenEdges()
+s32 MapgenParams::getSpawnRangeMax()
+{
+	if (!m_mapgen_edges_calculated) {
+		std::pair<s16, s16> edges = get_mapgen_edges(mapgen_limit, chunksize);
+		mapgen_edge_min = edges.first;
+		mapgen_edge_max = edges.second;
+		m_mapgen_edges_calculated = true;
+	}
+
+	return MYMIN(-mapgen_edge_min, mapgen_edge_max);
+}
+
+
+std::pair<s16, s16> get_mapgen_edges(s16 mapgen_limit, s16 chunksize)
 {
 	// Central chunk offset, in blocks
 	s16 ccoff_b = -chunksize / 2;
@@ -1089,17 +1100,5 @@ void MapgenParams::calcMapgenEdges()
 	s16 numcmin = MYMAX((ccfmin - mapgen_limit_min) / csize_n, 0);
 	s16 numcmax = MYMAX((mapgen_limit_max - ccfmax) / csize_n, 0);
 	// Mapgen edges, in nodes
-	mapgen_edge_min = ccmin - numcmin * csize_n;
-	mapgen_edge_max = ccmax + numcmax * csize_n;
-
-	m_mapgen_edges_calculated = true;
-}
-
-
-s32 MapgenParams::getSpawnRangeMax()
-{
-	if (!m_mapgen_edges_calculated)
-		calcMapgenEdges();
-
-	return MYMIN(-mapgen_edge_min, mapgen_edge_max);
+	return std::pair<s16, s16>(ccmin - numcmin * csize_n, ccmax + numcmax * csize_n);
 }

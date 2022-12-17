@@ -763,22 +763,23 @@ void AuthDatabaseSQLite3::writePrivileges(const AuthEntry &authEntry)
 	}
 }
 
-ModMetadataDatabaseSQLite3::ModMetadataDatabaseSQLite3(const std::string &savedir):
-	Database_SQLite3(savedir, "mod_storage"), ModMetadataDatabase()
+ModStorageDatabaseSQLite3::ModStorageDatabaseSQLite3(const std::string &savedir):
+	Database_SQLite3(savedir, "mod_storage"), ModStorageDatabase()
 {
 }
 
-ModMetadataDatabaseSQLite3::~ModMetadataDatabaseSQLite3()
+ModStorageDatabaseSQLite3::~ModStorageDatabaseSQLite3()
 {
 	FINALIZE_STATEMENT(m_stmt_remove_all)
 	FINALIZE_STATEMENT(m_stmt_remove)
 	FINALIZE_STATEMENT(m_stmt_set)
 	FINALIZE_STATEMENT(m_stmt_has)
 	FINALIZE_STATEMENT(m_stmt_get)
+	FINALIZE_STATEMENT(m_stmt_get_keys)
 	FINALIZE_STATEMENT(m_stmt_get_all)
 }
 
-void ModMetadataDatabaseSQLite3::createDatabase()
+void ModStorageDatabaseSQLite3::createDatabase()
 {
 	assert(m_database); // Pre-condition
 
@@ -793,9 +794,10 @@ void ModMetadataDatabaseSQLite3::createDatabase()
 		"Failed to create database table");
 }
 
-void ModMetadataDatabaseSQLite3::initStatements()
+void ModStorageDatabaseSQLite3::initStatements()
 {
 	PREPARE_STATEMENT(get_all, "SELECT `key`, `value` FROM `entries` WHERE `modname` = ?");
+	PREPARE_STATEMENT(get_keys, "SELECT `key` FROM `entries` WHERE `modname` = ?");
 	PREPARE_STATEMENT(get,
 		"SELECT `value` FROM `entries` WHERE `modname` = ? AND `key` = ? LIMIT 1");
 	PREPARE_STATEMENT(has,
@@ -806,7 +808,7 @@ void ModMetadataDatabaseSQLite3::initStatements()
 	PREPARE_STATEMENT(remove_all, "DELETE FROM `entries` WHERE `modname` = ?");
 }
 
-bool ModMetadataDatabaseSQLite3::getModEntries(const std::string &modname, StringMap *storage)
+void ModStorageDatabaseSQLite3::getModEntries(const std::string &modname, StringMap *storage)
 {
 	verifyDatabase();
 
@@ -821,11 +823,25 @@ bool ModMetadataDatabaseSQLite3::getModEntries(const std::string &modname, Strin
 	sqlite3_vrfy(sqlite3_errcode(m_database), SQLITE_DONE);
 
 	sqlite3_reset(m_stmt_get_all);
-
-	return true;
 }
 
-bool ModMetadataDatabaseSQLite3::getModEntry(const std::string &modname,
+void ModStorageDatabaseSQLite3::getModKeys(const std::string &modname,
+		std::vector<std::string> *storage)
+{
+	verifyDatabase();
+
+	str_to_sqlite(m_stmt_get_keys, 1, modname);
+	while (sqlite3_step(m_stmt_get_keys) == SQLITE_ROW) {
+		const char *key_data = (const char *) sqlite3_column_blob(m_stmt_get_keys, 0);
+		size_t key_len = sqlite3_column_bytes(m_stmt_get_keys, 0);
+		storage->emplace_back(key_data, key_len);
+	}
+	sqlite3_vrfy(sqlite3_errcode(m_database), SQLITE_DONE);
+
+	sqlite3_reset(m_stmt_get_keys);
+}
+
+bool ModStorageDatabaseSQLite3::getModEntry(const std::string &modname,
 	const std::string &key, std::string *value)
 {
 	verifyDatabase();
@@ -846,7 +862,7 @@ bool ModMetadataDatabaseSQLite3::getModEntry(const std::string &modname,
 	return found;
 }
 
-bool ModMetadataDatabaseSQLite3::hasModEntry(const std::string &modname,
+bool ModStorageDatabaseSQLite3::hasModEntry(const std::string &modname,
 		const std::string &key)
 {
 	verifyDatabase();
@@ -863,7 +879,7 @@ bool ModMetadataDatabaseSQLite3::hasModEntry(const std::string &modname,
 	return found;
 }
 
-bool ModMetadataDatabaseSQLite3::setModEntry(const std::string &modname,
+bool ModStorageDatabaseSQLite3::setModEntry(const std::string &modname,
 	const std::string &key, const std::string &value)
 {
 	verifyDatabase();
@@ -880,7 +896,7 @@ bool ModMetadataDatabaseSQLite3::setModEntry(const std::string &modname,
 	return true;
 }
 
-bool ModMetadataDatabaseSQLite3::removeModEntry(const std::string &modname,
+bool ModStorageDatabaseSQLite3::removeModEntry(const std::string &modname,
 		const std::string &key)
 {
 	verifyDatabase();
@@ -896,7 +912,7 @@ bool ModMetadataDatabaseSQLite3::removeModEntry(const std::string &modname,
 	return changes > 0;
 }
 
-bool ModMetadataDatabaseSQLite3::removeModEntries(const std::string &modname)
+bool ModStorageDatabaseSQLite3::removeModEntries(const std::string &modname)
 {
 	verifyDatabase();
 
@@ -909,7 +925,7 @@ bool ModMetadataDatabaseSQLite3::removeModEntries(const std::string &modname)
 	return changes > 0;
 }
 
-void ModMetadataDatabaseSQLite3::listMods(std::vector<std::string> *res)
+void ModStorageDatabaseSQLite3::listMods(std::vector<std::string> *res)
 {
 	verifyDatabase();
 

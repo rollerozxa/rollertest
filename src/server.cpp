@@ -67,6 +67,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "server/serverinventorymgr.h"
 #include "translation.h"
 #include "database/database-sqlite3.h"
+#if USE_POSTGRESQL
+#include "database/database-postgresql.h"
+#endif
 #include "database/database-files.h"
 #include "database/database-dummy.h"
 #include "gameparams.h"
@@ -1092,7 +1095,7 @@ PlayerSAO* Server::StageTwoClientInit(session_t peer_id)
 	if (!playersao || !player) {
 		if (player && player->getPeerId() != PEER_ID_INEXISTENT) {
 			actionstream << "Server: Failed to emerge player \"" << playername
-					<< "\" (player allocated to an another client)" << std::endl;
+					<< "\" (player allocated to another client)" << std::endl;
 			DenyAccess(peer_id, SERVER_ACCESSDENIED_ALREADY_CONNECTED);
 		} else {
 			errorstream << "Server: " << playername << ": Failed to emerge player"
@@ -4001,7 +4004,7 @@ Translations *Server::getTranslationLanguage(const std::string &lang_code)
 	return translations;
 }
 
-ModMetadataDatabase *Server::openModStorageDatabase(const std::string &world_path)
+ModStorageDatabase *Server::openModStorageDatabase(const std::string &world_path)
 {
 	std::string world_mt_path = world_path + DIR_DELIM + "world.mt";
 	Settings world_mt;
@@ -4019,14 +4022,22 @@ ModMetadataDatabase *Server::openModStorageDatabase(const std::string &world_pat
 	return openModStorageDatabase(backend, world_path, world_mt);
 }
 
-ModMetadataDatabase *Server::openModStorageDatabase(const std::string &backend,
+ModStorageDatabase *Server::openModStorageDatabase(const std::string &backend,
 		const std::string &world_path, const Settings &world_mt)
 {
 	if (backend == "sqlite3")
-		return new ModMetadataDatabaseSQLite3(world_path);
+		return new ModStorageDatabaseSQLite3(world_path);
+
+#if USE_POSTGRESQL
+	if (backend == "postgresql") {
+		std::string connect_string;
+		world_mt.getNoEx("pgsql_mod_storage_connection", connect_string);
+		return new ModStorageDatabasePostgreSQL(connect_string);
+	}
+#endif // USE_POSTGRESQL
 
 	if (backend == "files")
-		return new ModMetadataDatabaseFiles(world_path);
+		return new ModStorageDatabaseFiles(world_path);
 
 	if (backend == "dummy")
 		return new Database_Dummy();
@@ -4052,8 +4063,8 @@ bool Server::migrateModStorageDatabase(const GameParams &game_params, const Sett
 		return false;
 	}
 
-	ModMetadataDatabase *srcdb = nullptr;
-	ModMetadataDatabase *dstdb = nullptr;
+	ModStorageDatabase *srcdb = nullptr;
+	ModStorageDatabase *dstdb = nullptr;
 
 	bool succeeded = false;
 
