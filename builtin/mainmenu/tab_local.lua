@@ -284,6 +284,11 @@ local function main_button_handler(this, fields, name, tabdata)
 		local game_obj
 		if world then
 			game_obj = pkgmgr.find_by_gameid(world.gameid)
+			if not game_obj then
+				gamedata.errormessage =
+					fgettext("The game ($1) for the world you tried to play has been removed.", world.gameid)
+				return true
+			end
 			core.settings:set("menu_last_game", game_obj.id)
 		end
 
