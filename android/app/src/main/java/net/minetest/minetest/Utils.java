@@ -28,6 +28,15 @@ public class Utils {
 	}
 
 	@NonNull
+	public static File getShareDataDirectory(@NonNull Context context) {
+		File extDir = Objects.requireNonNull(
+			context.getExternalFilesDir(null),
+			"Cannot get external file directory"
+		);
+		return createDirs(extDir, "share");
+	}
+
+	@NonNull
 	public static File getCacheDirectory(@NonNull Context context) {
 		return Objects.requireNonNull(
 			context.getCacheDir(),
@@ -36,11 +45,12 @@ public class Utils {
 	}
 
 	public static boolean isInstallValid(@NonNull Context context) {
-		File userDataDirectory = getUserDataDirectory(context);
-		return userDataDirectory.isDirectory() &&
-			new File(userDataDirectory, "games").isDirectory() &&
-			new File(userDataDirectory, "builtin").isDirectory() &&
-			new File(userDataDirectory, "client").isDirectory() &&
-			new File(userDataDirectory, "textures").isDirectory();
+		File shareDataDirectory = getShareDataDirectory(context);
+		return shareDataDirectory.isDirectory() &&
+			new File(shareDataDirectory, "builtin").isDirectory() &&
+			new File(shareDataDirectory, "client").isDirectory() &&
+			new File(shareDataDirectory, "fonts").isDirectory() &&
+			new File(shareDataDirectory, "locale").isDirectory() &&
+			new File(shareDataDirectory, "textures").isDirectory();
 	}
 }

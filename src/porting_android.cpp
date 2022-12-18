@@ -154,7 +154,7 @@ static std::string javaStringToUTF8(jstring js)
 
 void initializePathsAndroid()
 {
-	// Set user and share paths
+	// Set user path
 	{
 		jmethodID getUserDataPath = jnienv->GetMethodID(nativeActivity,
 				"getUserDataPath", "()Ljava/lang/String;");
@@ -163,6 +163,17 @@ void initializePathsAndroid()
 		jobject result = jnienv->CallObjectMethod(app_global->activity->clazz, getUserDataPath);
 		const char *javachars = jnienv->GetStringUTFChars((jstring) result, nullptr);
 		path_user = javachars;
+		jnienv->ReleaseStringUTFChars((jstring) result, javachars);
+	}
+
+	// Set share path
+	{
+		jmethodID getShareDataPath = jnienv->GetMethodID(nativeActivity,
+				"getShareDataPath", "()Ljava/lang/String;");
+		FATAL_ERROR_IF(getShareDataPath==nullptr,
+				"porting::initializePathsAndroid unable to find Java getShareDataPath method");
+		jobject result = jnienv->CallObjectMethod(app_global->activity->clazz, getShareDataPath);
+		const char *javachars = jnienv->GetStringUTFChars((jstring) result, nullptr);
 		path_share = javachars;
 		path_locale  = path_share + DIR_DELIM + "locale";
 		jnienv->ReleaseStringUTFChars((jstring) result, javachars);

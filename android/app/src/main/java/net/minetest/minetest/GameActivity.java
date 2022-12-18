@@ -184,6 +184,10 @@ public class GameActivity extends NativeActivity {
 		return Utils.getUserDataDirectory(this).getAbsolutePath();
 	}
 
+	public String getShareDataPath() {
+		return Utils.getShareDataDirectory(this).getAbsolutePath();
+	}
+
 	public String getCachePath() {
 		return Utils.getCacheDirectory(this).getAbsolutePath();
 	}

@@ -76,7 +76,7 @@ public class UnzipService extends IntentService {
 		final File zipFile = new File(getCacheDir(), "Minetest.zip");
 		try {
 			setIsRunning(true);
-			File userDataDirectory = Utils.getUserDataDirectory(this);
+			File shareDataDirectory = Utils.getShareDataDirectory(this);
 
 			try (InputStream in = this.getAssets().open(zipFile.getName())) {
 				try (OutputStream out = new FileOutputStream(zipFile)) {
@@ -88,8 +88,8 @@ public class UnzipService extends IntentService {
 				}
 			}
 
-			migrate(notificationBuilder, userDataDirectory);
-			unzip(notificationBuilder, zipFile, userDataDirectory);
+			migrate(notificationBuilder, shareDataDirectory);
+			unzip(notificationBuilder, zipFile, shareDataDirectory);
 		} catch (IOException e) {
 			isSuccess = false;
 			failureMessage = e.getLocalizedMessage();

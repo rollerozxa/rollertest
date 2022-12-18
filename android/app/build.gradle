@@ -88,8 +88,6 @@ task prepareAssets() {
 		from "${projRoot}/textures" into "${assetsFolder}/textures"
 	}
 
-	file("${assetsFolder}/.nomedia").text = ""
-
 	task zipAssets(type: Zip) {
 		archiveFileName = "Minetest.zip"
 		from "${assetsFolder}"
