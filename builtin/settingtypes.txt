@@ -365,15 +365,6 @@ enable_shaders (Shaders) bool true
 #    enhanced, highlights and shadows are gradually compressed.
 tone_mapping (Filmic tone mapping) bool false
 
-#    Adjust the saturation (or vividness) of the scene
-#    Values
-#    < 1.0 decrease saturation
-#    > 1.0 increase saturation
-#    1.0 = unchanged saturation
-#    0.0 = black and white
-#    (Tone mapping needs to be enabled.)
-saturation (Saturation) float 1.0 0.0 5.0
-
 [**Waving Nodes]
 
 #    Set to true to enable waving leaves.
@@ -1675,6 +1666,11 @@ enable_mesh_cache (Mesh cache) bool false
 #    Delay between mesh updates on the client in ms. Increasing this will slow
 #    down the rate of mesh updates, thus reducing jitter on slower clients.
 mesh_generation_interval (Mapblock mesh generation delay) int 0 0 50
+
+#    Number of threads to use for mesh generation.
+#    Value of 0 (default) will let Minetest autodetect the number of available threads.
+mesh_generation_threads (Mapblock mesh generation threads) int 0 0 8
+
 
 #    Size of the MapBlock cache of the mesh generator. Increasing this will
 #    increase the cache hit %, reducing the data being copied from the main
