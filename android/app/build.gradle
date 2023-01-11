@@ -9,6 +9,10 @@ android {
 		targetSdkVersion 32
 		versionName "${versionMajor}.${versionMinor}.${versionPatch}"
 		versionCode project.versionCode
+
+		ndk {
+			abiFilters "arm64-v8a"
+		}
 	}
 
 	// load properties
@@ -32,16 +36,6 @@ android {
 				minifyEnabled true
 				signingConfig signingConfigs.release
 			}
-		}
-	}
-
-	// for multiple APKs
-	splits {
-		abi {
-			enable true
-			reset()
-			include 'arm64-v8a'
-			//include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
 		}
 	}
 
@@ -96,18 +90,6 @@ task prepareAssets() {
 }
 
 preBuild.dependsOn zipAssets
-
-// Map for the version code that gives each ABI a value.
-import com.android.build.OutputFile
-
-def abiCodes = ['armeabi-v7a': 0, 'arm64-v8a': 1]
-android.applicationVariants.all { variant ->
-	variant.outputs.each {
-		output ->
-			def abiName = output.getFilter(OutputFile.ABI)
-			output.versionCodeOverride = abiCodes.get(abiName, 0) + variant.versionCode
-	}
-}
 
 dependencies {
 	implementation project(':native')
