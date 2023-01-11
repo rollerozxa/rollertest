@@ -95,8 +95,8 @@ local previous_contributors = {
 }
 
 local rollertest_info = {
-	"This is a custom build of Minetest called ROllerTest.",
-	"Do not report bugs specific to ROllerTest to",
+	"This is a custom build of Minetest called ROllertest.",
+	"Do not report bugs specific to ROllertest to",
 	"the Minetest core developers!",
 	""
 }
