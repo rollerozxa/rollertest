@@ -101,57 +101,10 @@ public class MainActivity extends AppCompatActivity {
 		mTextView = findViewById(R.id.textView);
 		sharedPreferences = getSharedPreferences(SETTINGS, Context.MODE_PRIVATE);
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-				Build.VERSION.SDK_INT < Build.VERSION_CODES.R)
-			checkPermission();
-		else
-			checkAppVersion();
-	}
-
-	private void checkPermission() {
-		final List<String> missingPermissions = new ArrayList<>();
-		for (final String permission : REQUIRED_SDK_PERMISSIONS) {
-			final int result = ContextCompat.checkSelfPermission(this, permission);
-			if (result != PackageManager.PERMISSION_GRANTED)
-				missingPermissions.add(permission);
-		}
-		if (!missingPermissions.isEmpty()) {
-			final String[] permissions = missingPermissions
-					.toArray(new String[0]);
-			ActivityCompat.requestPermissions(this, permissions, PERMISSIONS);
-		} else {
-			final int[] grantResults = new int[REQUIRED_SDK_PERMISSIONS.length];
-			Arrays.fill(grantResults, PackageManager.PERMISSION_GRANTED);
-			onRequestPermissionsResult(PERMISSIONS, REQUIRED_SDK_PERMISSIONS, grantResults);
-		}
-	}
-
-	@Override
-	public void onRequestPermissionsResult(
-		int requestCode,
-		@NonNull String[] permissions,
-		@NonNull int[] grantResults
-	) {
-		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-		if (requestCode == PERMISSIONS) {
-			for (int grantResult : grantResults) {
-				if (grantResult != PackageManager.PERMISSION_GRANTED) {
-					Toast.makeText(this, R.string.not_granted, Toast.LENGTH_LONG).show();
-					finish();
-					return;
-				}
-			}
-			checkAppVersion();
-		}
+		checkAppVersion();
 	}
 
 	private void checkAppVersion() {
-		if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-			Toast.makeText(this, R.string.no_external_storage, Toast.LENGTH_LONG).show();
-			finish();
-			return;
-		}
-
 		if (UnzipService.getIsRunning()) {
 			mProgressBar.setVisibility(View.VISIBLE);
 			mProgressBar.setIndeterminate(true);
