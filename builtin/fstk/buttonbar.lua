@@ -31,18 +31,18 @@ local function buttonbar_formspec(self)
 
 		if self.orientation == "horizontal" then
 			btn_pos.x = self.pos.x + --base pos
-			(i - self.startbutton) * self.btn_size +       --button offset
-			self.btn_initial_offset
+			(i - self.startbutton) * (self.btn_size+0.25) +       --button offset
+			(self.btn_initial_offset+0.05)
 		else
-			btn_pos.x = self.pos.x + (self.btn_size * 0.05)
+			btn_pos.x = self.pos.x
 		end
 
 		if self.orientation == "vertical" then
 			btn_pos.y = self.pos.y + --base pos
-			(i - self.startbutton) * self.btn_size +       --button offset
-			self.btn_initial_offset
+			(i - self.startbutton) * (self.btn_size+0.25) +       --button offset
+			(self.btn_initial_offset+0.05)
 		else
-			btn_pos.y = self.pos.y + (self.btn_size * 0.05)
+			btn_pos.y = self.pos.y
 		end
 
 		if (self.orientation == "vertical" and
@@ -71,8 +71,8 @@ local function buttonbar_formspec(self)
 
 	if (self.have_move_buttons) then
 		local btn_dec_pos = {}
-		btn_dec_pos.x = self.pos.x + (self.btn_size * 0.05)
-		btn_dec_pos.y = self.pos.y + (self.btn_size * 0.05)
+		btn_dec_pos.x = self.pos.x
+		btn_dec_pos.y = self.pos.y
 		local btn_inc_pos = {}
 		local btn_size = {}
 
@@ -80,7 +80,7 @@ local function buttonbar_formspec(self)
 			btn_size.x = 0.5
 			btn_size.y = self.btn_size
 			btn_inc_pos.x = self.pos.x + self.size.x - 0.5
-			btn_inc_pos.y = self.pos.y + (self.btn_size * 0.05)
+			btn_inc_pos.y = self.pos.y
 		else
 			btn_size.x = self.btn_size
 			btn_size.y = 0.5
@@ -202,7 +202,7 @@ function buttonbar_create(name, cbf_buttonhandler, pos, orientation, size)
 	end
 
 	if (self.btn_initial_offset == nil) then
-		self.btn_initial_offset = self.btn_size * 0.05
+		self.btn_initial_offset = self.btn_size * 0.1
 	end
 
 	self.userbuttonhandler = cbf_buttonhandler

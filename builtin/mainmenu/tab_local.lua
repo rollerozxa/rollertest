@@ -78,7 +78,7 @@ function singleplayer_refresh_gamebar()
 
 	local btnbar = buttonbar_create("game_button_bar",
 		game_buttonbar_button_handler,
-		{x=-0.3,y=5.9}, "horizontal", {x=12.4,y=1.15})
+		{x=0,y=7.2}, "horizontal", {x=15.5,y=1.2})
 
 	for _, game in ipairs(pkgmgr.games) do
 		local btn_name = "game_btnbar_" .. game.id
@@ -151,16 +151,16 @@ local function get_formspec(tabview, name, tabdata)
 	local creative, damage, host = "", "", ""
 
 	-- Y offsets for game settings checkboxes
-	local y = -0.2
-	local yo = 0.45
+	local y = 1
+	local yo = 1
 
 	if disabled_settings["creative_mode"] == nil then
-		creative = "checkbox[0.2,"..y..";cb_creative_mode;".. fgettext("Creative Mode") .. ";" ..
+		creative = "checkbox[10.2,"..y..";cb_creative_mode;".. fgettext("Creative Mode") .. ";" ..
 			dump(core.settings:get_bool("creative_mode")) .. "]"
 		y = y + yo
 	end
 	if disabled_settings["enable_damage"] == nil then
-		damage = "checkbox[0.2,"..y..";cb_enable_damage;".. fgettext("Enable Damage") .. ";" ..
+		damage = "checkbox[10.2,"..y..";cb_enable_damage;".. fgettext("Enable Damage") .. ";" ..
 			dump(core.settings:get_bool("enable_damage")) .. "]"
 		y = y + yo
 	end
@@ -170,46 +170,19 @@ local function get_formspec(tabview, name, tabdata)
 		y = y + yo
 	end
 
-	retval = retval ..
-			"button[3.9,3.8;2.8,1;world_delete;".. fgettext("Delete") .. "]" ..
-			"button[6.55,3.8;2.8,1;world_configure;".. fgettext("Select Mods") .. "]" ..
-			"button[9.2,3.8;2.8,1;world_create;".. fgettext("New") .. "]" ..
-			"label[3.9,-0.05;".. fgettext("Select World:") .. "]"..
-			creative ..
-			damage ..
-			host ..
-			"textlist[3.9,0.4;7.9,3.45;sp_worlds;" ..
-			menu_render_worldlist() ..
-			";" .. index .. "]" ..
-			"box[-0.3,-0.3;4.05,6.12;#666666]"
-
-	if core.settings:get_bool("enable_server") and disabled_settings["enable_server"] == nil then
-		retval = retval ..
-				"button[3.9,4.75;8.1,1;play;".. fgettext("Host Game") .. "]" ..
-				"checkbox[0.2,"..y..";cb_server_announce;" .. fgettext("Announce Server") .. ";" ..
-				dump(core.settings:get_bool("server_announce")) .. "]" ..
-				"field[0.3,2.85;3.8,0.5;te_playername;" .. fgettext("Name") .. ";" ..
-				core.formspec_escape(core.settings:get("name")) .. "]" ..
-				"pwdfield[0.3,4.05;3.8,0.5;te_passwd;" .. fgettext("Password") .. "]"
-
-		local bind_addr = core.settings:get("bind_address")
-		if bind_addr ~= nil and bind_addr ~= "" then
-			retval = retval ..
-				"field[0.3,5.25;2.5,0.5;te_serveraddr;" .. fgettext("Bind Address") .. ";" ..
-				core.formspec_escape(core.settings:get("bind_address")) .. "]" ..
-				"field[2.85,5.25;1.25,0.5;te_serverport;" .. fgettext("Port") .. ";" ..
-				core.formspec_escape(core.settings:get("port")) .. "]"
-		else
-			retval = retval ..
-				"field[0.3,5.25;3.8,0.5;te_serverport;" .. fgettext("Server Port") .. ";" ..
-				core.formspec_escape(core.settings:get("port")) .. "]"
-		end
-	else
-		retval = retval ..
-				"button[3.9,4.75;8.1,1;play;" .. fgettext("Play Game") .. "]"
-	end
-
-	return retval
+	return table.concat{
+		"style[world_delete;bgcolor=",mt_color_red,"]",
+		"style[world_create;bgcolor=",mt_color_green,"]",
+		"button[0.47,5.8;2.8,0.9;world_delete;", fgettext("Delete"), "]",
+		"button[3.47,5.8;2.8,0.9;world_configure;", fgettext("Select Mods"), "]",
+		"button[6.47,5.8;2.8,0.9;world_create;", fgettext("New"), "]",
+		"label[0.4,0.4;", fgettext("Select World:"), "]",
+		"textlist[0.4,0.8;8.9,4.9;sp_worlds;",menu_render_worldlist(),";0]",
+		"box[9.75,0;5.75,7.1;#666666]",
+		"style[play;bgcolor=#111111]",
+		creative, damage,
+		"button[10,4;5.25,1.5;play;",fgettext("Play Game"),"]"},
+		"size[15.5,7.1,false]position[0.5,0.55]real_coordinates[true]"
 end
 
 local function main_button_handler(this, fields, name, tabdata)

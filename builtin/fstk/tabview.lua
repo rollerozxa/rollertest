@@ -67,7 +67,7 @@ local function get_formspec(self)
 
 	if self.parent == nil and not prepend then
 		local tsize = tab.tabsize or {width=self.width, height=self.height}
-		prepend = string.format("size[%f,%f,%s]", tsize.width, tsize.height,
+		prepend = string.format("size[%f,%f,%s]position[0.5,0.55]", tsize.width, tsize.height,
 				dump(self.fixed_size))
 	end
 

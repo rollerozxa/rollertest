@@ -185,7 +185,7 @@ return {
 			fs = fs .. "button[0.5,5.1;4.5,0.8;userdata;" .. fgettext("Open User Data Directory") .. "]"
 		end
 
-		return fs, "size[15.5,7.1,false]real_coordinates[true]"
+		return fs, "size[15.5,7.1,false]position[0.5,0.55]real_coordinates[true]"
 	end,
 	cbf_button_handler = function(this, fields, name, tabdata)
 		if fields.homepage then
