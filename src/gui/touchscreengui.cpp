@@ -41,7 +41,8 @@ const char **button_imagenames = (const char *[]) {
 	"zoom.png",
 	"aux1_btn.png",
 	"chat_btn.png",
-	"inventory_btn.png"
+	"inventory_btn.png",
+	"drop_btn.png"
 };
 
 const char **joystick_imagenames = (const char *[]) {
@@ -500,17 +501,17 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 
 	// init jump button
 	initButton(jump_id,
-			rect<s32>(m_screensize.X - (3.3 * button_size),
+			rect<s32>(m_screensize.X - (3.4 * button_size),
 					m_screensize.Y - (3 * button_size),
-					m_screensize.X - (1.8 * button_size),
+					m_screensize.X - (1.9 * button_size),
 					m_screensize.Y - (1.5 * button_size)),
 			L"x", false);
 
 	// init crunch button
 	initButton(crunch_id,
-			rect<s32>(m_screensize.X - (3.3 * button_size),
+			rect<s32>(m_screensize.X - (3.4 * button_size),
 					m_screensize.Y - (1.5 * button_size),
-					m_screensize.X - (1.8 * button_size),
+					m_screensize.X - (1.9 * button_size),
 					m_screensize.Y),
 			L"H", false);
 
@@ -539,11 +540,18 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 			L"chat", true);
 
 	initButton(inventory_id,
-			rect<s32>(m_screensize.X/5,
+			rect<s32>(m_screensize.X/5.5,
 					m_screensize.Y - button_size,
-					m_screensize.X/5 + button_size,
+					m_screensize.X/5.5 + button_size,
 					m_screensize.Y),
 			L"inv", true);
+
+	initButton(drop_id,
+			rect<s32>(0.25 * button_size,
+					m_screensize.Y - (4.5 * button_size),
+					button_size + (0.25 * button_size),
+					m_screensize.Y - (3.5 * button_size)),
+    		L"inv", true);
 
 	m_settingsbar.init(m_texturesource, "gear_icon.png", settings_starter_id,
 		v2s32(m_screensize.X - (1.25 * button_size),
@@ -568,15 +576,9 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 
 	m_rarecontrolsbar.init(m_texturesource, "rare_controls.png",
 		rare_controls_starter_id,
-		v2s32(0.25 * button_size,
-			m_screensize.Y - ((RARE_CONTROLS_BAR_Y_OFFSET + 1.0) * button_size)
-				+ (0.5 * button_size)),
-		v2s32(0.75 * button_size,
-			m_screensize.Y - (RARE_CONTROLS_BAR_Y_OFFSET * button_size)
-				+ (0.5 * button_size)),
+		v2s32(0, 0),
+		v2s32(0, 0),
 		AHBB_Dir_Left_Right, 2.0);
-
-	m_rarecontrolsbar.addButton(drop_id,      L"drop", "drop_btn.png");
 }
 
 touch_gui_button_id TouchScreenGUI::getButtonID(s32 x, s32 y)

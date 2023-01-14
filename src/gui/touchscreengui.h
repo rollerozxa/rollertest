@@ -42,6 +42,7 @@ typedef enum
 	aux1_id,
 	chat_id,
 	inventory_id,
+	drop_id,
 	after_last_element_id,
 	settings_starter_id,
 	rare_controls_starter_id,
@@ -53,7 +54,6 @@ typedef enum
 	range_id,
 	minimap_id,
 	toggle_chat_id,
-	drop_id,
 	forward_id,
 	backward_id,
 	left_id,
@@ -80,7 +80,7 @@ typedef enum
 	AHBB_Dir_Right_Left
 } autohide_button_bar_dir;
 
-#define MIN_DIG_TIME_MS 500
+#define MIN_DIG_TIME_MS 400
 #define BUTTON_REPEAT_DELAY 0.2f
 #define SETTINGS_BAR_Y_OFFSET 5
 #define RARE_CONTROLS_BAR_Y_OFFSET 5
