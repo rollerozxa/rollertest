@@ -55,6 +55,9 @@ local function get_formspec(tabview, name, tabdata)
 
 
 	local retval =
+		"style[btn_mod_mgr_delete_mod;bgcolor="..mt_color_red.."]" ..
+		"style[btn_mod_mgr_disable_txp,btn_mod_mgr_use_txp;bgcolor="..mt_color_blue.."]" ..
+		"style[btn_contentdb;bgcolor="..mt_color_green.."]" ..
 		"label[0.05,-0.25;".. fgettext("Installed Packages:") .. "]" ..
 		"tablecolumns[color;tree;text]" ..
 		"table[0,0.25;5.1,4.3;pkglist;" ..

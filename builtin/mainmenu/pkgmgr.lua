@@ -300,7 +300,7 @@ function pkgmgr.render_packagelist(render_list, use_technical_names, with_error)
 			end
 		elseif v.is_game_content or v.type == "game" then
 			icon = 1
-			color = mt_color_blue
+			color = mt_color_lightblue
 
 			local rawlist = render_list:get_raw_list()
 			if v.type == "game" and with_error then

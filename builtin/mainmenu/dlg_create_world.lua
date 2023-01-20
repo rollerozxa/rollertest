@@ -238,7 +238,7 @@ local function create_world_formspec(dialogdata)
 		end
 		y = y + 0.3
 
-		form = form .. "container_end[]container[0,3.5]"..
+		form = form .. "container_end[]container[0,3.25]"..
 			"label[0,0;" .. fgettext("Biomes") .. "]"
 
 		form = form .. "dropdown[0,0.4;6.3;mgv6_biomes;"
@@ -278,7 +278,7 @@ local function create_world_formspec(dialogdata)
 	end
 
 	local retval =
-		"size[12.25,6,true]" ..
+		"size[11.8,5.75,true]position[0.5,0.55]" ..
 
 		-- Left side
 		"container[0,0]"..
@@ -306,10 +306,10 @@ local function create_world_formspec(dialogdata)
 	if #pkgmgr.games == 1 and pkgmgr.games[1].id == "devtest" then
 		retval = retval ..
 			"container[0,3.5]" ..
-			"box[0,0;5.8,1.7;#ff8800]" ..
+			"box[0,0;5.8,1.5;#ff8800]" ..
 			"textarea[0.4,0.1;6,1.8;;;"..
 			fgettext("Development Test is meant for developers.") .. "]" ..
-			"button[1,1;4,0.5;world_create_open_cdb;" .. fgettext("Install another game") .. "]" ..
+			"button[1,0.75;4,0.5;world_create_open_cdb;" .. fgettext("Install another game") .. "]" ..
 			"container_end[]"
 	end
 
@@ -323,8 +323,8 @@ local function create_world_formspec(dialogdata)
 		"container_end[]"..
 
 		-- Menu buttons
-		"button[3.15,5.5;3,0.5;world_create_confirm;" .. fgettext("Create") .. "]" ..
-		"button[6.15,5.5;3,0.5;world_create_cancel;" .. fgettext("Cancel") .. "]"
+		"button[2.95,5.3;3,0.5;world_create_confirm;" .. fgettext("Create") .. "]" ..
+		"button[5.95,5.3;3,0.5;world_create_cancel;" .. fgettext("Cancel") .. "]"
 
 	return retval
 
