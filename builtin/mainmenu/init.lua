@@ -91,6 +91,13 @@ local function init_globals()
 	if not game then
 		gameid = core.settings:get("default_game") or "minetest"
 		game = pkgmgr.find_by_gameid(gameid)
+
+		-- If default_game doesn't exist, fall back to first game installed if one exists.
+		if not game and #pkgmgr.games > 0 then
+			game = pkgmgr.games[1]
+			gameid = game.id
+		end
+
 		core.settings:set("menu_last_game", gameid)
 	end
 

@@ -59,15 +59,6 @@ function singleplayer_refresh_gamebar()
 	end
 
 	local function game_buttonbar_button_handler(fields)
-		if fields.game_open_cdb then
-			local maintab = ui.find_by_name("maintab")
-			local dlg = create_store_dlg("game")
-			dlg:set_parent(maintab)
-			maintab:hide()
-			dlg:show()
-			return true
-		end
-
 		for _, game in ipairs(pkgmgr.games) do
 			if fields["game_btnbar_" .. game.id] then
 				apply_game(game)
@@ -134,6 +125,16 @@ local function get_disabled_settings(game)
 end
 
 local function get_formspec(tabview, name, tabdata)
+
+	-- Point the player to ContentDB when no games are found
+	if #pkgmgr.games == 0 then
+		return table.concat{
+			"style[label_button;border=false]",
+			"button[2.75,1.5;10,1;label_button;", fgettext("You have no games installed."), "]",
+			"button[5.25,3.5;5,1.2;game_open_cdb;", fgettext("Install a game"), "]"},
+			"size[15.5,7.1,false]position[0.5,0.55]real_coordinates[true]"
+	end
+
 	local retval = ""
 
 	local index = filterlist.get_current_index(menudata.worldlist,
@@ -188,6 +189,15 @@ end
 local function main_button_handler(this, fields, name, tabdata)
 
 	assert(name == "local")
+
+	if fields.game_open_cdb then
+		local maintab = ui.find_by_name("maintab")
+		local dlg = create_store_dlg("game")
+		dlg:set_parent(maintab)
+		maintab:hide()
+		dlg:show()
+		return true
+	end
 
 	if this.dlg_create_world_closed_at == nil then
 		this.dlg_create_world_closed_at = 0
@@ -267,11 +277,6 @@ local function main_button_handler(this, fields, name, tabdata)
 		local game_obj
 		if world then
 			game_obj = pkgmgr.find_by_gameid(world.gameid)
-			if not game_obj then
-				gamedata.errormessage =
-					fgettext("The game ($1) for the world you tried to play has been removed.", world.gameid)
-				return true
-			end
 			core.settings:set("menu_last_game", game_obj.id)
 		end
 

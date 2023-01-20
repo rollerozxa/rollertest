@@ -145,6 +145,12 @@ local function start_install(package, reason)
 				elseif package.type == "game" then
 					conf_path = path .. DIR_DELIM .. "game.conf"
 					name_is_title = true
+
+					-- If this installed game becomes the only one installed,
+					-- set menu_last_game to
+					if #pkgmgr.games == 1 then
+						core.settings:set("menu_last_game", package.name)
+					end
 				elseif package.type == "txp" then
 					conf_path = path .. DIR_DELIM .. "texture_pack.conf"
 				end
