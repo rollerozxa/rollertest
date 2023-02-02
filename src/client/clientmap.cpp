@@ -257,6 +257,11 @@ void ClientMap::updateDrawList()
 	}
 	m_drawlist.clear();
 
+	for (auto &block : m_keeplist) {
+		block->refDrop();
+	}
+	m_keeplist.clear();
+
 	v3s16 cam_pos_nodes = floatToInt(m_camera_position, BS);
 
 	v3s16 p_blocks_min;
@@ -297,6 +302,8 @@ void ClientMap::updateDrawList()
 	// Start breadth-first search with the block the camera is in
 	blocks_to_consider.push(camera_block);
 	blocks_seen.getChunk(camera_block).getBits(camera_block) = 0x07; // mark all sides as visible
+
+	std::set<v3s16> shortlist;
 
 	// Recursively walk the space and pick mapblocks for drawing
 	while (blocks_to_consider.size() > 0) {
@@ -369,11 +376,13 @@ void ClientMap::updateDrawList()
 			continue;
 		}
 
-		// The block is visible, add to the draw list
-		if (mesh) {
-			// Add to set
+		// Block meshes are stored in blocks where all coordinates are even (lowest bit set to 0)
+		// Add them to the de-dup set.
+		shortlist.emplace(block_coord.X & ~1, block_coord.Y & ~1, block_coord.Z & ~1);
+		// All other blocks we can grab and add to the keeplist right away.
+		if (block) {
+			m_keeplist.push_back(block);
 			block->refGrab();
-			m_drawlist[block_coord] = block;
 		}
 
 		// Decide which sides to traverse next or to block away
@@ -471,6 +480,17 @@ void ClientMap::updateDrawList()
 
 			if (look[axis] >= 0 && block_coord[axis] < p_blocks_max[axis])
 				traverse_far_side(+1);
+		}
+	}
+
+	g_profiler->avg("MapBlocks shortlist [#]", shortlist.size());
+
+	assert(m_drawlist.empty());
+	for (auto pos : shortlist) {
+		MapBlock * block = getBlockNoCreateNoEx(pos);
+		if (block) {
+			block->refGrab();
+			m_drawlist.emplace(pos, block);
 		}
 	}
 
@@ -720,7 +740,7 @@ void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
 			material.TextureLayer[ShadowRenderer::TEXTURE_LAYER_SHADOW].Texture = nullptr;
 		}
 
-		v3f block_wpos = intToFloat(descriptor.m_pos * MAP_BLOCKSIZE, BS);
+		v3f block_wpos = intToFloat(descriptor.m_pos / 8 * 8 * MAP_BLOCKSIZE, BS);
 		m.setTranslation(block_wpos - offset);
 
 		driver->setTransform(video::ETS_WORLD, m);
@@ -1046,7 +1066,7 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 			++material_swaps;
 		}
 
-		v3f block_wpos = intToFloat(descriptor.m_pos * MAP_BLOCKSIZE, BS);
+		v3f block_wpos = intToFloat(descriptor.m_pos / 8 * 8 * MAP_BLOCKSIZE, BS);
 		m.setTranslation(block_wpos - offset);
 
 		driver->setTransform(video::ETS_WORLD, m);
@@ -1120,9 +1140,8 @@ void ClientMap::updateDrawListShadow(v3f shadow_light_pos, v3f shadow_light_dir,
 			block->resetUsageTimer();
 
 			// Add to set
-			if (m_drawlist_shadow.find(block->getPos()) == m_drawlist_shadow.end()) {
+			if (m_drawlist_shadow.emplace(block->getPos(), block).second) {
 				block->refGrab();
-				m_drawlist_shadow[block->getPos()] = block;
 			}
 		}
 	}
@@ -1131,6 +1150,11 @@ void ClientMap::updateDrawListShadow(v3f shadow_light_pos, v3f shadow_light_dir,
 	g_profiler->avg("SHADOW MapBlocks occlusion culled [#]", blocks_occlusion_culled);
 	g_profiler->avg("SHADOW MapBlocks drawn [#]", m_drawlist_shadow.size());
 	g_profiler->avg("SHADOW MapBlocks loaded [#]", blocks_loaded);
+}
+
+void ClientMap::reportMetrics(u64 save_time_us, u32 saved_blocks, u32 all_blocks)
+{
+	g_profiler->avg("CM::reportMetrics loaded blocks [#]", all_blocks);
 }
 
 void ClientMap::updateTransparentMeshBuffers()
