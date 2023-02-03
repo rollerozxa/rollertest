@@ -47,7 +47,6 @@ dofile(menupath .. DIR_DELIM .. "dlg_delete_content.lua")
 dofile(menupath .. DIR_DELIM .. "dlg_delete_world.lua")
 dofile(menupath .. DIR_DELIM .. "dlg_register.lua")
 dofile(menupath .. DIR_DELIM .. "dlg_rename_modpack.lua")
-dofile(menupath .. DIR_DELIM .. "dlg_version_info.lua")
 
 local tabs = {}
 
@@ -130,7 +129,6 @@ local function init_globals()
 	end
 
 	ui.set_default("maintab")
-	check_new_version()
 	tv_main:show()
 	ui.update()
 end
