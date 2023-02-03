@@ -79,7 +79,7 @@ task prepareAssets() {
 		}
 	}
 	copy {
-		from "${projRoot}/textures" into "${assetsFolder}/textures"
+		from "${projRoot}/textures/base" into "${assetsFolder}/textures/base"
 	}
 
 	task zipAssets(type: Zip) {

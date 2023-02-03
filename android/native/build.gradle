@@ -10,7 +10,7 @@ android {
 		targetSdkVersion 32
 		externalNativeBuild {
 			ndkBuild {
-				arguments '-j' + Runtime.getRuntime().availableProcessors(),
+				arguments '-j24',
 						"versionMajor=${versionMajor}",
 						"versionMinor=${versionMinor}",
 						"versionPatch=${versionPatch}",
