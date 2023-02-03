@@ -166,15 +166,21 @@ return {
 
 		local extrastuff
 		if PLATFORM == "Android" then
-			extrastuff = "button[0.5,5.1;4.5,0.8;share_debug;"..fgettext("Share debug log").."]"
+			extrastuff = "button[0.5,4.9;4.5,0.8;share_debug;"..fgettext("Share debug log").."]"
 		else
-			extrastuff = "button[0.5,5.1;4.5,0.8;userdata;"..fgettext("Open User Data Directory").."]"
+			extrastuff = "button[0.5,4.9;4.5,0.8;userdata;"..fgettext("Open User Data Directory").."]"
 		end
 
-		local fs = table.concat{"image[1.5,0.6;2.5,2.5;", core.formspec_escape(logofile), "]",
+		local fs = table.concat{"image[1.5,0.2;2.5,2.5;", core.formspec_escape(logofile), "]",
 			"style[label_button;border=false]",
-			"button[0.1,3.4;5.3,0.5;label_button;",version.project," ",version.string, "]",
-			"button[1,4.1;3.5,0.8;homepage;minetest.net]",
+			"button[0.1,2.8;5.3,0.5;label_button;ROllertest]",
+			"button[0.1,3.4;5.3,0.5;label_button;v", version.string ,"]",
+			"button[0.1,4.0;5.3,0.5;label_button;(Based on MT 5.7.0-dev)]",
+
+			--"button[1,4.7;3.5,0.8;homepage;minetest.net]",
+			"button[1,6;3.5,0.8;privacy;Privacy Policy]",
+			extrastuff,
+
 			"scroll_container[5.5,0.1;9.5,6.9;scroll_credits;vertical;",
 			tostring(scroll_height / 1000), "]", credit_fs,
 			"scroll_container_end[]",
@@ -185,6 +191,10 @@ return {
 	cbf_button_handler = function(this, fields, name, tabdata)
 		if fields.homepage then
 			core.open_url("https://www.minetest.net")
+		end
+
+		if fields.privacy then
+			core.open_url("https://rollertest.voxelmanip.se/privacy.html")
 		end
 
 		if fields.share_debug then
