@@ -162,12 +162,10 @@ local function formspec(tabview, name, tabdata)
 				.. getSettingIndex.Leaves() .. "]" ..
 		"box[4,0;3.75,4.9;#999999]" ..
 		"label[4.25,0.1;" .. fgettext("Texturing:") .. "]" ..
-		"dropdown[4.25,0.55;3.5;dd_filters;" .. dd_options.filters[1] .. ";"
-				.. getSettingIndex.Filter() .. "]" ..
-		"dropdown[4.25,1.35;3.5;dd_mipmap;" .. dd_options.mipmap[1] .. ";"
+		"dropdown[4.25,0.55;3.5;dd_mipmap;" .. dd_options.mipmap[1] .. ";"
 				.. getSettingIndex.Mipmap() .. "]" ..
-		"label[4.25,2.15;" .. fgettext("Antialiasing:") .. "]" ..
-		"dropdown[4.25,2.6;3.5;dd_antialiasing;" .. dd_options.antialiasing[1] .. ";"
+		"label[4.25,1.45;" .. fgettext("Antialiasing:") .. "]" ..
+		"dropdown[4.25,1.9;3.5;dd_antialiasing;" .. dd_options.antialiasing[1] .. ";"
 				.. getSettingIndex.Antialiasing() .. "]" ..
 		"box[8,0;3.75,4.5;#999999]"
 
@@ -200,10 +198,12 @@ local function formspec(tabview, name, tabdata)
 
 	if core.settings:get("touchscreen_threshold") ~= nil then
 		tab_string = tab_string ..
-			"label[4.25,3.5;" .. fgettext("Touch threshold (px):") .. "]" ..
-			"dropdown[4.25,3.95;3.5;dd_touchthreshold;0,10,20,30,40,50;" ..
+			"label[4.25,2.8;" .. fgettext("Touch threshold (px):") .. "]" ..
+			"dropdown[4.25,3.25;3.5;dd_touchthreshold;0,10,20,30,40,50;" ..
 			((tonumber(core.settings:get("touchscreen_threshold")) / 10) + 1) ..
-			"]"
+			"]"..
+			"checkbox[4.25,4;cb_crosshair;Enable crosshair;" ..
+					dump(core.settings:get_bool("touch_use_crosshair")) .. "]"
 	else
 		tab_string = tab_string ..
 			"label[4.25,3.65;" .. fgettext("Screen:") .. "]" ..
@@ -306,6 +306,11 @@ local function handle_settings_buttons(this, fields, tabname, tabdata)
 	end
 	if fields["btn_change_keys"] then
 		core.show_keys_menu()
+		return true
+	end
+
+	if fields["cb_crosshair"] then
+		core.settings:set("touch_use_crosshair", fields["cb_crosshair"])
 		return true
 	end
 
