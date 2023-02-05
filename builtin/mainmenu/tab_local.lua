@@ -135,8 +135,6 @@ local function get_formspec(tabview, name, tabdata)
 			"size[15.5,7.1,false]position[0.5,0.55]real_coordinates[true]"
 	end
 
-	local retval = ""
-
 	local index = filterlist.get_current_index(menudata.worldlist,
 				tonumber(core.settings:get("mainmenu_last_selected_world")))
 	local list = menudata.worldlist:get_list()
@@ -149,7 +147,7 @@ local function get_formspec(tabview, name, tabdata)
 	end
 	local disabled_settings = get_disabled_settings(game)
 
-	local creative, damage, host = "", "", ""
+	local creative, damage = "", ""
 
 	-- Y offsets for game settings checkboxes
 	local y = 1
@@ -163,12 +161,6 @@ local function get_formspec(tabview, name, tabdata)
 	if disabled_settings["enable_damage"] == nil then
 		damage = "checkbox[10.2,"..y..";cb_enable_damage;".. fgettext("Enable Damage") .. ";" ..
 			dump(core.settings:get_bool("enable_damage")) .. "]"
-		y = y + yo
-	end
-	if disabled_settings["enable_server"] == nil then
-		host = "checkbox[0.2,"..y..";cb_server;".. fgettext("Host Server") ..";" ..
-			dump(core.settings:get_bool("enable_server")) .. "]"
-		y = y + yo
 	end
 
 	return table.concat{
@@ -178,7 +170,7 @@ local function get_formspec(tabview, name, tabdata)
 		"button[3.47,5.8;2.8,0.9;world_configure;", fgettext("Select Mods"), "]",
 		"button[6.47,5.8;2.8,0.9;world_create;", fgettext("New"), "]",
 		"label[0.4,0.4;", fgettext("Select World:"), "]",
-		"textlist[0.4,0.8;8.9,4.9;sp_worlds;",menu_render_worldlist(),";0]",
+		"textlist[0.4,0.8;8.9,4.9;sp_worlds;",menu_render_worldlist(),";",index,"]",
 		"box[9.75,0;5.75,7.1;#666666]",
 		"style[play;bgcolor=#111111]",
 		creative, damage,
