@@ -4423,7 +4423,7 @@ void Game::showPauseMenu()
 	os		<< "button_exit[4," << (ypos++) << ";3,0.5;btn_exit_os;"
 		<< strgettext("Exit to OS")   << "]"
 		<< "textarea[7.5,0.25;3.9,6.25;;" << control_text << ";]"
-		<< "textarea[0.4,0.25;3.9,6.25;;" << PROJECT_NAME_C " " VERSION_STRING "\n"
+		<< "textarea[0.4,0.25;3.9,6.25;;ROllertest " VERSION_STRING "\n"
 		<< "\n"
 		<<  strgettext("Game info:") << "\n";
 	const std::string &address = client->getAddressName();
