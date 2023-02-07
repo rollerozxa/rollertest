@@ -4346,8 +4346,8 @@ void Game::showPauseMenu()
 #ifdef HAVE_TOUCHSCREENGUI
 	static const std::string control_text = strgettext("Default Controls:\n"
 		"No menu visible:\n"
-		"- single tap: button activate\n"
-		"- double tap: place/use\n"
+		"- single tap: place/use\n"
+		"- hold down: break/punch\n"
 		"- slide finger: look around\n"
 		"Menu/Inventory visible:\n"
 		"- double tap (outside):\n"
