@@ -48,7 +48,6 @@ android {
 task prepareAssets() {
 	def assetsFolder = "build/assets"
 	def projRoot = "../.."
-	def gameToCopy = "minetest_game"
 
 	copy {
 		from "${projRoot}/minetest.conf.example", "${projRoot}/README.md" into assetsFolder
@@ -67,9 +66,6 @@ task prepareAssets() {
 	}
 	copy {
 		from "${projRoot}/fonts" include "*.ttf" into "${assetsFolder}/fonts"
-	}
-	copy {
-		from "${projRoot}/games/${gameToCopy}" into "${assetsFolder}/games/${gameToCopy}"
 	}
 	fileTree("${projRoot}/po").include("**/*.po").forEach { poFile ->
 		def moPath = "${assetsFolder}/locale/${poFile.parentFile.name}/LC_MESSAGES/"

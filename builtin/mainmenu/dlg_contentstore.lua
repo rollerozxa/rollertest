@@ -693,9 +693,19 @@ function store.sort_packages()
 	end)
 
 	-- Add uninstalled content
+
+	-- MTG first
 	for i=1, #store.packages_full_unordered do
 		local package = store.packages_full_unordered[i]
-		if not package.path then
+		if not package.path and package.name == "minetest_game" then
+			ret[#ret + 1] = package
+		end
+	end
+
+	-- then the rest
+	for i=1, #store.packages_full_unordered do
+		local package = store.packages_full_unordered[i]
+		if not package.path and package.name ~= "minetest_game" then
 			ret[#ret + 1] = package
 		end
 	end
@@ -838,6 +848,10 @@ function store.get_formspec(dlgdata)
 		formspec[#formspec + 1] = "container[0.375,"
 		formspec[#formspec + 1] = container_y
 		formspec[#formspec + 1] = "]"
+
+		if package.title == "Minetest Game" then
+			formspec[#formspec + 1] = "box[-0.1,-0.25;16.25,1.4;#53c958]"
+		end
 
 		-- image
 		formspec[#formspec + 1] = "image[0,-0.1;1.6,1.1;"
