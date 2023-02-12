@@ -246,34 +246,15 @@ endif()
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/builtin" DESTINATION "${SHAREDIR}")
 
 if(BUILD_CLIENT)
-	if(RUN_IN_PLACE)
-		install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/mods/mods_here.txt" DESTINATION "${SHAREDIR}/mods")
-		install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/textures/texture_packs_here.txt" DESTINATION "${SHAREDIR}/textures")
-	endif()
-
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/games/minetest_game" DESTINATION "${SHAREDIR}/games/"
-	COMPONENT "SUBGAME_MINETEST_GAME" OPTIONAL PATTERN ".git*" EXCLUDE )
-
-set(INSTALL_DEVTEST FALSE CACHE BOOL "Install Development Test")
-
-if(INSTALL_DEVTEST)
-	install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/games/devtest" DESTINATION "${SHAREDIR}/games/"
-		PATTERN ".git*" EXCLUDE )
-endif()
-
 	install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/client/shaders" DESTINATION "${SHAREDIR}/client")
 	install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/textures/base/pack" DESTINATION "${SHAREDIR}/textures/base")
-	if(RUN_IN_PLACE)
-		install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/clientmods" DESTINATION "${SHAREDIR}")
-		install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/client/serverlist" DESTINATION "${SHAREDIR}/client")
-	endif()
 
-	install(FILES "README.md" DESTINATION "${DOCDIR}" COMPONENT "Docs")
-	install(FILES "doc/lua_api.txt" DESTINATION "${DOCDIR}" COMPONENT "Docs")
-	install(FILES "doc/client_lua_api.txt" DESTINATION "${DOCDIR}" COMPONENT "Docs")
-	install(FILES "doc/menu_lua_api.txt" DESTINATION "${DOCDIR}" COMPONENT "Docs")
-	install(FILES "doc/texture_packs.txt" DESTINATION "${DOCDIR}" COMPONENT "Docs")
-	install(FILES "doc/world_format.txt" DESTINATION "${DOCDIR}" COMPONENT "Docs")
+	install(FILES "README.md" DESTINATION "${DOCDIR}")
+	install(FILES "doc/lua_api.txt" DESTINATION "${DOCDIR}")
+	install(FILES "doc/client_lua_api.txt" DESTINATION "${DOCDIR}")
+	install(FILES "doc/menu_lua_api.txt" DESTINATION "${DOCDIR}")
+	install(FILES "doc/texture_packs.txt" DESTINATION "${DOCDIR}")
+	install(FILES "doc/world_format.txt" DESTINATION "${DOCDIR}")
 	install(FILES "minetest.conf.example" DESTINATION "${EXAMPLE_CONF_DIR}")
 
 	if(UNIX AND NOT APPLE)
@@ -317,23 +298,6 @@ set(CPACK_PACKAGE_VERSION_MINOR ${VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${VERSION_PATCH})
 set(CPACK_PACKAGE_VENDOR "celeron55")
 set(CPACK_PACKAGE_CONTACT "Perttu Ahola <celeron55@gmail.com>")
-
-include(CPackComponent)
-
-cpack_add_component(Docs
-	DISPLAY_NAME "Documentation"
-	DESCRIPTION "Documentation about Minetest and Minetest modding"
-)
-
-cpack_add_component(SUBGAME_MINETEST_GAME
-	DISPLAY_NAME "Minetest Game"
-	DESCRIPTION "The default game bundled in the Minetest engine. Mainly used as a modding base."
-	GROUP "Games"
-)
-
-cpack_add_component_group(Subgames
-	DESCRIPTION "Games for the Minetest engine."
-)
 
 if(WIN32)
 	# Include all dynamically linked runtime libraries such as MSVCRxxx.dll
