@@ -2,7 +2,7 @@
 
 project.ext.set("versionMajor", 2023)      // Version Major
 project.ext.set("versionMinor", 02)      // Version Minor
-project.ext.set("versionPatch", 07)      // Version Patch
+project.ext.set("versionPatch", 18)      // Version Patch
 project.ext.set("versionExtra", "") // Version Extra
 project.ext.set("versionCode", 43)      // Android Version Code
 
