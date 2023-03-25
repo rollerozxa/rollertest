@@ -90,7 +90,7 @@ void set_default_settings()
 	settings->setDefault("keymap_console", "KEY_F10");
 	settings->setDefault("keymap_rangeselect", "KEY_KEY_R");
 	settings->setDefault("keymap_freemove", "KEY_KEY_K");
-	settings->setDefault("keymap_pitchmove", "KEY_KEY_P");
+	settings->setDefault("keymap_pitchmove", "");
 	settings->setDefault("keymap_fastmove", "KEY_KEY_J");
 	settings->setDefault("keymap_noclip", "KEY_KEY_H");
 	settings->setDefault("keymap_hotbar_next", "KEY_KEY_N");
@@ -282,6 +282,7 @@ void set_default_settings()
 	settings->setDefault("shadow_poisson_filter", "true");
 	settings->setDefault("shadow_update_frames", "8");
 	settings->setDefault("shadow_soft_radius", "5.0");
+	settings->setDefault("shadow_sky_body_orbit_tilt", "0.0");
 
 	// Input
 	settings->setDefault("invert_mouse", "false");
