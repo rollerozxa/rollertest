@@ -103,18 +103,23 @@ ClientMap::ClientMap(
 	m_cache_bilinear_filter   = g_settings->getBool("bilinear_filter");
 	m_cache_anistropic_filter = g_settings->getBool("anisotropic_filter");
 	m_cache_transparency_sorting_distance = g_settings->getU16("transparency_sorting_distance");
+	m_loops_occlusion_culler = g_settings->get("occlusion_culler") == "loops";
+	g_settings->registerChangedCallback("occlusion_culler", on_settings_changed, this);
 	m_enable_raytraced_culling = g_settings->getBool("enable_raytraced_culling");
 	g_settings->registerChangedCallback("enable_raytraced_culling", on_settings_changed, this);
 }
 
 void ClientMap::onSettingChanged(const std::string &name)
 {
+	if (name == "occlusion_culler")
+		m_loops_occlusion_culler = g_settings->get("occlusion_culler") == "loops";
 	if (name == "enable_raytraced_culling")
 		m_enable_raytraced_culling = g_settings->getBool("enable_raytraced_culling");
 }
 
 ClientMap::~ClientMap()
 {
+	g_settings->deregisterChangedCallback("occlusion_culler", on_settings_changed, this);
 	g_settings->deregisterChangedCallback("enable_raytraced_culling", on_settings_changed, this);
 }
 
@@ -264,6 +269,10 @@ void ClientMap::updateDrawList()
 
 	const v3s16 cam_pos_nodes = floatToInt(m_camera_position, BS);
 
+	v3s16 p_blocks_min;
+	v3s16 p_blocks_max;
+	getBlocksInViewRange(cam_pos_nodes, &p_blocks_min, &p_blocks_max);
+
 	// Number of blocks occlusion culled
 	u32 blocks_occlusion_culled = 0;
 	// Number of blocks frustum culled
@@ -298,13 +307,24 @@ void ClientMap::updateDrawList()
 	 When range_all is enabled, enumerate all blocks visible in the
 	 frustum and display them.
 	 */
-	if (m_control.range_all) {
+	if (m_control.range_all || m_loops_occlusion_culler) {
+		// Number of blocks currently loaded by the client
+		u32 blocks_loaded = 0;
+		// Number of blocks with mesh in rendering range
+		u32 blocks_in_range_with_mesh = 0;
+
 		MapBlockVect sectorblocks;
 
 		for (auto &sector_it : m_sectors) {
 			MapSector *sector = sector_it.second;
-			if (!sector)
-				continue;
+			v2s16 sp = sector->getPos();
+
+			blocks_loaded += sector->size();
+			if (!m_control.range_all) {
+				if (sp.X < p_blocks_min.X || sp.X > p_blocks_max.X ||
+						sp.Y < p_blocks_min.Z || sp.Y > p_blocks_max.Z)
+					continue;
+			}
 
 			sectorblocks.clear();
 			sector->getBlocks(sectorblocks);
@@ -329,6 +349,16 @@ void ClientMap::updateDrawList()
 					mesh_sphere_radius = 0.0f;
 				}
 
+				// First, perform a simple distance check.
+				if (!m_control.range_all &&
+					mesh_sphere_center.getDistanceFrom(m_camera_position) >
+						m_control.wanted_range * BS + mesh_sphere_radius)
+					continue; // Out of range, skip.
+
+				// Keep the block alive as long as it is in range.
+				block->resetUsageTimer();
+				blocks_in_range_with_mesh++;
+
 				// Frustum culling
 				// Only do coarse culling here, to account for fast camera movement.
 				// This is needed because this function is not called every frame.
@@ -336,6 +366,14 @@ void ClientMap::updateDrawList()
 				if (is_frustum_culled(mesh_sphere_center,
 						mesh_sphere_radius + frustum_cull_extra_radius)) {
 					blocks_frustum_culled++;
+					continue;
+				}
+
+				// Raytraced occlusion culling - send rays from the camera to the block's corners
+				if (!m_control.range_all && occlusion_culling_enabled && m_enable_raytraced_culling &&
+						mesh &&
+						isMeshOccluded(block, mesh_grid.cell_size, cam_pos_nodes)) {
+					blocks_occlusion_culled++;
 					continue;
 				}
 
@@ -354,15 +392,14 @@ void ClientMap::updateDrawList()
 				}
 			}
 		}
+
+		g_profiler->avg("MapBlock meshes in range [#]", blocks_in_range_with_mesh);
+		g_profiler->avg("MapBlocks loaded [#]", blocks_loaded);
 	} else {
 		// Blocks visited by the algorithm
 		u32 blocks_visited = 0;
 		// Block sides that were not traversed
 		u32 sides_skipped = 0;
-
-		v3s16 p_blocks_min;
-		v3s16 p_blocks_max;
-		getBlocksInViewRange(cam_pos_nodes, &p_blocks_min, &p_blocks_max);
 
 		std::queue<v3s16> blocks_to_consider;
 
@@ -582,6 +619,9 @@ void ClientMap::updateDrawList()
 
 void ClientMap::touchMapBlocks()
 {
+	if (m_control.range_all || m_loops_occlusion_culler)
+		return;
+
 	v3s16 cam_pos_nodes = floatToInt(m_camera_position, BS);
 
 	v3s16 p_blocks_min;
@@ -592,8 +632,6 @@ void ClientMap::touchMapBlocks()
 	u32 blocks_loaded = 0;
 	// Number of blocks with mesh in rendering range
 	u32 blocks_in_range_with_mesh = 0;
-
-	v3f cam_pos_f = intToFloat(cam_pos_nodes, BS);
 
 	for (const auto &sector_it : m_sectors) {
 		MapSector *sector = sector_it.second;
@@ -614,23 +652,27 @@ void ClientMap::touchMapBlocks()
 		*/
 
 		for (MapBlock *block : sectorblocks) {
-			/*
-				Compare block position to camera position, skip
-				if not seen on display
-			*/
+			MapBlockMesh *mesh = block->mesh;
 
-			if (!block->mesh) {
-				// Ignore if mesh doesn't exist
-				continue;
+			// Calculate the coordinates for range and frustum culling
+			v3f mesh_sphere_center;
+			f32 mesh_sphere_radius;
+
+			v3s16 block_pos_nodes = block->getPos() * MAP_BLOCKSIZE;
+
+			if (mesh) {
+				mesh_sphere_center = intToFloat(block_pos_nodes, BS)
+						+ mesh->getBoundingSphereCenter();
+				mesh_sphere_radius = mesh->getBoundingRadius();
+			} else {
+				mesh_sphere_center = intToFloat(block_pos_nodes, BS)
+						+ v3f((MAP_BLOCKSIZE * 0.5f - 0.5f) * BS);
+				mesh_sphere_radius = 0.0f;
 			}
-
-			v3f mesh_sphere_center = intToFloat(block->getPosRelative(), BS)
-					+ block->mesh->getBoundingSphereCenter();
-			f32 mesh_sphere_radius = block->mesh->getBoundingRadius();
 
 			// First, perform a simple distance check.
 			if (!m_control.range_all &&
-				mesh_sphere_center.getDistanceFrom(cam_pos_f) >
+				mesh_sphere_center.getDistanceFrom(m_camera_position) >
 					m_control.wanted_range * BS + mesh_sphere_radius)
 				continue; // Out of range, skip.
 
@@ -1195,11 +1237,6 @@ void ClientMap::updateDrawListShadow(v3f shadow_light_pos, v3f shadow_light_dir,
 	u32 blocks_loaded = 0;
 	// Number of blocks with mesh in rendering range
 	u32 blocks_in_range_with_mesh = 0;
-	// Number of blocks occlusion culled
-	u32 blocks_occlusion_culled = 0;
-
-	std::set<v3s16> shortlist;
-	MeshGrid mesh_grid = m_client->getMeshGrid();
 
 	for (auto &sector_it : m_sectors) {
 		MapSector *sector = sector_it.second;
@@ -1214,26 +1251,16 @@ void ClientMap::updateDrawListShadow(v3f shadow_light_pos, v3f shadow_light_dir,
 			Loop through blocks in sector
 		*/
 		for (MapBlock *block : sectorblocks) {
-			if (mesh_grid.cell_size == 1 && !block->mesh) {
-				// fast out in the case of no mesh chunking
-				continue;
-			}
-
-			v3f block_pos = intToFloat(block->getPos() * MAP_BLOCKSIZE, BS);
-			v3f projection = shadow_light_pos + shadow_light_dir * shadow_light_dir.dotProduct(block_pos - shadow_light_pos);
-			if (projection.getDistanceFrom(block_pos) > radius)
-				continue;
-
-			if (mesh_grid.cell_size > 1) {
-				// Block meshes are stored in the corner block of a chunk
-				// (where all coordinate are divisible by the chunk size)
-				// Add them to the de-dup set.
-				shortlist.emplace(mesh_grid.getMeshPos(block->getPos()));
-			}
-			if (!block->mesh) {
+			MapBlockMesh *mesh = block->mesh;
+			if (!mesh) {
 				// Ignore if mesh doesn't exist
 				continue;
 			}
+
+			v3f block_pos = intToFloat(block->getPos() * MAP_BLOCKSIZE, BS) + mesh->getBoundingSphereCenter();
+			v3f projection = shadow_light_pos + shadow_light_dir * shadow_light_dir.dotProduct(block_pos - shadow_light_pos);
+			if (projection.getDistanceFrom(block_pos) > (radius + mesh->getBoundingRadius()))
+				continue;
 
 			blocks_in_range_with_mesh++;
 
@@ -1246,15 +1273,8 @@ void ClientMap::updateDrawListShadow(v3f shadow_light_pos, v3f shadow_light_dir,
 			}
 		}
 	}
-	for (auto pos : shortlist) {
-		MapBlock * block = getBlockNoCreateNoEx(pos);
-		if (block && block->mesh && m_drawlist_shadow.emplace(pos, block).second) {
-			block->refGrab();
-		}
-	}
 
 	g_profiler->avg("SHADOW MapBlock meshes in range [#]", blocks_in_range_with_mesh);
-	g_profiler->avg("SHADOW MapBlocks occlusion culled [#]", blocks_occlusion_culled);
 	g_profiler->avg("SHADOW MapBlocks drawn [#]", m_drawlist_shadow.size());
 	g_profiler->avg("SHADOW MapBlocks loaded [#]", blocks_loaded);
 }

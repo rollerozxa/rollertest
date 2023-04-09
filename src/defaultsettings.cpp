@@ -65,6 +65,7 @@ void set_default_settings()
 	settings->setDefault("max_out_chat_queue_size", "20");
 	settings->setDefault("pause_on_lost_focus", "false");
 	settings->setDefault("enable_split_login_register", "true");
+	settings->setDefault("occlusion_culler", "bfs");
 	settings->setDefault("enable_raytraced_culling", "true");
 	settings->setDefault("chat_weblink_color", "#8888FF");
 
@@ -190,7 +191,7 @@ void set_default_settings()
 	settings->setDefault("vsync", "false");
 	settings->setDefault("fov", "72");
 	settings->setDefault("leaves_style", "fancy");
-	settings->setDefault("connected_glass", "true");
+	settings->setDefault("connected_glass", "false");
 	settings->setDefault("smooth_lighting", "true");
 	settings->setDefault("performance_tradeoffs", "false");
 	settings->setDefault("lighting_alpha", "0.0");
