@@ -579,6 +579,8 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 		v2s32(0, 0),
 		v2s32(0, 0),
 		AHBB_Dir_Left_Right, 2.0);
+
+	m_initialized = true;
 }
 
 touch_gui_button_id TouchScreenGUI::getButtonID(s32 x, s32 y)
@@ -740,6 +742,8 @@ void TouchScreenGUI::handleReleaseEvent(size_t evt_id)
 
 void TouchScreenGUI::translateEvent(const SEvent &event)
 {
+	if (!m_initialized)
+		return;
 	if (!m_visible) {
 		infostream
 			<< "TouchScreenGUI::translateEvent got event but not visible!"
@@ -1069,6 +1073,9 @@ void TouchScreenGUI::applyJoystickStatus()
 
 TouchScreenGUI::~TouchScreenGUI()
 {
+	if (!m_initialized)
+		return;
+
 	for (auto &button : m_buttons) {
 		if (button.guibutton) {
 			button.guibutton->drop();
@@ -1094,6 +1101,9 @@ TouchScreenGUI::~TouchScreenGUI()
 
 void TouchScreenGUI::step(float dtime)
 {
+	if (!m_initialized)
+		return;
+
 	// simulate keyboard repeats
 	for (auto &button : m_buttons) {
 		if (!button.ids.empty()) {
@@ -1175,6 +1185,9 @@ void TouchScreenGUI::registerHudItem(int index, const rect<s32> &rect)
 
 void TouchScreenGUI::Toggle(bool visible)
 {
+	if (!m_initialized)
+		return;
+
 	m_visible = visible;
 	for (auto &button : m_buttons) {
 		if (button.guibutton)

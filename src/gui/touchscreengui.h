@@ -204,6 +204,7 @@ public:
 	void show();
 
 private:
+	bool m_initialized = false;
 	IrrlichtDevice *m_device;
 	IGUIEnvironment *m_guienv;
 	IEventReceiver *m_receiver;
