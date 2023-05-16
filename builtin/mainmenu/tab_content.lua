@@ -62,7 +62,8 @@ local function get_formspec(tabview, name, tabdata)
 		"table[0.4,0.8;6.3,4.9;pkglist;",
 		pkgmgr.render_packagelist(packages, use_technical_names),
 		";", tabdata.selected_pkg, "]",
-		"button[0.4,5.9;6.3,0.8;btn_contentdb;", fgettext("Browse online content"), "]"}
+		"button[0.4,5.9;6.3,0.8;btn_contentdb;", fgettext("Browse online content"), "]",
+		settings_btn_fs()}
 
 	local selected_pkg
 	if filterlist.size(packages) >= tabdata.selected_pkg then
@@ -172,6 +173,8 @@ end
 
 --------------------------------------------------------------------------------
 local function handle_buttons(tabview, fields, tabname, tabdata)
+	if settings_btn_handler(tabview, fields) then return true end
+
 	if fields["pkglist"] ~= nil then
 		local event = core.explode_table_event(fields["pkglist"])
 		tabdata.selected_pkg = event.row

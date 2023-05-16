@@ -50,23 +50,6 @@ dofile(menupath .. DIR_DELIM .. "dlg_rename_modpack.lua")
 
 local tabs = {}
 
-tabs.settings = {
-	name = "settings",
-	caption = fgettext("Settings"),
-	cbf_formspec = function()
-		return "button[0.1,0.1;3,0.8;open_settings;" .. fgettext("Open Settings") .. "]"
-	end,
-	cbf_button_handler = function(tabview, fields)
-		if fields.open_settings then
-			local dlg = create_settings_dlg()
-			dlg:set_parent(tabview)
-			tabview:hide()
-			dlg:show()
-			return true
-		end
-	end,
-}
-
 tabs.content  = dofile(menupath .. DIR_DELIM .. "tab_content.lua")
 tabs.about    = dofile(menupath .. DIR_DELIM .. "tab_about.lua")
 tabs.local_game = dofile(menupath .. DIR_DELIM .. "tab_local.lua")
@@ -126,7 +109,6 @@ local function init_globals()
 	tv_main:add(tabs.local_game)
 	tv_main:add(tabs.play_online)
 	tv_main:add(tabs.content)
-	tv_main:add(tabs.settings)
 	tv_main:add(tabs.about)
 
 	tv_main:set_global_event_handler(main_event_handler)

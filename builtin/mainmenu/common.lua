@@ -276,3 +276,21 @@ function confirmation_formspec(message, confirm_id, confirm_label, cancel_id, ca
 			"button[0.5,1.5;2.5,0.5;" .. confirm_id .. ";" .. confirm_label .. "]" ..
 			"button[7.0,1.5;2.5,0.5;" .. cancel_id .. ";" .. cancel_label .. "]"
 end
+
+-- Common settings button and formspec handler
+
+function settings_btn_fs()
+	return "style[btn_settings;noclip=true]"
+		.. "button[12.5,-0.89;3,0.9;btn_settings;Settings]"
+end
+
+function settings_btn_handler(tabview, fields)
+	if fields.btn_settings then
+		local dlg = create_settings_dlg()
+		dlg:set_parent(tabview)
+		tabview:hide()
+		dlg:show()
+		mm_game_theme.reset()
+		return true
+	end
+end

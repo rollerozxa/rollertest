@@ -131,7 +131,8 @@ local function get_formspec(tabview, name, tabdata)
 		return table.concat{
 			"style[label_button;border=false]",
 			"button[2.75,1.5;10,1;label_button;", fgettext("You have no games installed."), "]",
-			"button[5.25,3.5;5,1.2;game_open_cdb;", fgettext("Install a game"), "]"},
+			"button[5.25,3.5;5,1.2;game_open_cdb;", fgettext("Install a game"), "]",
+			settings_btn_fs()},
 			"size[15.5,7.1,false]position[0.5,0.55]real_coordinates[true]"
 	end
 
@@ -164,6 +165,7 @@ local function get_formspec(tabview, name, tabdata)
 	end
 
 	return table.concat{
+		settings_btn_fs(),
 		"style[world_delete;bgcolor=",mt_color_red,"]",
 		"style[world_create;bgcolor=",mt_color_green,"]",
 		"button[0.47,5.8;2.8,0.9;world_delete;", fgettext("Delete"), "]",
@@ -190,6 +192,8 @@ local function main_button_handler(this, fields, name, tabdata)
 		dlg:show()
 		return true
 	end
+
+	if settings_btn_handler(this, fields) then return true end
 
 	if this.dlg_create_world_closed_at == nil then
 		this.dlg_create_world_closed_at = 0

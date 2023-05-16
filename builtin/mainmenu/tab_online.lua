@@ -65,6 +65,7 @@ local function get_formspec(tabview, name, tabdata)
 	end
 
 	local retval =
+		settings_btn_fs() ..
 		-- Search
 		"field[0.25,0.25;7,0.75;te_search;;" .. core.formspec_escape(tabdata.search_for) .. "]" ..
 		"container[7.25,0.25]" ..
@@ -270,6 +271,8 @@ local function set_selected_server(tabdata, idx, server)
 end
 
 local function main_button_handler(tabview, fields, name, tabdata)
+	if settings_btn_handler(tabview, fields) then return true end
+
 	if fields.te_name then
 		gamedata.playername = fields.te_name
 		core.settings:set("name", fields.te_name)

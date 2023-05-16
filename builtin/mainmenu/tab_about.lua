@@ -181,7 +181,8 @@ return {
 			extrastuff = "button[0.5,4.9;4.5,0.8;userdata;"..fgettext("Open User Data Directory").."]"
 		end
 
-		local fs = table.concat{"image[1.5,0.2;2.5,2.5;", core.formspec_escape(logofile), "]",
+		local fs = table.concat{settings_btn_fs(),
+			"image[1.5,0.2;2.5,2.5;", core.formspec_escape(logofile), "]",
 			"style[label_button;border=false]",
 			"button[0.1,2.8;5.3,0.5;label_button;ROllertest]",
 			"button[0.1,3.4;5.3,0.5;label_button;v", version.string ,"]",
@@ -199,6 +200,8 @@ return {
 		return fs, "size[15.5,7.1,false]position[0.5,0.55]real_coordinates[true]"
 	end,
 	cbf_button_handler = function(this, fields, name, tabdata)
+		if settings_btn_handler(this, fields) then return true end
+
 		if fields.homepage then
 			core.open_url("https://www.minetest.net")
 		end
