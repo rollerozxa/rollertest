@@ -82,8 +82,8 @@ local function make_field(converter, validator)
 				self.changed = converter(value) ~= converter(setting.default)
 
 				local fs = ("field[0,0.3;%f,0.8;%s;%s;%s]"):format(
-					avail_w - 1.5, setting.name, get_label(setting), core.formspec_escape(value))
-				fs = fs .. ("button[%f,0.3;1.5,0.8;%s;%s]"):format(avail_w - 1.5, "set_" .. setting.name, fgettext("Set"))
+					avail_w - 2.3, setting.name, get_label(setting), core.formspec_escape(value))
+				fs = fs .. ("button[%f,0.3;1.5,0.8;%s;%s]"):format(avail_w - 2, "set_" .. setting.name, fgettext("Set"))
 
 				return fs, 1.1
 			end,
@@ -162,7 +162,7 @@ function make.enum(setting)
 			local selected_idx = table.indexof(setting.values, value)
 			local fs = "label[0,0.1;" .. get_label(setting) .. "]"
 
-			fs = fs .. ("dropdown[0,0.3;%f,0.8;%s;%s;%d]"):format(
+			fs = fs .. ("dropdown[0,0.35;%f,0.8;%s;%s;%d]"):format(
 				avail_w, setting.name, table.concat(items, ","), selected_idx, value)
 
 			return fs, 1.1
@@ -376,9 +376,15 @@ local function noise_params(setting)
 	}
 end
 
-
 make.filepath = make.path
 make.noise_params_2d = noise_params
 make.noise_params_3d = noise_params
+
+-- Irrlicht's goofy ahh file picker refuses to work on Android,
+-- treat 'filepath' and 'path' as regular 'string'.
+if PLATFORM == "Android" then
+	make.filepath = make.string
+	make.path = make.string
+end
 
 return make

@@ -111,10 +111,11 @@ add_page({
 
 
 local tabsize = {
-	width = 15.5,
-	height= 12,
+	width  = 18,
+	height = 12,
 }
 
+if PLATFORM == "Android" then tabsize.height = 10 end
 
 local function load_settingtypes()
 	local page = nil
@@ -321,40 +322,46 @@ local function get_formspec(dialogdata)
 		scrollbar_w = 0.6
 	end
 
-	local left_pane_width = 4.25
-	local search_width = left_pane_width + scrollbar_w - (0.75 * 2)
+	local left_pane_width = 5
+	local search_width = left_pane_width - 0.25 + scrollbar_w - (0.75 * 2)
 
 	local show_technical_names = core.settings:get_bool("show_technical_names")
 
 	formspec_show_hack = not formspec_show_hack
 
+	local offset = ""
+	if PLATFORM ~= "Android" then
+		offset = "position[0.5,0.55]"
+	end
+
 	local fs = {
 		"formspec_version[6]",
 		"size[", tostring(tabsize.width), ",", tostring(tabsize.height + 1), "]",
+		offset,
 		"bgcolor[#0000]",
 
 		-- HACK: this is needed to allow resubmitting the same formspec
 		formspec_show_hack and " " or "",
 
-		"box[0,0;", tostring(tabsize.width), ",", tostring(tabsize.height), ";#0000008C]",
+		"box[0,0;", tostring(tabsize.width), ",", tostring(tabsize.height), ";#000000b0]",
 
-		"button[0,", tostring(tabsize.height + 0.2), ";3,0.8;back;", fgettext("Back"), "]",
+		"button[0.5,", tostring(tabsize.height), ";4.5,0.9;back;", fgettext("Back"), "]",
 
-		("box[%f,%f;5,0.8;#0000008C]"):format(tabsize.width - 5, tabsize.height + 0.2),
-		"checkbox[", tostring(tabsize.width - 4.75), ",", tostring(tabsize.height + 0.6), ";show_technical_names;",
+		("box[%f,%f;5.25,0.8;#0000008C]"):format(tabsize.width - 5.25, tabsize.height + 0.1),
+		"checkbox[", tostring(tabsize.width - 5), ",", tostring(tabsize.height + 0.5), ";show_technical_names;",
 			fgettext("Show technical names"), ";", tostring(show_technical_names), "]",
 
-		"field[0.25,0.25;", tostring(search_width), ",0.75;search_query;;",
+		"field[0.25,0.25;", tostring(search_width), ",0.9;search_query;;",
 			core.formspec_escape(dialogdata.query or ""), "]",
 		"container[", tostring(search_width + 0.25), ", 0.25]",
-			"image_button[0,0;0.75,0.75;", core.formspec_escape(defaulttexturedir .. "search.png"), ";search;]",
-			"image_button[0.75,0;0.75,0.75;", core.formspec_escape(defaulttexturedir .. "clear.png"), ";search_clear;]",
+			"image_button[0,0;0.9,0.9;", core.formspec_escape(defaulttexturedir .. "search.png"), ";search;]",
+			"image_button[0.9,0;0.9,0.9;", core.formspec_escape(defaulttexturedir .. "clear.png"), ";search_clear;]",
 			"tooltip[search;", fgettext("Search"), "]",
 			"tooltip[search_clear;", fgettext("Clear"), "]",
 		"container_end[]",
 		"scroll_container[0.25,1.25;", tostring(left_pane_width), ",",
 				tostring(tabsize.height - 1.5), ";leftscroll;vertical;0.1]",
-		"style_type[button;border=false;bgcolor=#3333]",
+		"style_type[button;border=false;bgcolor=#1113]",
 		"style_type[button:hover;border=false;bgcolor=#6663]",
 	}
 
@@ -364,13 +371,13 @@ local function get_formspec(dialogdata)
 		if other_page.section ~= last_section then
 			fs[#fs + 1] = ("label[0.1,%f;%s]"):format(y + 0.41, core.colorize("#ff0", fgettext(other_page.section)))
 			last_section = other_page.section
-			y = y + 0.82
+			y = y + 0.9
 		end
-		fs[#fs + 1] = ("box[0,%f;%f,0.8;%s]"):format(
-			y, left_pane_width, other_page.id == page_id and "#467832FF" or "#3339")
-		fs[#fs + 1] = ("button[0,%f;%f,0.8;page_%s;%s]")
+		fs[#fs + 1] = ("box[0,%f;%f,0.9;%s]"):format(
+			y, left_pane_width, other_page.id == page_id and "#467832FF" or "#1A1A1A99")
+		fs[#fs + 1] = ("button[0,%f;%f,0.9;page_%s;%s]")
 			:format(y, left_pane_width, other_page.id, fgettext(other_page.title))
-		y = y + 0.82
+		y = y + 0.92
 	end
 
 	if #filtered_pages == 0 then
@@ -440,7 +447,12 @@ local function get_formspec(dialogdata)
 		fs[#fs + 1] = "container_end[]"
 
 		if used_h > 0 then
-			y = y + used_h + 0.25
+			if PLATFORM == "Android" then
+				y = y + used_h + 0.5
+			else
+				y = y + used_h + 0.25
+			end
+
 		end
 	end
 
@@ -463,6 +475,7 @@ local function buttonhandler(this, fields)
 	dialogdata.query = fields.search_query
 
 	if fields.back then
+		dialogdata.page_id = update_filtered_pages("")
 		this:delete()
 		return true
 	end

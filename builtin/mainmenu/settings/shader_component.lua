@@ -68,44 +68,44 @@ return {
 
 		if shaders_enabled then
 			fs = fs ..
-				"container[0,0.75]" ..
+				"container[0,0.85]" ..
 				"checkbox[0,0;cb_tonemapping;" .. fgettext("Tone mapping") .. ";"
 						.. tostring(core.settings:get_bool("tone_mapping")) .. "]" ..
-				"checkbox[0,0.5;cb_waving_water;" .. fgettext("Waving liquids") .. ";"
+				"checkbox[0,0.6;cb_waving_water;" .. fgettext("Waving liquids") .. ";"
 						.. tostring(core.settings:get_bool("enable_waving_water")) .. "]" ..
-				"checkbox[0,1;cb_waving_leaves;" .. fgettext("Waving leaves") .. ";"
+				"checkbox[0,1.2;cb_waving_leaves;" .. fgettext("Waving leaves") .. ";"
 						.. tostring(core.settings:get_bool("enable_waving_leaves")) .. "]" ..
-				"checkbox[0,1.5;cb_waving_plants;" .. fgettext("Waving plants") .. ";"
+				"checkbox[0,1.8;cb_waving_plants;" .. fgettext("Waving plants") .. ";"
 						.. tostring(core.settings:get_bool("enable_waving_plants")) .. "]"
 
 			if video_driver == "opengl" then
 				fs = fs ..
-					"label[0,2.2;" .. fgettext("Dynamic shadows") .. "]" ..
-					"dropdown[0,2.4;3,0.8;dd_shadows;" .. table.concat(shadow_levels_labels, ",") .. ";" ..
+					"label[0,2.4;" .. fgettext("Dynamic shadows") .. "]" ..
+					"dropdown[0,2.7;3,0.8;dd_shadows;" .. table.concat(shadow_levels_labels, ",") .. ";" ..
 						get_shadow_mapping_idx() .. ";true]" ..
-					"label[0,3.5;" .. core.colorize("#bbb", fgettext("(The game will need to enable shadows as well)")) .. "]"
+					"label[0,3.8;" .. core.colorize("#bbb", fgettext("(The game will need to enable shadows as well)")) .. "]"
 			else
 				fs = fs ..
-					"label[0,2.2;" .. core.colorize("#888888", fgettext("Dynamic shadows")) .. "]"
+					"label[0,2.4;" .. core.colorize("#888888", fgettext("Dynamic shadows")) .. "]"
 			end
 
 			fs = fs .. "container_end[]"
 		else
 			fs = fs ..
-				"container[0.35,0.75]" ..
+				"container[0.5,0.85]" ..
 				"label[0,0;" .. core.colorize("#888888",
 						fgettext("Tone mapping")) .. "]" ..
-				"label[0,0.5;" .. core.colorize("#888888",
+				"label[0,0.6;" .. core.colorize("#888888",
 						fgettext("Waving liquids")) .. "]" ..
-				"label[0,1;" .. core.colorize("#888888",
+				"label[0,1.2;" .. core.colorize("#888888",
 						fgettext("Waving leaves")) .. "]" ..
-				"label[0,1.5;" .. core.colorize("#888888",
+				"label[0,1.8;" .. core.colorize("#888888",
 						fgettext("Waving plants")) .. "]"..
-				"label[0,2;" .. core.colorize("#888888",
+				"label[-0.5,2.4;" .. core.colorize("#888888",
 						fgettext("Dynamic shadows")) .. "]" ..
 				"container_end[]"
 		end
-		return fs, 4.5
+		return fs, 5
 	end,
 
 	on_submit = function(self, fields)

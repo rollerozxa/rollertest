@@ -621,9 +621,6 @@ serverlist_url (Serverlist URL) string servers.minetest.net
 #    If disabled, new accounts will be registered automatically when logging in.
 enable_split_login_register (Enable split login/register) bool true
 
-#    URL to JSON file which provides information about the newest Minetest release
-update_information_url (Update information URL) string https://www.minetest.net/release_info.json
-
 [*Server]
 
 #    Name of the player.
@@ -2112,10 +2109,6 @@ show_technical_names (Show technical names) bool false
 #    sound controls will be non-functional.
 #    Changing this setting requires a restart.
 enable_sound (Sound) bool true
-
-#    Unix timestamp (integer) of when the client last checked for an update
-#    Set this value to "disabled" to never check for updates.
-update_last_checked (Last update check) string
 
 #    Version number which was last seen during an update check.
 #

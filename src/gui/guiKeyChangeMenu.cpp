@@ -157,45 +157,6 @@ void GUIKeyChangeMenu::regenerateGui(v2u32 screensize)
 	}
 
 	{
-		s32 option_x = offset.X;
-		s32 option_y = offset.Y + 5 * s;
-		u32 option_w = 180 * s;
-		{
-			core::rect<s32> rect(0, 0, option_w, 30 * s);
-			rect += topleft + v2s32(option_x, option_y);
-			Environment->addCheckBox(g_settings->getBool("aux1_descends"), rect, this,
-					GUI_ID_CB_AUX1_DESCENDS, wstrgettext("\"Aux1\" = climb down").c_str());
-		}
-		offset += v2s32(0, 25 * s);
-	}
-
-	{
-		s32 option_x = offset.X;
-		s32 option_y = offset.Y + 5 * s;
-		u32 option_w = 280 * s;
-		{
-			core::rect<s32> rect(0, 0, option_w, 30 * s);
-			rect += topleft + v2s32(option_x, option_y);
-			Environment->addCheckBox(g_settings->getBool("doubletap_jump"), rect, this,
-					GUI_ID_CB_DOUBLETAP_JUMP, wstrgettext("Double tap \"jump\" to toggle fly").c_str());
-		}
-		offset += v2s32(0, 25 * s);
-	}
-
-	{
-		s32 option_x = offset.X;
-		s32 option_y = offset.Y + 5 * s;
-		u32 option_w = 280;
-		{
-			core::rect<s32> rect(0, 0, option_w, 30 * s);
-			rect += topleft + v2s32(option_x, option_y);
-			Environment->addCheckBox(g_settings->getBool("autojump"), rect, this,
-					GUI_ID_CB_AUTOJUMP, wstrgettext("Automatic jumping").c_str());
-		}
-		offset += v2s32(0, 25);
-	}
-
-	{
 		core::rect<s32> rect(0, 0, 100 * s, 30 * s);
 		rect += topleft + v2s32(size.X / 2 - 105 * s, size.Y - 40 * s);
 		GUIButton::addButton(Environment, rect, m_tsrc, this, GUI_ID_BACK_BUTTON,
