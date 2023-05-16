@@ -53,18 +53,16 @@ local function get_formspec(tabview, name, tabdata)
 
 	local use_technical_names = core.settings:get_bool("show_technical_names")
 
-
-	local retval =
-		"style[btn_mod_mgr_delete_mod;bgcolor="..mt_color_red.."]" ..
-		"style[btn_mod_mgr_disable_txp,btn_mod_mgr_use_txp;bgcolor="..mt_color_blue.."]" ..
-		"style[btn_contentdb;bgcolor="..mt_color_green.."]" ..
-		"label[0.05,-0.25;".. fgettext("Installed Packages:") .. "]" ..
-		"tablecolumns[color;tree;text]" ..
-		"table[0,0.25;5.1,4.3;pkglist;" ..
-		pkgmgr.render_packagelist(packages, use_technical_names) ..
-		";" .. tabdata.selected_pkg .. "]" ..
-		"button[0,4.85;5.25,0.5;btn_contentdb;".. fgettext("Browse online content") .. "]"
-
+	local retval = table.concat{
+		"style[btn_mod_mgr_delete_mod;bgcolor=",mt_color_red,"]",
+		"style[btn_mod_mgr_disable_txp,btn_mod_mgr_use_txp;bgcolor=",mt_color_blue,"]",
+		"style[btn_contentdb;bgcolor=",mt_color_green,"]",
+		"label[0.4,0.4;", fgettext("Installed Packages:"), "]",
+		"tablecolumns[color;tree;text]",
+		"table[0.4,0.8;6.3,4.9;pkglist;",
+		pkgmgr.render_packagelist(packages, use_technical_names),
+		";", tabdata.selected_pkg, "]",
+		"button[0.4,5.9;6.3,0.8;btn_contentdb;", fgettext("Browse online content"), "]"}
 
 	local selected_pkg
 	if filterlist.size(packages) >= tabdata.selected_pkg then
@@ -101,14 +99,14 @@ local function get_formspec(tabview, name, tabdata)
 		end
 
 		retval = retval ..
-				"image[5.5,0;3,2;" .. core.formspec_escape(modscreenshot) .. "]" ..
-				"label[8.25,0.6;" .. core.formspec_escape(title_and_name) .. "]" ..
-				"box[5.5,2.2;6.15,2.35;#000]"
+				"image[7.1,0.2;3,2;" .. core.formspec_escape(modscreenshot) .. "]" ..
+				"label[10.5,1;" .. core.formspec_escape(title_and_name) .. "]" ..
+				"box[7.1,2.5;8,2.9;#000]"
 
 		if selected_pkg.type == "mod" then
 			if selected_pkg.is_modpack then
 				retval = retval ..
-					"button[8.65,4.65;3.25,1;btn_mod_mgr_rename_modpack;" ..
+					"button[11.1,5.8;4,0.9;btn_mod_mgr_rename_modpack;" ..
 					fgettext("Rename") .. "]"
 			else
 				--show dependencies
@@ -136,26 +134,25 @@ local function get_formspec(tabview, name, tabdata)
 			if selected_pkg.type == "txp" then
 				if selected_pkg.enabled then
 					retval = retval ..
-						"button[8.65,4.65;3.25,1;btn_mod_mgr_disable_txp;" ..
+						"button[11.1,5.8;4,0.9;btn_mod_mgr_disable_txp;" ..
 						fgettext("Disable Texture Pack") .. "]"
 				else
 					retval = retval ..
-						"button[8.65,4.65;3.25,1;btn_mod_mgr_use_txp;" ..
+						"button[11.1,5.8;4,0.9;btn_mod_mgr_use_txp;" ..
 						fgettext("Use Texture Pack") .. "]"
 				end
 			end
 		end
 
-		retval = retval .. "textarea[5.85,2.2;6.35,2.9;;" ..
-			fgettext("Information:") .. ";" .. desc .. "]"
+		retval = retval .. "textarea[7.1,2.5;8,2.9;;;"..desc.."]"
 
 		if core.may_modify_path(selected_pkg.path) then
 			retval = retval ..
-				"button[5.5,4.65;3.25,1;btn_mod_mgr_delete_mod;" ..
+				"button[7.1,5.8;4,0.9;btn_mod_mgr_delete_mod;" ..
 				fgettext("Uninstall Package") .. "]"
 		end
 	end
-	return retval
+	return retval, "size[15.5,7.1,false]position[0.5,0.55]real_coordinates[true]"
 end
 
 --------------------------------------------------------------------------------
