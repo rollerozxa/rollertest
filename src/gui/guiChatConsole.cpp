@@ -671,8 +671,7 @@ bool GUIChatConsole::OnEvent(const SEvent& event)
 			if (event.MouseInput.Y / m_fontsize.Y < (m_height / m_fontsize.Y) - 1 )
 			{
 				// Translate pixel position to font position
-				bool was_url_pressed = m_cache_clickable_chat_weblinks &&
-						weblinkClick(event.MouseInput.X / m_fontsize.X,
+				bool was_url_pressed = weblinkClick(event.MouseInput.X / m_fontsize.X,
 								event.MouseInput.Y / m_fontsize.Y);
 
 				if (!was_url_pressed

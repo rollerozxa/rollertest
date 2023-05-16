@@ -545,17 +545,17 @@ bool IClientMediaDownloader::checkAndLoad(
 	std::string sha1_hex = hex_encode(sha1);
 
 	// Compute actual checksum of data
-	std::string data_sha1;
+	/*std::string data_sha1;
 	{
 		SHA1 data_sha1_calculator;
 		data_sha1_calculator.addBytes(data.c_str(), data.size());
 		unsigned char *data_tmpdigest = data_sha1_calculator.getDigest();
 		data_sha1.assign((char*) data_tmpdigest, 20);
 		free(data_tmpdigest);
-	}
+	}*/
 
 	// Check that received file matches announced checksum
-	if (data_sha1 != sha1) {
+	/*if (data_sha1 != sha1) {
 		std::string data_sha1_hex = hex_encode(data_sha1);
 		infostream << "Client: "
 			<< cached_or_received_uc << " media file "
@@ -563,7 +563,7 @@ bool IClientMediaDownloader::checkAndLoad(
 			<< "mismatches actual checksum " << data_sha1_hex
 			<< std::endl;
 		return false;
-	}
+	}*/
 
 	// Checksum is ok, try loading the file
 	bool success = loadMedia(client, data, name);

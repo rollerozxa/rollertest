@@ -181,19 +181,10 @@ void set_default_settings()
 	settings->setDefault("fps_max_unfocused", "20");
 	settings->setDefault("viewing_range", "190");
 	settings->setDefault("client_mesh_chunk", "1");
-<<<<<<< HEAD
-#if ENABLE_GLES
-	settings->setDefault("near_plane", "0.1");
-#endif
 	settings->setDefault("screen_w", "1280");
 	settings->setDefault("screen_h", "720");
-	settings->setDefault("autosave_screensize", "false");
-=======
-	settings->setDefault("screen_w", "1024");
-	settings->setDefault("screen_h", "600");
 	settings->setDefault("window_maximized", "false");
-	settings->setDefault("autosave_screensize", "true");
->>>>>>> origin/master
+	settings->setDefault("autosave_screensize", "false");
 	settings->setDefault("fullscreen", "false");
 	settings->setDefault("vsync", "false");
 	settings->setDefault("fov", "72");
@@ -225,11 +216,7 @@ void set_default_settings()
 	settings->setDefault("console_alpha", "200");
 	settings->setDefault("formspec_fullscreen_bg_color", "(0,0,0)");
 	settings->setDefault("formspec_fullscreen_bg_opacity", "140");
-<<<<<<< HEAD
-	settings->setDefault("formspec_default_bg_color", "(0,0,0)");
-	settings->setDefault("formspec_default_bg_opacity", "180");
-=======
->>>>>>> origin/master
+
 	settings->setDefault("selectionbox_color", "(0,0,0)");
 	settings->setDefault("selectionbox_width", "2");
 	settings->setDefault("node_highlighting", "box");

@@ -141,7 +141,7 @@ return {
 		prepare_credits(credit_list, rollertest_info)
 
 		table.insert_all(credit_list, {
-			core.colorize("#000", "Dedication of the current release"),
+			core.colorize("#888", "Dedication of the current release"),
 			"The 5.7.0 release is dedicated to the memory of",
 			"Minetest developer Jude Melton-Houghton (TurkeyMcMac)",
 			"who died on February 1, 2023.",
@@ -185,7 +185,7 @@ return {
 			"style[label_button;border=false]",
 			"button[0.1,2.8;5.3,0.5;label_button;ROllertest]",
 			"button[0.1,3.4;5.3,0.5;label_button;v", version.string ,"]",
-			"button[0.1,4.0;5.3,0.5;label_button;(Based on MT 5.7.0-dev)]",
+			"button[0.1,4.0;5.3,0.5;label_button;(Based on MT 5.7.0)]",
 
 			--"button[1,4.7;3.5,0.8;homepage;minetest.net]",
 			"button[1,6;3.5,0.8;privacy;Privacy Policy]",
