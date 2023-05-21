@@ -62,7 +62,6 @@ cd $builddir
 cmake_args=(
 	-DCMAKE_TOOLCHAIN_FILE=$toolchain_file
 	-DCMAKE_INSTALL_PREFIX=/tmp
-	-DVERSION_EXTRA=$git_hash
 	-DBUILD_CLIENT=1 -DBUILD_SERVER=0
 	-DEXTRA_DLL="$runtime_dlls"
 
