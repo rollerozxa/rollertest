@@ -84,6 +84,7 @@ public:
 	u32 last_keyPressed = 0;
 	u8 last_camera_fov = 0;
 	u8 last_wanted_range = 0;
+	bool last_camera_inverted = false;
 
 	float camera_impact = 0.0f;
 
@@ -190,6 +191,7 @@ private:
 
 	bool m_can_jump = false;
 	bool m_disable_jump = false;
+	bool m_disable_descend = false;
 	u16 m_breath = PLAYER_MAX_BREATH_DEFAULT;
 	f32 m_yaw = 0.0f;
 	f32 m_pitch = 0.0f;

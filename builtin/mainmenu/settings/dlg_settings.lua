@@ -317,14 +317,16 @@ local function get_formspec(dialogdata)
 	local page_id = dialogdata.page_id or "most_used"
 	local page = filtered_page_by_id[page_id]
 
-	local scrollbar_w = 0.4
-	if PLATFORM == "Android" then
-		scrollbar_w = 0.6
-	end
+	local extra_h = 1 -- not included in tabsize.height
+	local tabsize = {
+		width = TOUCHSCREEN_GUI and 16.5 or 15.5,
+		height = TOUCHSCREEN_GUI and (10 - extra_h) or 12,
+	}
 
 	local left_pane_width = 5
 	local search_width = left_pane_width - 0.25 + scrollbar_w - (0.75 * 2)
 
+	local technical_names_w = TOUCHSCREEN_GUI and 6 or 5
 	local show_technical_names = core.settings:get_bool("show_technical_names")
 
 	formspec_show_hack = not formspec_show_hack
@@ -338,6 +340,7 @@ local function get_formspec(dialogdata)
 		"formspec_version[6]",
 		"size[", tostring(tabsize.width), ",", tostring(tabsize.height + 1), "]",
 		offset,
+
 		"bgcolor[#0000]",
 
 		-- HACK: this is needed to allow resubmitting the same formspec
@@ -421,7 +424,7 @@ local function get_formspec(dialogdata)
 
 		fs[#fs + 1] = "style_type[image_button;border=false;padding=]"
 
-		local show_reset = comp.changed and comp.setting and comp.setting.default
+		local show_reset = comp.resettable and comp.setting
 		local show_info = comp.info_text and comp.info_text ~= ""
 		if show_reset or show_info then
 			-- ensure there's enough space for reset/info
@@ -430,10 +433,13 @@ local function get_formspec(dialogdata)
 		local info_reset_y = used_h / 2 - 0.25
 
 		if show_reset then
+			local default = comp.setting.default
+			local reset_tooltip = default and
+					fgettext("Reset setting to default ($1)", tostring(default)) or
+					fgettext("Reset setting to default")
 			fs[#fs + 1] = ("image_button[%f,%f;0.5,0.5;%s;%s;]"):format(
 					right_pane_width - 1.4, info_reset_y, reset_icon_path, "reset_" .. i)
-			fs[#fs + 1] = ("tooltip[%s;%s]"):format(
-					"reset_" .. i, fgettext("Reset setting to default ($1)", tostring(comp.setting.default)))
+			fs[#fs + 1] = ("tooltip[%s;%s]"):format("reset_" .. i, reset_tooltip)
 		end
 
 		if show_info then
@@ -519,7 +525,7 @@ local function buttonhandler(this, fields)
 			return true
 		end
 		if comp.setting and fields["reset_" .. i] then
-			core.settings:set(comp.setting.name, comp.setting.default)
+			core.settings:remove(comp.setting.name)
 			return true
 		end
 	end
@@ -529,5 +535,9 @@ end
 
 
 function create_settings_dlg()
-	return dialog_create("dlg_settings", get_formspec, buttonhandler, nil)
+	local dlg = dialog_create("dlg_settings", get_formspec, buttonhandler, nil)
+
+	dlg.data.page_id = update_filtered_pages("")
+
+	return dlg
 end

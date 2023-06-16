@@ -594,6 +594,29 @@ Example:
 Creates an inventorycube with `grass.png`, `dirt.png^grass_side.png` and
 `dirt.png^grass_side.png` textures
 
+#### `[fill:<w>x<h>:<x>,<y>:<color>`
+
+* `<w>`: width
+* `<h>`: height
+* `<x>`: x position
+* `<y>`: y position
+* `<color>`: a `ColorString`.
+
+Creates a texture of the given size and color, optionally with an <x>,<y>
+position. An alpha value may be specified in the `Colorstring`.
+
+The optional <x>,<y> position is only used if the [fill is being overlaid
+onto another texture with '^'.
+
+When [fill is overlaid onto another texture it will not upscale or change
+the resolution of the texture, the base texture will determine the output
+resolution.
+
+Examples:
+
+    [fill:16x16:#20F02080
+    texture.png^[fill:8x8:4,4:red
+
 #### `[lowpart:<percent>:<file>`
 
 Blit the lower `<percent>`% part of `<file>` on the texture.
@@ -628,13 +651,29 @@ which it assumes to be a tilesheet with dimensions w,h.
 
 Colorize the textures with the given color.
 `<color>` is specified as a `ColorString`.
-`<ratio>` is an int ranging from 0 to 255 or the word "`alpha`".  If
+`<ratio>` is an int ranging from 0 to 255 or the word "`alpha`". If
 it is an int, then it specifies how far to interpolate between the
 colors where 0 is only the texture color and 255 is only `<color>`. If
 omitted, the alpha of `<color>` will be used as the ratio.  If it is
 the word "`alpha`", then each texture pixel will contain the RGB of
 `<color>` and the alpha of `<color>` multiplied by the alpha of the
 texture pixel.
+
+#### `[colorizehsl:<hue>:<saturation>:<lightness>`
+
+Colorize the texture to the given hue. The texture will be converted into a
+greyscale image as seen through a colored glass, like "Colorize" in GIMP.
+Saturation and lightness can optionally be adjusted.
+
+`<hue>` should be from -180 to +180. The hue at 0° on an HSL color wheel is
+red, 60° is yellow, 120° is green, and 180° is cyan, while -60° is magenta
+and -120° is blue.
+
+`<saturation>` and `<lightness>` are optional adjustments.
+
+`<lightness>` is from -100 to +100, with a default of 0
+
+`<saturation>` is from 0 to 100, with a default of 50
 
 #### `[multiply:<color>`
 
@@ -643,6 +682,76 @@ Multiplies texture colors with the given color.
 Result is more like what you'd expect if you put a color on top of another
 color, meaning white surfaces get a lot of your new color while black parts
 don't change very much.
+
+A Multiply blend can be applied between two textures by using the overlay
+modifier with a brightness adjustment:
+
+    textureA.png^[contrast:0:-64^[overlay:textureB.png
+
+#### `[screen:<color>`
+
+Apply a Screen blend with the given color. A Screen blend is the inverse of
+a Multiply blend, lightening images instead of darkening them.
+
+`<color>` is specified as a `ColorString`.
+
+A Screen blend can be applied between two textures by using the overlay
+modifier with a brightness adjustment:
+
+    textureA.png^[contrast:0:64^[overlay:textureB.png
+
+#### `[hsl:<hue>:<saturation>:<lightness>`
+
+Adjust the hue, saturation, and lightness of the texture. Like
+"Hue-Saturation" in GIMP, but with 0 as the mid-point.
+
+`<hue>` should be from -180 to +180
+
+`<saturation>` and `<lightness>` are optional, and both percentages.
+
+`<lightness>` is from -100 to +100.
+
+`<saturation>` goes down to -100 (fully desaturated) but may go above 100,
+allowing for even muted colors to become highly saturated.
+
+#### `[contrast:<contrast>:<brightness>`
+
+Adjust the brightness and contrast of the texture. Conceptually like
+GIMP's "Brightness-Contrast" feature but allows brightness to be wound
+all the way up to white or down to black.
+
+`<contrast>` is a value from -127 to +127.
+
+`<brightness>` is an optional value, from -127 to +127.
+
+If only a boost in contrast is required, an alternative technique is to
+hardlight blend the texture with itself, this increases contrast in the same
+way as an S-shaped color-curve, which avoids dark colors clipping to black
+and light colors clipping to white:
+
+    texture.png^[hardlight:texture.png
+
+#### `[overlay:<file>`
+
+Applies an Overlay blend with the two textures, like the Overlay layer mode
+in GIMP. Overlay is the same as Hard light but with the role of the two
+textures swapped, see the `[hardlight` modifier description for more detail
+about these blend modes.
+
+#### `[hardlight:<file>`
+
+Applies a Hard light blend with the two textures, like the Hard light layer
+mode in GIMP.
+
+Hard light combines Multiply and Screen blend modes. Light parts of the
+`<file>` texture will lighten (screen) the base texture, and dark parts of the
+`<file>` texture will darken (multiply) the base texture. This can be useful
+for applying embossing or chiselled effects to textures. A Hard light with the
+same texture acts like applying an S-shaped color-curve, and can be used to
+increase contrast without clipping.
+
+Hard light is the same as Overlay but with the roles of the two textures
+swapped, i.e. `A.png^[hardlight:B.png` is the same as `B.png^[overlay:A.png`
 
 #### `[png:<base64>`
 
@@ -885,16 +994,21 @@ Only Ogg Vorbis files are supported.
 For positional playing of sounds, only single-channel (mono) files are
 supported. Otherwise OpenAL will play them non-positionally.
 
-Mods should generally prefix their sounds with `modname_`, e.g. given
+Mods should generally prefix their sound files with `modname_`, e.g. given
 the mod name "`foomod`", a sound could be called:
 
     foomod_foosound.ogg
 
-Sounds are referred to by their name with a dot, a single digit and the
-file extension stripped out. When a sound is played, the actual sound file
-is chosen randomly from the matching sounds.
+Sound group
+-----------
 
-When playing the sound `foomod_foosound`, the sound is chosen randomly
+A sound group is the set of all sound files, whose filenames are of the following
+format:
+`<sound-group name>[.<single digit>].ogg`
+When a sound-group is played, one the files in the group is chosen at random.
+Sound files can only be referred to by their sound-group name.
+
+Example: When playing the sound `foomod_foosound`, the sound is chosen randomly
 from the available ones of the following files:
 
 * `foomod_foosound.ogg`
@@ -903,62 +1017,10 @@ from the available ones of the following files:
 * (...)
 * `foomod_foosound.9.ogg`
 
-Examples of sound parameter tables:
-
-```lua
--- Play locationless on all clients
-{
-    gain = 1.0,   -- default
-    fade = 0.0,   -- default, change to a value > 0 to fade the sound in
-    pitch = 1.0,  -- default
-}
--- Play locationless to one player
-{
-    to_player = name,
-    gain = 1.0,   -- default
-    fade = 0.0,   -- default, change to a value > 0 to fade the sound in
-    pitch = 1.0,  -- default
-}
--- Play locationless to one player, looped
-{
-    to_player = name,
-    gain = 1.0,  -- default
-    loop = true,
-}
--- Play at a location
-{
-    pos = {x = 1, y = 2, z = 3},
-    gain = 1.0,  -- default
-    max_hear_distance = 32,  -- default, uses a Euclidean metric
-}
--- Play connected to an object, looped
-{
-    object = <an ObjectRef>,
-    gain = 1.0,  -- default
-    max_hear_distance = 32,  -- default, uses a Euclidean metric
-    loop = true,
-}
--- Play at a location, heard by anyone *but* the given player
-{
-    pos = {x = 32, y = 0, z = 100},
-    max_hear_distance = 40,
-    exclude_player = name,
-}
-```
-
-Looped sounds must either be connected to an object or played locationless to
-one player using `to_player = name`.
-
-A positional sound will only be heard by players that are within
-`max_hear_distance` of the sound position, at the start of the sound.
-
-`exclude_player = name` can be applied to locationless, positional and object-
-bound sounds to exclude a single player from hearing them.
-
 `SimpleSoundSpec`
 -----------------
 
-Specifies a sound name, gain (=volume) and pitch.
+Specifies a sound name, gain (=volume), pitch and fade.
 This is either a string or a table.
 
 In string form, you just specify the sound name or
@@ -966,11 +1028,25 @@ the empty string for no sound.
 
 Table form has the following fields:
 
-* `name`: Sound name
-* `gain`: Volume (`1.0` = 100%)
-* `pitch`: Pitch (`1.0` = 100%)
+* `name`:
+  Sound-group name.
+  If == `""`, no sound is played.
+* `gain`:
+  Volume (`1.0` = 100%), must be non-negative.
+  At the end, OpenAL clamps sound gain to a maximum of `1.0`. By setting gain for
+  a positional sound higher than `1.0`, one can increase the radius inside which
+  maximal gain is reached.
+  Furthermore, gain of positional sounds doesn't increase inside a 1 node radius.
+  The gain given here describes the gain at a distance of 3 nodes.
+* `pitch`:
+  Applies a pitch-shift to the sound.
+  Each factor of `2.0` results in a pitch-shift of +12 semitones.
+  Must be positive.
+* `fade`:
+  If > `0.0`, the sound is faded in, with this value in gain per second, until
+  `gain` is reached.
 
-`gain` and `pitch` are optional and default to `1.0`.
+`gain`, `pitch` and `fade` are optional and default to `1.0`, `1.0` and `0.0`.
 
 Examples:
 
@@ -981,10 +1057,105 @@ Examples:
 * `{name = "default_place_node", gain = 0.5}`: 50% volume
 * `{name = "default_place_node", gain = 0.9, pitch = 1.1}`: 90% volume, 110% pitch
 
-Special sound files
--------------------
+Sound parameter table
+---------------------
 
-These sound files are played back by the engine if provided.
+Table used to specify how a sound is played:
+
+```lua
+{
+    gain = 1.0,
+    -- Scales the gain specified in `SimpleSoundSpec`.
+
+    pitch = 1.0,
+    -- Overwrites the pitch specified in `SimpleSoundSpec`.
+
+    fade = 0.0,
+    -- Overwrites the fade specified in `SimpleSoundSpec`.
+
+    start_time = 0.0,
+    -- Start with a time-offset into the sound.
+    -- The behavior is as if the sound was already playing for this many seconds.
+    -- Negative values are relative to the sound's length, so the sound reaches
+    -- its end in `-start_time` seconds.
+    -- It is unspecified what happens if `loop` is false and `start_time` is
+    -- smaller than minus the sound's length.
+
+    loop = false,
+    -- If true, sound is played in a loop.
+
+    pos = {x = 1, y = 2, z = 3},
+    -- Play sound at a position.
+    -- Can't be used together with `object`.
+
+    object = <an ObjectRef>,
+    -- Attach the sound to an object.
+    -- Can't be used together with `pos`.
+
+    to_player = name,
+    -- Only play for this player.
+    -- Can't be used together with `exclude_player`.
+
+    exclude_player = name,
+    -- Don't play sound for this player.
+    -- Can't be used together with `to_player`.
+
+    max_hear_distance = 32,
+    -- Only play for players that are at most this far away when the sound
+    -- starts playing.
+    -- Needs `pos` or `object` to be set.
+    -- `32` is the default.
+}
+```
+
+Examples:
+
+```lua
+-- Play locationless on all clients
+{
+    gain = 1.0,   -- default
+    fade = 0.0,   -- default
+    pitch = 1.0,  -- default
+}
+-- Play locationless to one player
+{
+    to_player = name,
+    gain = 1.0,   -- default
+    fade = 0.0,   -- default
+    pitch = 1.0,  -- default
+}
+-- Play locationless to one player, looped
+{
+    to_player = name,
+    gain = 1.0,  -- default
+    loop = true,
+}
+-- Play at a location, start the sound at offset 5 seconds
+{
+    pos = {x = 1, y = 2, z = 3},
+    gain = 1.0,  -- default
+    max_hear_distance = 32,  -- default
+    start_time = 5.0,
+}
+-- Play connected to an object, looped
+{
+    object = <an ObjectRef>,
+    gain = 1.0,  -- default
+    max_hear_distance = 32,  -- default
+    loop = true,
+}
+-- Play at a location, heard by anyone *but* the given player
+{
+    pos = {x = 32, y = 0, z = 100},
+    max_hear_distance = 40,
+    exclude_player = name,
+}
+```
+
+Special sound-groups
+--------------------
+
+These sound-groups are played back by the engine if provided.
 
  * `player_damage`: Played when the local player takes damage (gain = 0.5)
  * `player_falling_damage`: Played when the local player takes
@@ -1960,6 +2131,9 @@ to games.
     * `3`: the node always gets the digging time 0 seconds (torch)
 * `disable_jump`: Player (and possibly other things) cannot jump from node
   or if their feet are in the node. Note: not supported for `new_move = false`
+* `disable_descend`: Player (and possibly other things) cannot *actively*
+  descend in node using Sneak or Aux1 key (for liquids and climbable nodes
+  only). Note: not supported for `new_move = false`
 * `fall_damage_add_percent`: modifies the fall damage suffered when hitting
   the top of this node. There's also an armor group with the same name.
   The final player damage is determined by the following formula:
@@ -7657,7 +7831,7 @@ child will follow movement and rotation of that bone.
 * `override_day_night_ratio(ratio or nil)`
     * `0`...`1`: Overrides day-night ratio, controlling sunlight to a specific
       amount.
-    * `nil`: Disables override, defaulting to sunlight based on day-night cycle
+    * Passing no arguments disables override, defaulting to sunlight based on day-night cycle
 * `get_day_night_ratio()`: returns the ratio or nil if it isn't overridden
 * `set_local_animation(idle, walk, dig, walk_while_dig, frame_speed)`:
   set animation for player model in third person view.
@@ -7676,8 +7850,9 @@ child will follow movement and rotation of that bone.
       the client already has the block)
     * Resource intensive - use sparsely
 * `set_lighting(light_definition)`: sets lighting for the player
+    * Passing no arguments resets lighting to its default values.
     * `light_definition` is a table with the following optional fields:
-      * `saturation` sets the saturation (vividness).
+      * `saturation` sets the saturation (vividness; default: `1.0`).
           values > 1 increase the saturation
           values in [0,1) decrease the saturation
             * This value has no effect on clients who have the "Tone Mapping" shader disabled.
@@ -7686,12 +7861,12 @@ child will follow movement and rotation of that bone.
             * This value has no effect on clients who have the "Dynamic Shadows" shader disabled.
       * `exposure` is a table that controls automatic exposure.
         The basic exposure factor equation is `e = 2^exposure_correction / clamp(luminance, 2^luminance_min, 2^luminance_max)`
-        * `luminance_min` set the lower luminance boundary to use in the calculation
-        * `luminance_max` set the upper luminance boundary to use in the calculation
-        * `exposure_correction` correct observed exposure by the given EV value
-        * `speed_dark_bright` set the speed of adapting to bright light
-        * `speed_bright_dark` set the speed of adapting to dark scene
-        * `center_weight_power` set the power factor for center-weighted luminance measurement
+        * `luminance_min` set the lower luminance boundary to use in the calculation (default: `-3.0`)
+        * `luminance_max` set the upper luminance boundary to use in the calculation (default: `-3.0`)
+        * `exposure_correction` correct observed exposure by the given EV value (default: `0.0`)
+        * `speed_dark_bright` set the speed of adapting to bright light (default: `1000.0`)
+        * `speed_bright_dark` set the speed of adapting to dark scene (default: `1000.0`)
+        * `center_weight_power` set the power factor for center-weighted luminance measurement (default: `1.0`)
 
 * `get_lighting()`: returns the current state of lighting for the player.
     * Result is a table with the same fields as `light_definition` in `set_lighting`.
@@ -7898,6 +8073,12 @@ It can be created via `Settings(filename)`.
     * Also, see documentation for set() above.
 * `remove(key)`: returns a boolean (`true` for success)
 * `get_names()`: returns `{key1,...}`
+* `has(key)`:
+    * Returns a boolean indicating whether `key` exists.
+    * Note that for the main settings object (`minetest.settings`), `get(key)`
+      might return a value even if `has(key)` returns `false`. That's because
+      `get` can fall back to the so-called parent of the `Settings` object, i.e.
+      the default values.
 * `write()`: returns a boolean (`true` for success)
     * Writes changes to file.
 * `to_table()`: returns `{[key1]=value1,...}`
@@ -8685,7 +8866,10 @@ Used by `minetest.register_node`.
 
         footstep = <SimpleSoundSpec>,
         -- If walkable, played when object walks on it. If node is
-        -- climbable or a liquid, played when object moves through it
+        -- climbable or a liquid, played when object moves through it.
+        -- Sound is played at the base of the object's collision-box.
+        -- Gain is multiplied by `0.6`.
+        -- For local player, it's played position-less, with normal gain.
 
         dig = <SimpleSoundSpec> or "__group",
         -- While digging node.
@@ -9448,8 +9632,13 @@ See [Decoration types]. Used by `minetest.register_decoration`.
 
     spawn_by = "default:water",
     -- Node (or list of nodes) that the decoration only spawns next to.
-    -- Checks the 8 neighboring nodes on the same Y, and also the ones
-    -- at Y+1, excluding both center nodes.
+    -- Checks the 8 neighboring nodes on the same height,
+    -- and also the ones at the height plus the check_offset, excluding both center nodes.
+
+    check_offset = -1,
+    -- Specifies the offset that spawn_by should also check
+    -- The default value of -1 is useful to e.g check for water next to the base node.
+    -- 0 disables additional checks, valid values: {-1, 0, 1}
 
     num_spawn_by = 1,
     -- Number of spawn_by nodes that must be surrounding the decoration

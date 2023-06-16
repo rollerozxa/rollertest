@@ -3,7 +3,7 @@
 project.ext.set("versionMajor", 2023)      // Version Major
 project.ext.set("versionMinor", 4)      // Version Minor
 project.ext.set("versionPatch", 9)      // Version Patch
-project.ext.set("versionExtra", "") // Version Extra
+// ^ keep in sync with cmake
 project.ext.set("versionCode", 45)      // Android Version Code
 
 buildscript {

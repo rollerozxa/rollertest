@@ -478,11 +478,14 @@ void Server::process_PlayerPos(RemotePlayer *player, PlayerSAO *playersao,
 
 	f32 fov = 0;
 	u8 wanted_range = 0;
+	u8 bits = 0; // bits instead of bool so it is extensible later
 
 	*pkt >> keyPressed;
 	*pkt >> f32fov;
 	fov = (f32)f32fov / 80.0f;
 	*pkt >> wanted_range;
+	if (pkt->getRemainingBytes() >= 1)
+		*pkt >> bits;
 
 	v3f position((f32)ps.X / 100.0f, (f32)ps.Y / 100.0f, (f32)ps.Z / 100.0f);
 	v3f speed((f32)ss.X / 100.0f, (f32)ss.Y / 100.0f, (f32)ss.Z / 100.0f);
@@ -500,6 +503,7 @@ void Server::process_PlayerPos(RemotePlayer *player, PlayerSAO *playersao,
 	playersao->setPlayerYaw(yaw);
 	playersao->setFov(fov);
 	playersao->setWantedRange(wanted_range);
+	playersao->setCameraInverted(bits & 0x01);
 
 	player->control.unpackKeysPressed(keyPressed);
 
@@ -907,8 +911,8 @@ bool Server::checkInteractDistance(RemotePlayer *player, const f32 d, const std:
 	return true;
 }
 
-// Tiny helper to retrieve the selected item into an Optional
-static inline void getWieldedItem(const PlayerSAO *playersao, Optional<ItemStack> &ret)
+// Tiny helper to retrieve the selected item into an std::optional
+static inline void getWieldedItem(const PlayerSAO *playersao, std::optional<ItemStack> &ret)
 {
 	ret = ItemStack();
 	playersao->getWieldedItem(&(*ret));
@@ -1222,7 +1226,7 @@ void Server::handleCommand_Interact(NetworkPacket *pkt)
 
 	// Place block or right-click object
 	case INTERACT_PLACE: {
-		Optional<ItemStack> selected_item;
+		std::optional<ItemStack> selected_item;
 		getWieldedItem(playersao, selected_item);
 
 		// Reset build time counter
@@ -1281,7 +1285,7 @@ void Server::handleCommand_Interact(NetworkPacket *pkt)
 	} // action == INTERACT_PLACE
 
 	case INTERACT_USE: {
-		Optional<ItemStack> selected_item;
+		std::optional<ItemStack> selected_item;
 		getWieldedItem(playersao, selected_item);
 
 		actionstream << player->getName() << " uses " << selected_item->name
@@ -1298,7 +1302,7 @@ void Server::handleCommand_Interact(NetworkPacket *pkt)
 
 	// Rightclick air
 	case INTERACT_ACTIVATE: {
-		Optional<ItemStack> selected_item;
+		std::optional<ItemStack> selected_item;
 		getWieldedItem(playersao, selected_item);
 
 		actionstream << player->getName() << " activates "
