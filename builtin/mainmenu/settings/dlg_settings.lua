@@ -319,9 +319,11 @@ local function get_formspec(dialogdata)
 
 	local extra_h = 1 -- not included in tabsize.height
 	local tabsize = {
-		width = TOUCHSCREEN_GUI and 16.5 or 15.5,
+		width = 18,
 		height = TOUCHSCREEN_GUI and (10 - extra_h) or 12,
 	}
+
+	local scrollbar_w = TOUCHSCREEN_GUI and 0.6 or 0.4
 
 	local left_pane_width = 5
 	local search_width = left_pane_width - 0.25 + scrollbar_w - (0.75 * 2)

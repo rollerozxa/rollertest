@@ -17,9 +17,12 @@
 -- with this program; if not, write to the Free Software Foundation, Inc.,
 -- 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-local PATH = os.getenv("HOME") or os.getenv("HOMEPATH") or core.get_user_path()
+local PATH = os.getenv("HOME") or "/"
+if PLATFORM == "Windows" then
+	PATH = os.getenv("HOMEDRIVE") .. os.getenv("HOMEPATH")
+end
 
-tabdata = {}
+local tabdata = {}
 
 local function texture(filename)
 	return core.formspec_escape(defaulttexturedir .. filename .. ".png")
@@ -36,7 +39,7 @@ local function get_dirs()
 
 	local new = {}
 	for _, f in ipairs(dirs) do
-		if f:sub(1,1) ~= "." then
+		if f:sub(1, 1) ~= "." then
 			new[#new + 1] = core.formspec_escape(f)
 		end
 	end
@@ -48,15 +51,15 @@ end
 local function make_fs(dialogdata)
 	local dirs = get_dirs()
 
-	local _dirs = ""
+	local _dirs = {}
 
 	if not next(dirs) then
-		_dirs = "2,,"
+		_dirs[#_dirs + 1] = "2,,"
 	end
 
 	for _, f in ipairs(dirs) do
 		local is_file = not core.is_dir(PATH .. DIR_DELIM .. f)
-		_dirs = _dirs .. (is_file and "1," or "0,") .. f .. ","
+		_dirs[#_dirs + 1] = (is_file and "1," or "0,") .. f .. ","
 	end
 
 	local field_label
@@ -70,13 +73,13 @@ local function make_fs(dialogdata)
 		"formspec_version[4]",
 		"size[14,9.2]",
 		"image_button[0.2,0.2;0.65,0.65;", texture('up_icon'), ";updir;]",
-		"field[1,0.2;12,0.65;path;;", PATH, "]",
+		"field[1,0.2;12,0.65;path;;", core.formspec_escape(PATH), "]",
 		"tablecolumns[image,",
 			"0=", texture('folder'), ",",
 			"1=", texture('file'), ",",
 			"2=", texture('blank'),
 			";text]",
-		"table[0.2,1.1;13.6,6;dirs;", _dirs:sub(1,-2),
+		"table[0.2,1.1;13.6,6;dirs;", table.concat(_dirs):sub(1, -2),
 			";", (tabdata.selected or 1), "]",
 		"field[0.2,8;9,0.8;select;", field_label, ";", (tabdata.filename or ""), "]",
 		"button[9.5,8;2,0.8;ok;", fgettext("Open"), "]",
@@ -104,7 +107,7 @@ local function fields_handler(this, fields)
 	local dirs = get_dirs()
 
 	if fields.dirs then
-		local event, idx = fields.dirs:sub(1,3), tonumber(fields.dirs:match("%d+"))
+		local event, idx = fields.dirs:sub(1, 3), tonumber(fields.dirs:match("%d+"))
 		local filename = dirs[idx]
 		local is_file = not core.is_dir(PATH .. DIR_DELIM .. filename)
 
@@ -112,7 +115,6 @@ local function fields_handler(this, fields)
 			tabdata.filename = filename
 			tabdata.selected = idx
 
-			core.update_formspec(this:get_formspec())
 			return true
 
 		elseif event == "DCL" and filename then
@@ -121,7 +123,6 @@ local function fields_handler(this, fields)
 				tabdata.selected = 1
 			end
 
-			core.update_formspec(this:get_formspec())
 			return true
 		end
 
@@ -129,16 +130,16 @@ local function fields_handler(this, fields)
 		PATH = string.split(PATH, DIR_DELIM)
 		PATH[#PATH] = nil
 		PATH = table.concat(PATH, DIR_DELIM)
-		PATH = DIR_DELIM .. PATH
+		if PLATFORM ~= "Windows" then
+			PATH = DIR_DELIM .. PATH
+		end
 
 		tabdata.selected = 1
-
-		core.update_formspec(this:get_formspec())
 		return true
 
 	elseif fields.path then
 		PATH = fields.path
-		core.update_formspec(this:get_formspec())
+		tabdata.selected = 1
 		return true
 	end
 

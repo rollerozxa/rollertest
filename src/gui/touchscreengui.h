@@ -54,10 +54,6 @@ typedef enum
 	range_id,
 	minimap_id,
 	toggle_chat_id,
-	chat_id,
-	inventory_id,
-	drop_id,
-	exit_id,
 	joystick_off_id,
 	joystick_bg_id,
 	joystick_center_id

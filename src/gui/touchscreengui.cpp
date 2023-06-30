@@ -53,11 +53,6 @@ const char *joystick_imagenames[] = {
 
 static irr::EKEY_CODE id2keycode(touch_gui_button_id id)
 {
-	// ESC isn't part of the keymap.
-	if (id == exit_id) {
-		return KEY_ESCAPE;
-	}
-
 	std::string key = "";
 	switch (id) {
 		case inventory_id:
@@ -572,8 +567,6 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 		v2s32(0, 0),
 		v2s32(0, 0),
 		AHBB_Dir_Left_Right, 2.0);
-
-	m_rarecontrolsbar.addButton(exit_id,      L"exit", "exit_btn.png");
 
 	m_initialized = true;
 }
