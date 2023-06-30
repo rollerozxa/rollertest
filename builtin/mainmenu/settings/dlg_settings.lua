@@ -110,13 +110,6 @@ add_page({
 })
 
 
-local tabsize = {
-	width  = 18,
-	height = 12,
-}
-
-if PLATFORM == "Android" then tabsize.height = 10 end
-
 local function load_settingtypes()
 	local page = nil
 	local section = nil
@@ -328,7 +321,6 @@ local function get_formspec(dialogdata)
 	local left_pane_width = 5
 	local search_width = left_pane_width - 0.25 + scrollbar_w - (0.75 * 2)
 
-	local technical_names_w = TOUCHSCREEN_GUI and 6 or 5
 	local show_technical_names = core.settings:get_bool("show_technical_names")
 
 	formspec_show_hack = not formspec_show_hack

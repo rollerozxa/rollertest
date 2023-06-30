@@ -186,7 +186,7 @@ return {
 			"style[label_button;border=false]",
 			"button[0.1,2.8;5.3,0.5;label_button;ROllertest]",
 			"button[0.1,3.4;5.3,0.5;label_button;v", version.string ,"]",
-			"button[0.1,4.0;5.3,0.5;label_button;(Based on MT 5.7.0)]",
+			"button[0.1,4.0;5.3,0.5;label_button;(Based on MT 5.8.0-dev)]",
 
 			--"button[1,4.7;3.5,0.8;homepage;minetest.net]",
 			"button[1,6;3.5,0.8;privacy;Privacy Policy]",

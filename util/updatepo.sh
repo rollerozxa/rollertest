@@ -79,6 +79,7 @@ for lang in $langs ; do # note the missing quotes around $langs
 	if test -e $pofile; then
 		echo "[$lang]: updating strings"
 		msgmerge --update --sort-by-file $pofile $potfile
+		msgattrib --no-obsolete -o $pofile $pofile
 	else
 		# This will ask for the translator identity
 		echo "[$lang]: NEW strings"
