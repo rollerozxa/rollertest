@@ -35,7 +35,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 using namespace irr::core;
 
-const char **button_imagenames = (const char *[]) {
+const char *button_imagenames[] = {
 	"jump_btn.png",
 	"down.png",
 	"zoom.png",
@@ -45,7 +45,7 @@ const char **button_imagenames = (const char *[]) {
 	"drop_btn.png"
 };
 
-const char **joystick_imagenames = (const char *[]) {
+const char *joystick_imagenames[] = {
 	"joystick_off.png",
 	"joystick_bg.png",
 	"joystick_center.png"
@@ -53,6 +53,11 @@ const char **joystick_imagenames = (const char *[]) {
 
 static irr::EKEY_CODE id2keycode(touch_gui_button_id id)
 {
+	// ESC isn't part of the keymap.
+	if (id == exit_id) {
+		return KEY_ESCAPE;
+	}
+
 	std::string key = "";
 	switch (id) {
 		case inventory_id:
@@ -567,6 +572,8 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 		v2s32(0, 0),
 		v2s32(0, 0),
 		AHBB_Dir_Left_Right, 2.0);
+
+	m_rarecontrolsbar.addButton(exit_id,      L"exit", "exit_btn.png");
 
 	m_initialized = true;
 }

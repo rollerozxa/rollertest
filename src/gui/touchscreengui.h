@@ -57,6 +57,7 @@ typedef enum
 	chat_id,
 	inventory_id,
 	drop_id,
+	exit_id,
 	joystick_off_id,
 	joystick_bg_id,
 	joystick_center_id
@@ -87,8 +88,8 @@ typedef enum
 // Very slow button repeat frequency
 #define SLOW_BUTTON_REPEAT 1.0f
 
-extern const char **button_imagenames;
-extern const char **joystick_imagenames;
+extern const char *button_imagenames[];
+extern const char *joystick_imagenames[];
 
 struct button_info
 {
