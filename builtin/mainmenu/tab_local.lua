@@ -25,8 +25,26 @@ local valid_disabled_settings = {
 
 -- Currently chosen game in gamebar for theming and filtering
 function current_game()
-	local last_game_id = core.settings:get("menu_last_game")
-	local game = pkgmgr.find_by_gameid(last_game_id)
+	local gameid = core.settings:get("menu_last_game")
+	local game = gameid and pkgmgr.find_by_gameid(gameid)
+	if not game then
+		-- Fall back to first game installed if one exists.
+		if not game and #pkgmgr.games > 0 then
+
+			-- If devtest is the first game in the list and there is another
+			-- game available, pick the other game instead.
+			local picked_game
+			if pkgmgr.games[1].id == "devtest" and #pkgmgr.games > 1 then
+				picked_game = 2
+			else
+				picked_game = 1
+			end
+
+			game = pkgmgr.games[picked_game]
+			gameid = game.id
+			core.settings:set("menu_last_game", gameid)
+		end
+	end
 
 	return game
 end
@@ -56,6 +74,11 @@ function singleplayer_refresh_gamebar()
 	local old_bar = ui.find_by_name("game_button_bar")
 	if old_bar ~= nil then
 		old_bar:delete()
+	end
+
+	-- Hide gamebar if no games are installed
+	if #pkgmgr.games == 0 then
+		return false
 	end
 
 	local function game_buttonbar_button_handler(fields)
@@ -95,6 +118,7 @@ function singleplayer_refresh_gamebar()
 
 	local plus_image = core.formspec_escape(defaulttexturedir .. "plus.png")
 	btnbar:add_button("game_open_cdb", "", plus_image, fgettext("Install games from ContentDB"))
+	return true
 end
 
 
@@ -361,8 +385,9 @@ local function on_change(type, old_tab, new_tab)
 			apply_game(game)
 		end
 
-		singleplayer_refresh_gamebar()
-		ui.find_by_name("game_button_bar"):show()
+		if singleplayer_refresh_gamebar() then
+			ui.find_by_name("game_button_bar"):show()
+		end
 	else
 		menudata.worldlist:set_filtercriteria(nil)
 		local gamebar = ui.find_by_name("game_button_bar")
