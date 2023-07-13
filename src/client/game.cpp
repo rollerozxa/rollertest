@@ -372,6 +372,7 @@ class GameGlobalShaderConstantSetter : public IShaderConstantSetter
 	bool m_fog_enabled;
 	CachedPixelShaderSetting<float, 4> m_sky_bg_color;
 	CachedPixelShaderSetting<float> m_fog_distance;
+	CachedPixelShaderSetting<float> m_fog_shading_parameter;
 	CachedVertexShaderSetting<float> m_animation_timer_vertex;
 	CachedPixelShaderSetting<float> m_animation_timer_pixel;
 	CachedVertexShaderSetting<float> m_animation_timer_delta_vertex;
@@ -431,6 +432,7 @@ public:
 		m_fog_range(fog_range),
 		m_sky_bg_color("skyBgColor"),
 		m_fog_distance("fogDistance"),
+		m_fog_shading_parameter("fogShadingParameter"),
 		m_animation_timer_vertex("animationTimer"),
 		m_animation_timer_pixel("animationTimer"),
 		m_animation_timer_delta_vertex("animationTimerDelta"),
@@ -496,7 +498,10 @@ public:
 		if (m_fog_enabled && !*m_force_fog_off)
 			fog_distance = *m_fog_range;
 
+		float fog_shading_parameter = 1.0 / ( 1.0 - m_sky->getFogStart());
+
 		m_fog_distance.set(&fog_distance, services);
+		m_fog_shading_parameter.set(&fog_shading_parameter, services);
 
 		u32 daynight_ratio = (float)m_client->getEnv().getDayNightRatio();
 		video::SColorf sunlight;
@@ -880,7 +885,6 @@ private:
 	static const ClientEventHandler clientEventHandler[CLIENTEVENT_MAX];
 
 	f32 getSensitivityScaleFactor() const;
-	ClientDynamicInfo getCurrentDynamicInfo() const;
 
 	InputHandler *input = nullptr;
 
@@ -961,7 +965,6 @@ private:
 	f32  m_cache_joystick_frustum_sensitivity;
 	f32  m_repeat_place_time;
 	f32  m_cache_cam_smoothing;
-	f32  m_cache_fog_start;
 
 	bool m_invert_mouse;
 	bool m_enable_hotbar_mouse_wheel;
@@ -1195,7 +1198,7 @@ void Game::run()
 		//  + Sleep time until the wanted FPS are reached
 		draw_times.limit(device, &dtime);
 
-		const auto current_dynamic_info = getCurrentDynamicInfo();
+		const auto current_dynamic_info = ClientDynamicInfo::getCurrent();
 		if (!current_dynamic_info.equal(client_display_info)) {
 			client_display_info = current_dynamic_info;
 			dynamic_info_send_timer = 0.2f;
@@ -2492,6 +2495,9 @@ void Game::increaseViewRange()
 		range_new = 4000;
 		std::wstring msg = fwgettext("Viewing range is at maximum: %d", range_new);
 		m_game_ui->showStatusText(msg);
+	} else if (sky->getFogDistance() >= 0 && range_new > sky->getFogDistance()) {
+		std::wstring msg = fwgettext("Viewing range changed to %d, but limited to %d set by server", range_new, sky->getFogDistance());
+		m_game_ui->showStatusText(msg);
 	} else {
 		std::wstring msg = fwgettext("Viewing range changed to %d", range_new);
 		m_game_ui->showStatusText(msg);
@@ -2509,6 +2515,9 @@ void Game::decreaseViewRange()
 		range_new = 20;
 		std::wstring msg = fwgettext("Viewing range is at minimum: %d", range_new);
 		m_game_ui->showStatusText(msg);
+	} else if (sky->getFogDistance() >= 0 && range_new > sky->getFogDistance()) {
+		std::wstring msg = fwgettext("Viewing range changed to %d, but limited to %d set by server", range_new, sky->getFogDistance());
+		m_game_ui->showStatusText(msg);
 	} else {
 		std::wstring msg = fwgettext("Viewing range changed to %d", range_new);
 		m_game_ui->showStatusText(msg);
@@ -2520,10 +2529,15 @@ void Game::decreaseViewRange()
 void Game::toggleFullViewRange()
 {
 	draw_control->range_all = !draw_control->range_all;
-	if (draw_control->range_all)
-		m_game_ui->showTranslatedStatusText("Enabled unlimited viewing range");
-	else
+	if (draw_control->range_all) {
+		if (sky->getFogDistance() >= 0) {
+			m_game_ui->showTranslatedStatusText("The server has disabled unlimited viewing range");
+		} else {
+			m_game_ui->showTranslatedStatusText("Enabled unlimited viewing range");
+		}
+	} else {
 		m_game_ui->showTranslatedStatusText("Disabled unlimited viewing range");
+	}
 }
 
 
@@ -2586,19 +2600,6 @@ f32 Game::getSensitivityScaleFactor() const
 	// 16:9 aspect ratio to minimize disruption of existing sensitivity
 	// settings.
 	return tan(fov_y / 2.0f) * 1.3763818698f;
-}
-
-ClientDynamicInfo Game::getCurrentDynamicInfo() const
-{
-	v2u32 screen_size = RenderingEngine::getWindowSize();
-	f32 density = RenderingEngine::getDisplayDensity();
-	f32 gui_scaling = g_settings->getFloat("gui_scaling") * density;
-	f32 hud_scaling = g_settings->getFloat("hud_scaling") * density;
-
-	return {
-		screen_size, gui_scaling, hud_scaling,
-		ClientDynamicInfo::calculateMaxFSSize(screen_size)
-	};
 }
 
 void Game::updateCameraOrientation(CameraOrientation *cam, float dtime)
@@ -2997,6 +2998,20 @@ void Game::handleClientEvent_SetSky(ClientEvent *event, CameraOrientation *cam)
 
 	// Orbit Tilt:
 	sky->setBodyOrbitTilt(event->set_sky->body_orbit_tilt);
+
+	// fog
+	// do not override a potentially smaller client setting.
+	sky->setFogDistance(event->set_sky->fog_distance);
+
+	// if the fog distance is reset, switch back to the client's viewing_range
+	if (event->set_sky->fog_distance < 0)
+		draw_control->wanted_range = g_settings->getS16("viewing_range");
+
+	if (event->set_sky->fog_start >= 0)
+		sky->setFogStart(rangelim(event->set_sky->fog_start, 0.0f, 0.99f));
+	else
+		sky->setFogStart(rangelim(g_settings->getFloat("fog_start"), 0.0f, 0.99f));
+
 
 	delete event->set_sky;
 }
@@ -3917,7 +3932,10 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 		Fog range
 	*/
 
-	if (draw_control->range_all) {
+	if (sky->getFogDistance() >= 0) {
+		draw_control->wanted_range = MYMIN(draw_control->wanted_range, sky->getFogDistance());
+	}
+	if (draw_control->range_all && sky->getFogDistance() < 0) {
 		runData.fog_range = 100000 * BS;
 	} else {
 		runData.fog_range = draw_control->wanted_range * BS;
@@ -4008,12 +4026,11 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	/*
 		Fog
 	*/
-
 	if (m_cache_enable_fog) {
 		driver->setFog(
 				sky->getBgColor(),
 				video::EFT_FOG_LINEAR,
-				runData.fog_range * m_cache_fog_start,
+				runData.fog_range * sky->getFogStart(),
 				runData.fog_range * 1.0,
 				0.01,
 				false, // pixel fog
@@ -4286,15 +4303,12 @@ void Game::readSettings()
 	m_cache_enable_noclip                = g_settings->getBool("noclip");
 	m_cache_enable_free_move             = g_settings->getBool("free_move");
 
-	m_cache_fog_start                    = g_settings->getFloat("fog_start");
-
 	m_cache_cam_smoothing = 0;
 	if (g_settings->getBool("cinematic"))
 		m_cache_cam_smoothing = 1 - g_settings->getFloat("cinematic_camera_smoothing");
 	else
 		m_cache_cam_smoothing = 1 - g_settings->getFloat("camera_smoothing");
 
-	m_cache_fog_start = rangelim(m_cache_fog_start, 0.0f, 0.99f);
 	m_cache_cam_smoothing = rangelim(m_cache_cam_smoothing, 0.01f, 1.0f);
 	m_cache_mouse_sensitivity = rangelim(m_cache_mouse_sensitivity, 0.001, 100.0);
 
@@ -4510,7 +4524,7 @@ void the_game(bool *kill,
 		error_message = e.what();
 		errorstream << "ServerError: " << error_message << std::endl;
 	} catch (ModError &e) {
-		// DO NOT TRANSLATE the `ModError`, it's used by ui.lua
+		// DO NOT TRANSLATE the `ModError`, it's used by `ui.lua`
 		error_message = std::string("ModError: ") + e.what() +
 				strgettext("\nCheck debug.txt for details.");
 		errorstream << error_message << std::endl;

@@ -34,6 +34,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "util/strfnd.h"
 #include "client/clientevent.h"
 #include "client/sound.h"
+#include "client/localplayer.h"
 #include "network/clientopcodes.h"
 #include "network/connection.h"
 #include "network/networkpacket.h"
@@ -1395,9 +1396,13 @@ void Client::handleCommand_HudSetSky(NetworkPacket* pkt)
 				>> skybox.sky_color.indoors;
 		}
 
-		try {
+		if (pkt->getRemainingBytes() >= 4) {
 			*pkt >> skybox.body_orbit_tilt;
-		} catch (PacketError &e) {}
+		}
+
+		if (pkt->getRemainingBytes() >= 6) {
+			*pkt >> skybox.fog_distance >> skybox.fog_start;
+		}
 
 		ClientEvent *event = new ClientEvent();
 		event->type = CE_SET_SKY;
@@ -1504,7 +1509,7 @@ void Client::handleCommand_LocalPlayerAnimations(NetworkPacket* pkt)
 	*pkt >> player->local_animations[3];
 	*pkt >> player->local_animation_speed;
 
-	player->last_animation = -1;
+	player->last_animation = LocalPlayerAnimation::NO_ANIM;
 }
 
 void Client::handleCommand_EyeOffset(NetworkPacket* pkt)
