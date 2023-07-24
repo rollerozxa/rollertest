@@ -188,6 +188,8 @@ local function get_formspec(tabview, name, tabdata)
 			dump(core.settings:get_bool("enable_damage")) .. "]"
 	end
 
+	local padding = TOUCHSCREEN_GUI and "0.05,0.05" or "0.03,0.03"
+
 	return table.concat{
 		settings_btn_fs(),
 		"style[world_delete;bgcolor=",mt_color_red,"]",
@@ -200,8 +202,7 @@ local function get_formspec(tabview, name, tabdata)
 		"box[9.75,0;5.75,7.1;#666666]",
 		"style[play;bgcolor=#111111]",
 		creative, damage,
-		"button[10,4;5.25,1.5;play;",fgettext("Play Game"),"]"},
-		"size[15.5,7.1,false]position[0.5,0.55]real_coordinates[true]"
+		"button[10,4;5.25,1.5;play;",fgettext("Play Game"),"]"}
 end
 
 local function main_button_handler(this, fields, name, tabdata)

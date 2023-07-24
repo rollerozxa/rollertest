@@ -197,7 +197,7 @@ return {
 			"scroll_container_end[]",
 			"scrollbar[15,0.1;0.4,6.9;vertical;scroll_credits;0]"}
 
-		return fs, "size[15.5,7.1,false]position[0.5,0.55]real_coordinates[true]"
+		return fs
 	end,
 	cbf_button_handler = function(this, fields, name, tabdata)
 		if settings_btn_handler(this, fields) then return true end

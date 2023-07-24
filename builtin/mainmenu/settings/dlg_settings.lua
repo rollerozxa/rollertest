@@ -333,6 +333,7 @@ local function get_formspec(dialogdata)
 	local fs = {
 		"formspec_version[6]",
 		"size[", tostring(tabsize.width), ",", tostring(tabsize.height + 1), "]",
+		"padding[0.02,0.02]",
 		offset,
 
 		"bgcolor[#0000]",
@@ -340,7 +341,7 @@ local function get_formspec(dialogdata)
 		-- HACK: this is needed to allow resubmitting the same formspec
 		formspec_show_hack and " " or "",
 
-		"box[0,0;", tostring(tabsize.width), ",", tostring(tabsize.height), ";#000000b0]",
+		"box[0,0;", tostring(tabsize.width), ",", tostring(tabsize.height), ";#000000d0]",
 
 		"button[0.5,", tostring(tabsize.height), ";4.5,0.9;back;", fgettext("Back"), "]",
 

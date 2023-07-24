@@ -68,16 +68,21 @@ local function get_formspec(self)
 
 	if self.parent == nil and not prepend then
 		local tsize = tab.tabsize or {width=self.width, height=self.height}
-		prepend = string.format("size[%f,%f,%s]position[0.5,0.55]", tsize.width, tsize.height,
-				dump(self.fixed_size))
 
-		if tab.formspec_version then
-			prepend = ("formspec_version[%d]"):format(tab.formspec_version) .. prepend
-		end
+		local padding = TOUCHSCREEN_GUI and "0.05,0.05" or "0,0"
+
+		prepend = string.format([[
+			formspec_version[6]
+			size[%f,%f,%s]
+			position[0.5,0.55]
+			padding[%s]
+			style_type[box;noclip=true]
+		]], tsize.width, tsize.height,
+				dump(self.fixed_size),
+				padding)
 	end
 
-	local formspec = (prepend or "") .. self:tab_header() .. content
-	return formspec
+	return (prepend or "") .. self:tab_header() .. content
 end
 
 --------------------------------------------------------------------------------
@@ -136,7 +141,7 @@ local function tab_header(self)
 			toadd = toadd .. ","
 		end
 
-		toadd = toadd .. self.tablist[i].caption
+		toadd = toadd .. "  " .. self.tablist[i].caption .. "  "
 	end
 	return string.format("tabheader[%f,%f;%s;%s;%i;true;false]",
 			self.header_x, self.header_y, self.name, toadd, self.last_tab_index);
