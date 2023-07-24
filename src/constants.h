@@ -100,9 +100,3 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 // This is the maximum number of attempts to try and add a serial to the end of
 // the file attempting to ensure a unique filename
 #define SCREENSHOT_MAX_SERIAL_TRIES 1000
-
-/*
-    GUI related things
-*/
-
-#define TTF_DEFAULT_FONT_SIZE (16)
