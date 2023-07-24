@@ -754,11 +754,14 @@ MapBlockMesh::MapBlockMesh(MeshMakeData *data, v3s16 camera_offset):
 
 			// Create material
 			video::SMaterial material;
-			material.setFlag(video::EMF_LIGHTING, false);
-			material.setFlag(video::EMF_BACK_FACE_CULLING, true);
-			material.setFlag(video::EMF_BILINEAR_FILTER, false);
-			material.setFlag(video::EMF_FOG_ENABLE, true);
+			material.Lighting = false;
+			material.BackfaceCulling = true;
+			material.FogEnable = true;
 			material.setTexture(0, p.layer.texture);
+			material.forEachTexture([] (auto &tex) {
+				tex.MinFilter = video::ETMINF_NEAREST_MIPMAP_NEAREST;
+				tex.MagFilter = video::ETMAGF_NEAREST;
+			});
 
 			if (m_enable_shaders) {
 				material.MaterialType = m_shdrsrc->getShaderInfo(
