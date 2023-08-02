@@ -28,7 +28,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.os.Environment;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -176,7 +175,6 @@ public class UnzipService extends IntentService {
 			}
 		}
 	}
-
 
 	private void publishProgress(@Nullable  Notification.Builder notificationBuilder, @StringRes int message, int progress) {
 		Intent intentUpdate = new Intent(ACTION_UPDATE);
