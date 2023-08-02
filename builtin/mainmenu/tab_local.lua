@@ -172,7 +172,8 @@ local function get_formspec(tabview, name, tabdata)
 	end
 	local disabled_settings = get_disabled_settings(game)
 
-	local creative, damage = "", ""
+	local creative, damage, host = "", "", ""
+	local enable_server = core.settings:get_bool("enable_server")
 
 	-- Y offsets for game settings checkboxes
 	local y = 1
@@ -186,6 +187,15 @@ local function get_formspec(tabview, name, tabdata)
 	if disabled_settings["enable_damage"] == nil then
 		damage = "checkbox[10.2,"..y..";cb_enable_damage;".. fgettext("Enable Damage") .. ";" ..
 			dump(core.settings:get_bool("enable_damage")) .. "]"
+		y = y + yo
+	end
+	if disabled_settings["enable_server"] == nil then
+		host = "checkbox[10.2,"..y..";cb_server;".. fgettext("Host Server") ..";" ..
+			dump(core.settings:get_bool("enable_server")) .. "]"
+
+		if enable_server then
+			host = host .. "button[10,"..(y+0.75)..";5.25,1;btn_server_conf;"..fgettext("Configure Server").."]"
+		end
 	end
 
 	local padding = TOUCHSCREEN_GUI and "0.05,0.05" or "0.03,0.03"
@@ -200,9 +210,9 @@ local function get_formspec(tabview, name, tabdata)
 		"label[0.4,0.4;", fgettext("Select World:"), "]",
 		"textlist[0.4,0.8;8.9,4.9;sp_worlds;",menu_render_worldlist(),";",index,"]",
 		"box[9.75,0;5.75,7.1;#666666]",
-		"style[play;bgcolor=#111111]",
-		creative, damage,
-		"button[10,4;5.25,1.5;play;",fgettext("Play Game"),"]"}
+		--"style[play;bgcolor=#111111]",
+		creative, damage, host,
+		"button[10,5;5.25,1.5;play;",(enable_server and fgettext("Host Game") or fgettext("Play Game")),"]"}
 end
 
 local function main_button_handler(this, fields, name, tabdata)
@@ -212,6 +222,15 @@ local function main_button_handler(this, fields, name, tabdata)
 	if fields.game_open_cdb then
 		local maintab = ui.find_by_name("maintab")
 		local dlg = create_store_dlg("game")
+		dlg:set_parent(maintab)
+		maintab:hide()
+		dlg:show()
+		return true
+	end
+
+	if fields.btn_server_conf then
+		local maintab = ui.find_by_name("maintab")
+		local dlg = create_config_server_dlg()
 		dlg:set_parent(maintab)
 		maintab:hide()
 		dlg:show()
@@ -269,14 +288,6 @@ local function main_button_handler(this, fields, name, tabdata)
 		return true
 	end
 
-	if fields["cb_server_announce"] then
-		core.settings:set("server_announce", fields["cb_server_announce"])
-		local selected = core.get_textlist_index("srv_worlds")
-		menu_worldmt(selected, "server_announce", fields["cb_server_announce"])
-
-		return true
-	end
-
 	if fields["play"] ~= nil or world_doubleclick or fields["key_enter"] then
 		local enter_key_duration = core.get_us_time() - this.dlg_create_world_closed_at
 		if world_doubleclick and enter_key_duration <= 200000 then -- 200 ms
@@ -313,15 +324,15 @@ local function main_button_handler(this, fields, name, tabdata)
 		end
 
 		if core.settings:get_bool("enable_server") then
-			gamedata.playername = fields["te_playername"]
-			gamedata.password   = fields["te_passwd"]
-			gamedata.port       = fields["te_serverport"]
+			gamedata.playername = core.settings:get("name")
+			gamedata.password   = server_password
+			gamedata.port       = core.settings:get("port")
 			gamedata.address    = ""
 
-			core.settings:set("port",gamedata.port)
-			if fields["te_serveraddr"] ~= nil then
-				core.settings:set("bind_address",fields["te_serveraddr"])
-			end
+			local announce = core.settings:get("server_announce")
+			local selected = core.get_textlist_index("srv_worlds")
+			menu_worldmt(selected, "server_announce", announce)
+
 		else
 			gamedata.singleplayer = true
 		end

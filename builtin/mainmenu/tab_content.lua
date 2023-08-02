@@ -59,10 +59,10 @@ local function get_formspec(tabview, name, tabdata)
 		"style[btn_contentdb;bgcolor=",mt_color_green,"]",
 		"label[0.4,0.4;", fgettext("Installed Packages:"), "]",
 		"tablecolumns[color;tree;text]",
-		"table[0.4,0.8;6.3,4.9;pkglist;",
+		"table[0.4,0.8;6.3,4.8;pkglist;",
 		pkgmgr.render_packagelist(packages, use_technical_names),
 		";", tabdata.selected_pkg, "]",
-		"button[0.4,5.9;6.3,0.8;btn_contentdb;", fgettext("Browse online content"), "]",
+		"button[0.4,5.8;6.3,0.9;btn_contentdb;", fgettext("Browse online content"), "]",
 		settings_btn_fs()}
 
 	local selected_pkg
