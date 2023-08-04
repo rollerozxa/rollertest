@@ -44,25 +44,24 @@ local function get_formspec()
 end
 
 local function buttonhandler(this, fields)
-	if fields.server_announce then
-		core.settings:set("server_announce", fields.server_announce)
-		return true
-	end
-
-	if fields.btn_save or fields["key_enter"] then
-		if fields["key_enter"] then
-			-- HACK: See dlg_create_world.lua:348
-			this.parent.dlg_create_world_closed_at = core.get_us_time()
-		end
-
+	if fields.server_announce or fields.btn_save or fields["key_enter"] then
 		core.settings:set("name", fields.playername)
 		core.settings:set("port", fields.serverport)
 
 		server_password = fields.password
 
-		this:delete()
+		if fields.server_announce then
+			core.settings:set("server_announce", fields.server_announce)
+		else
+			if fields["key_enter"] then
+				-- HACK: See dlg_create_world.lua:348
+				this.parent.dlg_create_world_closed_at = core.get_us_time()
+			end
 
-		return true
+			this:delete()
+
+			return true
+		end
 	end
 
 	return false

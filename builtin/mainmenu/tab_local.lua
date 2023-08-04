@@ -198,8 +198,6 @@ local function get_formspec(tabview, name, tabdata)
 		end
 	end
 
-	local padding = TOUCHSCREEN_GUI and "0.05,0.05" or "0.03,0.03"
-
 	return table.concat{
 		settings_btn_fs(),
 		"style[world_delete;bgcolor=",mt_color_red,"]",
@@ -330,9 +328,7 @@ local function main_button_handler(this, fields, name, tabdata)
 			gamedata.address    = ""
 
 			local announce = core.settings:get("server_announce")
-			local selected = core.get_textlist_index("srv_worlds")
-			menu_worldmt(selected, "server_announce", announce)
-
+			menu_worldmt(core.get_textlist_index("srv_worlds"), "server_announce", announce)
 		else
 			gamedata.singleplayer = true
 		end
