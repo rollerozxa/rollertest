@@ -23,6 +23,10 @@ local valid_disabled_settings = {
 	["enable_server"]=true,
 }
 
+-- Name and port stored to persist when updating the formspec
+local current_name = core.settings:get("name")
+local current_port = core.settings:get("port")
+
 -- Currently chosen game in gamebar for theming and filtering
 function current_game()
 	local gameid = core.settings:get("menu_last_game")
@@ -90,9 +94,8 @@ function singleplayer_refresh_gamebar()
 		end
 	end
 
-	local btnbar = buttonbar_create("game_button_bar",
-		game_buttonbar_button_handler,
-		{x=0,y=7.2}, "horizontal", {x=15.5,y=1.2})
+	local btnbar = buttonbar_create("game_button_bar", {x = 0, y = 7.2},
+			{x = 15.5, y = 1.2}, "#000000", game_buttonbar_button_handler)
 
 	for _, game in ipairs(pkgmgr.games) do
 		local btn_name = "game_btnbar_" .. game.id
@@ -242,6 +245,14 @@ local function main_button_handler(this, fields, name, tabdata)
 	end
 
 	local world_doubleclick = false
+
+	if fields["te_playername"] then
+		current_name = fields["te_playername"]
+	end
+
+	if fields["te_serverport"] then
+		current_port = fields["te_serverport"]
+	end
 
 	if fields["sp_worlds"] ~= nil then
 		local event = core.explode_textlist_event(fields["sp_worlds"])

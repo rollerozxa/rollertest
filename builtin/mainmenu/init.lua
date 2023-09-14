@@ -51,12 +51,12 @@ dofile(menupath .. DIR_DELIM .. "dlg_register.lua")
 dofile(menupath .. DIR_DELIM .. "dlg_rename_modpack.lua")
 dofile(menupath .. DIR_DELIM .. "dlg_config_server.lua")
 
-local tabs = {}
-
-tabs.content  = dofile(menupath .. DIR_DELIM .. "tab_content.lua")
-tabs.about    = dofile(menupath .. DIR_DELIM .. "tab_about.lua")
-tabs.local_game = dofile(menupath .. DIR_DELIM .. "tab_local.lua")
-tabs.play_online = dofile(menupath .. DIR_DELIM .. "tab_online.lua")
+local tabs = {
+	content  = dofile(menupath .. DIR_DELIM .. "tab_content.lua"),
+	about = dofile(menupath .. DIR_DELIM .. "tab_about.lua"),
+	local_game = dofile(menupath .. DIR_DELIM .. "tab_local.lua"),
+	play_online = dofile(menupath .. DIR_DELIM .. "tab_online.lua")
+}
 
 --------------------------------------------------------------------------------
 local function main_event_handler(tabview, event)
@@ -106,6 +106,19 @@ local function init_globals()
 	if last_tab and tv_main.current_tab ~= last_tab then
 		tv_main:set_tab(last_tab)
 	end
+
+	--[[tv_main:set_end_button({
+		icon = defaulttexturedir .. "settings_btn.png",
+		label = fgettext("Settings"),
+		name = "open_settings",
+		on_click = function(tabview)
+			local dlg = create_settings_dlg()
+			dlg:set_parent(tabview)
+			tabview:hide()
+			dlg:show()
+			return true
+		end,
+	})]]
 
 	ui.set_default("maintab")
 	tv_main:show()

@@ -578,7 +578,7 @@ public:
 		m_saturation_pixel.set(&saturation, services);
 	}
 
-	void onSetMaterial(const video::SMaterial &material)
+	void onSetMaterial(const video::SMaterial &material) override
 	{
 		video::ITexture *texture = material.getTexture(0);
 		if (texture) {
@@ -2163,6 +2163,14 @@ void Game::processItemSelection(u16 *new_playeritem)
 		}
 	}
 
+#ifdef HAVE_TOUCHSCREENGUI
+	if (g_touchscreengui) {
+		std::optional<u16> selection = g_touchscreengui->getHotbarSelection();
+		if (selection)
+			*new_playeritem = *selection;
+	}
+#endif
+
 	// Clamp selection again in case it wasn't changed but max_item was
 	*new_playeritem = MYMIN(*new_playeritem, max_item);
 }
@@ -3164,7 +3172,7 @@ void Game::updateCamera(f32 dtime)
 		v3f camera_direction = camera->getDirection();
 
 		client->getEnv().getClientMap().updateCamera(camera_position,
-				camera_direction, camera_fov, camera_offset);
+				camera_direction, camera_fov, camera_offset, player->light_color);
 
 		if (m_camera_offset_changed) {
 			client->updateCameraOffset(camera_offset);
@@ -3621,10 +3629,10 @@ bool Game::nodePlacement(const ItemDefinition &selected_def,
 	// Compare core.item_place_node() for what the server does with param2
 	MapNode predicted_node(id, 0, 0);
 
-	const u8 place_param2 = selected_def.place_param2;
+	const auto place_param2 = selected_def.place_param2;
 
 	if (place_param2) {
-		predicted_node.setParam2(place_param2);
+		predicted_node.setParam2(*place_param2);
 	} else if (predicted_f.param_type_2 == CPT2_WALLMOUNTED ||
 			predicted_f.param_type_2 == CPT2_COLORED_WALLMOUNTED) {
 		v3s16 dir = nodepos - neighborpos;
