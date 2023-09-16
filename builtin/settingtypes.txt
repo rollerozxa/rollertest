@@ -736,10 +736,6 @@ enable_local_map_saving (Saving map received from server) bool false
 #    URL to the server list displayed in the Multiplayer Tab.
 serverlist_url (Serverlist URL) string servers.minetest.net
 
-#    If enabled, account registration is separate from login in the UI.
-#    If disabled, new accounts will be registered automatically when logging in.
-enable_split_login_register (Enable split login/register) bool true
-
 [*Server]
 
 #    Name of the player.

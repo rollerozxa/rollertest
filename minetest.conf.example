@@ -684,11 +684,6 @@
 #    type: string
 # serverlist_url = servers.minetest.net
 
-#    If enabled, account registration is separate from login in the UI.
-#    If disabled, new accounts will be registered automatically when logging in.
-#    type: bool
-# enable_split_login_register = true
-
 #    URL to JSON file which provides information about the newest Minetest release
 #    type: string
 # update_information_url = https://www.minetest.net/release_info.json

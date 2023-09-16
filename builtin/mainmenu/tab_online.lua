@@ -64,92 +64,96 @@ local function get_formspec(tabview, name, tabdata)
 		tabdata.search_for = ""
 	end
 
-	local retval =
-		settings_btn_fs() ..
+	local retval = {
+		settings_btn_fs(),
 		-- Search
-		"field[0.25,0.25;7,0.75;te_search;;" .. core.formspec_escape(tabdata.search_for) .. "]" ..
-		"container[7.25,0.25]" ..
-		"image_button[0,0;0.75,0.75;" .. core.formspec_escape(defaulttexturedir .. "search.png") .. ";btn_mp_search;]" ..
-		"image_button[0.75,0;0.75,0.75;" .. core.formspec_escape(defaulttexturedir .. "clear.png") .. ";btn_mp_clear;]" ..
-		"image_button[1.5,0;0.75,0.75;" .. core.formspec_escape(defaulttexturedir .. "refresh.png") .. ";btn_mp_refresh;]" ..
-		"tooltip[btn_mp_clear;" .. fgettext("Clear") .. "]" ..
-		"tooltip[btn_mp_search;" .. fgettext("Search") .. "]" ..
-		"tooltip[btn_mp_refresh;" .. fgettext("Refresh") .. "]" ..
-		"container_end[]" ..
+		"field[0.25,0.25;7,0.75;te_search;;", core.formspec_escape(tabdata.search_for), "]",
+		"container[7.25,0.25]",
+		"image_button[0,0;0.75,0.75;", esc_texture("search.png"), ";btn_mp_search;]",
+		"image_button[0.75,0;0.75,0.75;", esc_texture("clear.png"), ";btn_mp_clear;]",
+		"image_button[1.5,0;0.75,0.75;", esc_texture("refresh.png"), ";btn_mp_refresh;]",
+		"tooltip[btn_mp_clear;", fgettext("Clear"), "]",
+		"tooltip[btn_mp_search;", fgettext("Search"), "]",
+		"tooltip[btn_mp_refresh;", fgettext("Refresh"), "]",
+		"container_end[]",
 
-		"container[9.75,0]" ..
-		"box[0,0;5.75,7.1;#666666]" ..
+		"container[9.75,0]",
+		"box[0,0;5.75,7.1;#666666]",
 
 		-- Address / Port
-		"label[0.25,0.35;" .. fgettext("Address") .. "]" ..
-		"label[4.25,0.35;" .. fgettext("Port") .. "]" ..
-		"field[0.25,0.5;4,0.75;te_address;;" ..
-			core.formspec_escape(core.settings:get("address")) .. "]" ..
-		"field[4.25,0.5;1.25,0.75;te_port;;" ..
-			core.formspec_escape(core.settings:get("remote_port")) .. "]" ..
+		"label[0.25,0.35;", fgettext("Address"), "]",
+		"label[4.25,0.35;", fgettext("Port"), "]",
+		"field[0.25,0.5;4,0.75;te_address;;",
+			core.formspec_escape(core.settings:get("address")), "]",
+		"field[4.25,0.5;1.25,0.75;te_port;;",
+			core.formspec_escape(core.settings:get("remote_port")), "]",
 
 		-- Description Background
-		"label[0.25,1.6;" .. fgettext("Server Description") .. "]" ..
-		"box[0.25,1.85;5.25,2.7;#999999]"..
+		"label[0.25,1.6;", fgettext("Server Description"), "]",
+		"box[0.25,1.85;5.25,2.7;#999999]",
 
 		-- Name / Password
-		"container[0,4.8]" ..
-		"label[0.25,0;" .. fgettext("Name") .. "]" ..
-		"label[2.875,0;" .. fgettext("Password") .. "]" ..
-		"field[0.25,0.2;2.625,0.75;te_name;;" .. core.formspec_escape(core.settings:get("name")) .. "]" ..
-		"pwdfield[2.875,0.2;2.625,0.75;te_pwd;]" ..
-		"container_end[]" ..
+		"container[0,4.8]",
+		"label[0.25,0;", fgettext("Name"), "]",
+		"label[2.875,0;", fgettext("Password"), "]",
+		"field[0.25,0.2;2.625,0.75;te_name;;", core.formspec_escape(core.settings:get("name")), "]",
+		"pwdfield[2.875,0.2;2.625,0.75;te_pwd;]",
+		"container_end[]",
 
 		-- Connect
-		"button[3,6;2.5,0.75;btn_mp_login;" .. fgettext("Login") .. "]"
-
-	if core.settings:get_bool("enable_split_login_register") then
-		retval = retval .. "button[0.25,6;2.5,0.75;btn_mp_register;" .. fgettext("Register") .. "]"
-	end
+		"button[3,6;2.5,0.75;btn_mp_login;", fgettext("Login"), "]",
+		"button[0.25,6;2.5,0.75;btn_mp_register;", fgettext("Register"), "]"
+	}
 
 	if tabdata.selected then
 		if gamedata.fav then
-			retval = retval .. "tooltip[btn_delete_favorite;" .. fgettext("Remove favorite") .. "]"
-			retval = retval .. "style[btn_delete_favorite;padding=6]"
-			retval = retval .. "image_button[5,1.3;0.5,0.5;" .. core.formspec_escape(defaulttexturedir ..
-				"server_favorite_delete.png") .. ";btn_delete_favorite;]"
+			table.insert_all(retval, {
+				"tooltip[btn_delete_favorite;", fgettext("Remove favorite"), "]",
+				"style[btn_delete_favorite;padding=6]",
+				"image_button[5,1.3;0.5,0.5;",
+					esc_texture("server_favorite_delete.png"), ";btn_delete_favorite;]"
+			})
 		end
 		if gamedata.serverdescription then
-			retval = retval .. "textarea[0.25,1.85;5.2,2.75;;;" ..
-				core.formspec_escape(gamedata.serverdescription) .. "]"
+			table.insert_all(retval, {
+				"textarea[0.25,1.85;5.2,2.75;;;",
+					core.formspec_escape(gamedata.serverdescription), "]"
+			})
 		end
 	end
 
-	retval = retval .. "container_end[]"
+	table.insert_all(retval, {
+		"container_end[]",
 
-	-- Table
-	retval = retval .. "tablecolumns[" ..
-		"image,tooltip=" .. fgettext("Ping") .. "," ..
-		"0=" .. core.formspec_escape(defaulttexturedir .. "blank.png") .. "," ..
-		"1=" .. core.formspec_escape(defaulttexturedir .. "server_ping_4.png") .. "," ..
-		"2=" .. core.formspec_escape(defaulttexturedir .. "server_ping_3.png") .. "," ..
-		"3=" .. core.formspec_escape(defaulttexturedir .. "server_ping_2.png") .. "," ..
-		"4=" .. core.formspec_escape(defaulttexturedir .. "server_ping_1.png") .. "," ..
-		"5=" .. core.formspec_escape(defaulttexturedir .. "server_favorite.png") .. "," ..
-		"6=" .. core.formspec_escape(defaulttexturedir .. "server_public.png") .. "," ..
-		"7=" .. core.formspec_escape(defaulttexturedir .. "server_incompatible.png") .. ";" ..
-		"color,span=1;" ..
-		"text,align=inline;"..
-		"color,span=1;" ..
-		"text,align=inline,width=4.25;" ..
-		"image,tooltip=" .. fgettext("Creative mode") .. "," ..
-		"0=" .. core.formspec_escape(defaulttexturedir .. "blank.png") .. "," ..
-		"1=" .. core.formspec_escape(defaulttexturedir .. "server_flags_creative.png") .. "," ..
-		"align=inline,padding=0.25,width=1.5;" ..
+		-- Table
+		"tablecolumns[",
+		"image,tooltip=", fgettext("Ping"), ",",
+		"0=", esc_texture("blank.png"), ",",
+		"1=", esc_texture("server_ping_4.png"), ",",
+		"2=", esc_texture("server_ping_3.png"), ",",
+		"3=", esc_texture("server_ping_2.png"), ",",
+		"4=", esc_texture("server_ping_1.png"), ",",
+		"5=", esc_texture("server_favorite.png"), ",",
+		"6=", esc_texture("server_public.png"), ",",
+		"7=", esc_texture("server_incompatible.png"), ";",
+		"color,span=1;",
+		"text,align=inline;",
+		"color,span=1;",
+		"text,align=inline,width=4.25;",
+		"image,tooltip=", fgettext("Creative mode"), ",",
+		"0=", esc_texture("blank.png"), ",",
+		"1=", esc_texture("server_flags_creative.png"), ",",
+		"align=inline,padding=0.25,width=1.5;",
 		--~ PvP = Player versus Player
-		"image,tooltip=" .. fgettext("Damage / PvP") .. "," ..
-		"0=" .. core.formspec_escape(defaulttexturedir .. "blank.png") .. "," ..
-		"1=" .. core.formspec_escape(defaulttexturedir .. "server_flags_damage.png") .. "," ..
-		"2=" .. core.formspec_escape(defaulttexturedir .. "server_flags_pvp.png") .. "," ..
-		"align=inline,padding=0.25,width=1.5;" ..
-		"color,align=inline,span=1;" ..
-		"text,align=inline,padding=1]" ..
+		"image,tooltip=", fgettext("Damage / PvP"), ",",
+		"0=", esc_texture("blank.png"), ",",
+		"1=", esc_texture("server_flags_damage.png"), ",",
+		"2=", esc_texture("server_flags_pvp.png"), ",",
+		"align=inline,padding=0.25,width=1.5;",
+		"color,align=inline,span=1;",
+		"text,align=inline,padding=1]",
 		"table[0.25,1;9.25,5.8;servers;"
+	})
 
 	local servers = get_sorted_servers()
 
@@ -173,15 +177,15 @@ local function get_formspec(tabview, name, tabdata)
 		end
 	end
 
-	retval = retval .. table.concat(rows, ",")
+	retval[#retval+1] = table.concat(rows, ",")
 
 	if tabdata.selected then
-		retval = retval .. ";" .. tabdata.selected .. "]"
+		retval[#retval+1] = ";" .. tabdata.selected .. "]"
 	else
-		retval = retval .. ";0]"
+		retval[#retval+1] = ";0]"
 	end
 
-	return retval
+	return table.concat(retval)
 end
 
 --------------------------------------------------------------------------------
@@ -358,8 +362,7 @@ local function main_button_handler(tabview, fields, name, tabdata)
 		gamedata.address    = fields.te_address
 		gamedata.port       = te_port_number
 
-		local enable_split_login_register = core.settings:get_bool("enable_split_login_register")
-		gamedata.allow_login_or_register = enable_split_login_register and "login" or "any"
+		gamedata.allow_login_or_register = "login"
 		gamedata.selected_world = 0
 
 		local idx = core.get_table_index("servers")
