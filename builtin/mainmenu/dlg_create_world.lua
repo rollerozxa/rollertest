@@ -104,39 +104,38 @@ local function create_world_formspec(dialogdata)
 	end
 
 	local disallowed_mapgen_settings = {}
-	if game ~= nil then
-		local gameconfig = Settings(game.path.."/game.conf")
 
-		local allowed_mapgens = (gameconfig:get("allowed_mapgens") or ""):split()
-		for key, value in pairs(allowed_mapgens) do
-			allowed_mapgens[key] = value:trim()
-		end
+	local gameconfig = Settings(game.path.."/game.conf")
 
-		local disallowed_mapgens = (gameconfig:get("disallowed_mapgens") or ""):split()
-		for key, value in pairs(disallowed_mapgens) do
-			disallowed_mapgens[key] = value:trim()
-		end
+	local allowed_mapgens = (gameconfig:get("allowed_mapgens") or ""):split()
+	for key, value in pairs(allowed_mapgens) do
+		allowed_mapgens[key] = value:trim()
+	end
 
-		if #allowed_mapgens > 0 then
-			for i = #mapgens, 1, -1 do
-				if table.indexof(allowed_mapgens, mapgens[i]) == -1 then
-					table.remove(mapgens, i)
-				end
+	local disallowed_mapgens = (gameconfig:get("disallowed_mapgens") or ""):split()
+	for key, value in pairs(disallowed_mapgens) do
+		disallowed_mapgens[key] = value:trim()
+	end
+
+	if #allowed_mapgens > 0 then
+		for i = #mapgens, 1, -1 do
+			if table.indexof(allowed_mapgens, mapgens[i]) == -1 then
+				table.remove(mapgens, i)
 			end
 		end
+	end
 
-		if #disallowed_mapgens > 0 then
-			for i = #mapgens, 1, -1 do
-				if table.indexof(disallowed_mapgens, mapgens[i]) > 0 then
-					table.remove(mapgens, i)
-				end
+	if #disallowed_mapgens > 0 then
+		for i = #mapgens, 1, -1 do
+			if table.indexof(disallowed_mapgens, mapgens[i]) > 0 then
+				table.remove(mapgens, i)
 			end
 		end
+	end
 
-		local ds = (gameconfig:get("disallowed_mapgen_settings") or ""):split()
-		for _, value in pairs(ds) do
-			disallowed_mapgen_settings[value:trim()] = true
-		end
+	local ds = (gameconfig:get("disallowed_mapgen_settings") or ""):split()
+	for _, value in pairs(ds) do
+		disallowed_mapgen_settings[value:trim()] = true
 	end
 
 	local mglist = ""
@@ -277,62 +276,67 @@ local function create_world_formspec(dialogdata)
 		label_spflags = "label[0,"..y_start..";" .. fgettext("Mapgen-specific flags") .. "]"
 	end
 
-	local retval =
-		"size[11.8,5.75,true]position[0.5,0.55]" ..
+	local retval = {
+		"size[11.8,5.75,true]position[0.5,0.55]",
 
 		-- Left side
-		"container[0,0]"..
-		"field[0.3,0.6;6,0.5;te_world_name;" ..
-		fgettext("World name") ..
-		";" .. core.formspec_escape(dialogdata.worldname) .. "]" ..
+		"container[0,0]",
+		"field[0.3,0.6;6,0.5;te_world_name;",
+			fgettext("World name"), ";", core.formspec_escape(dialogdata.worldname), "]",
 		"set_focus[te_world_name;false]"
+	}
+
+	local function write(...) table.insert_all(retval, {...}) end
 
 	if not disallowed_mapgen_settings["seed"] then
-		retval = retval .. "field[0.3,1.7;6,0.5;te_seed;" ..
-				fgettext("Seed") ..
-				";".. core.formspec_escape(dialogdata.seed) .. "]"
+		write(
+			"field[0.3,1.7;6,0.5;te_seed;", fgettext("Seed"), ";",
+				core.formspec_escape(dialogdata.seed) .. "]"
+		)
 	end
 
 	if #mapgens == 1 then
-		retval = retval ..
-			"dropdown[-10,2.5;6.3;dd_mapgen;"..mglist..";"..selindex.."]"
+		write(
+			"dropdown[-10,2.5;6.3;dd_mapgen;", mglist, ";", selindex, "]"
+		)
 	else
-		retval = retval ..
-			"label[0,2;" .. fgettext("Mapgen") .. "]"..
-			"dropdown[0,2.5;6.3;dd_mapgen;" .. mglist .. ";" .. selindex .. "]"
+		write(
+			"label[0,2;", fgettext("Mapgen"), "]",
+			"dropdown[0,2.5;6.3;dd_mapgen;", mglist, ";", selindex, "]"
+		)
 	end
 
 	-- Warning when making a devtest world
-	if pkgmgr.games[1].id == "devtest" then
-		retval = retval ..
-			"container[0,3.5]" ..
-			"box[0,0;5.8,1.5;#ff8800]" ..
-			"textarea[0.4,0.1;6,1.8;;;"..
-			fgettext("Development Test is meant for developers.") .. "]" ..
-			"button[1,0.75;4,0.5;world_create_open_cdb;" .. fgettext("Install another game") .. "]" ..
+	if game.id == "devtest" then
+		write(
+			"container[0,3.5]",
+			"box[0,0;5.8,1.5;#ff8800]",
+			"textarea[0.4,0.1;6,1.8;;;", fgettext("Development Test is meant for developers."), "]",
+			"button[1,0.75;4,0.5;world_create_open_cdb;", fgettext("Install another game"), "]",
 			"container_end[]"
+		)
 	end
 
-	retval = retval ..
-		"container_end[]" ..
+	write(
+		"container_end[]",
 
 		-- Right side
-		"container[6.2,0]"..
-		label_flags .. str_flags ..
-		label_spflags .. str_spflags ..
-		"container_end[]"..
+		"container[6.2,0]",
+		label_flags, str_flags,
+		label_spflags, str_spflags,
+		"container_end[]",
 
 		-- Menu buttons
-		"button[2.95,5.3;3,0.5;world_create_confirm;" .. fgettext("Create") .. "]" ..
-		"button[5.95,5.3;3,0.5;world_create_cancel;" .. fgettext("Cancel") .. "]"
+		"button[2.95,5.3;3,0.5;world_create_confirm;", fgettext("Create"), "]",
+		"button[5.95,5.3;3,0.5;world_create_cancel;", fgettext("Cancel"), "]"
+	)
 
-	return retval
-
+	return table.concat(retval)
 end
 
 local function create_world_buttonhandler(this, fields)
 
-	if fields["world_create_open_cdb"] then
+	if fields.world_create_open_cdb then
 		local dlg = create_store_dlg("game")
 		dlg:set_parent(this.parent)
 		this:delete()
@@ -341,46 +345,42 @@ local function create_world_buttonhandler(this, fields)
 		return true
 	end
 
-	if fields["world_create_confirm"] or
-		fields["key_enter"] then
+	if fields.world_create_confirm or fields.key_enter then
 
-		if fields["key_enter"] then
+		if fields.key_enter then
 			-- HACK: This timestamp prevents double-triggering when pressing Enter on an input box
 			-- and releasing it on a button[] or textlist[] due to instant formspec updates.
 			this.parent.dlg_create_world_closed_at = core.get_us_time()
 		end
 
-		local worldname = fields["te_world_name"]
+		local worldname = fields.te_world_name
 		local game, _ = pkgmgr.find_by_gameid(core.settings:get("menu_last_game"))
 
+		assert(game, "No game exists.")
+
 		local message
-		if game == nil then
-			message = fgettext_ne("No game selected")
-		end
 
-		if message == nil then
-			-- For unnamed worlds use the generated name 'world<number>',
-			-- where the number increments: it is set to 1 larger than the largest
-			-- generated name number found.
-			if worldname == "" then
-				local worldnum_max = 0
-				for _, world in ipairs(menudata.worldlist:get_list()) do
-					if world.name:match("^world%d+$") then
-						local worldnum = tonumber(world.name:sub(6))
-						worldnum_max = math.max(worldnum_max, worldnum)
-					end
+		-- For unnamed worlds use the generated name 'world<number>',
+		-- where the number increments: it is set to 1 larger than the largest
+		-- generated name number found.
+		if worldname == "" then
+			local worldnum_max = 0
+			for _, world in ipairs(menudata.worldlist:get_list()) do
+				if world.name:match("^world%d+$") then
+					local worldnum = tonumber(world.name:sub(6))
+					worldnum_max = math.max(worldnum_max, worldnum)
 				end
-				worldname = "world" .. worldnum_max + 1
 			end
+			worldname = "world" .. worldnum_max + 1
+		end
 
-			if menudata.worldlist:uid_exists_raw(worldname) then
-				message = fgettext_ne("A world named \"$1\" already exists", worldname)
-			end
+		if menudata.worldlist:uid_exists_raw(worldname) then
+			message = fgettext_ne("A world named \"$1\" already exists", worldname)
 		end
 
 		if message == nil then
-			this.data.seed = fields["te_seed"] or ""
-			this.data.mg = fields["dd_mapgen"]
+			this.data.seed = fields.te_seed or ""
+			this.data.mg = fieldsdd_mapgen
 
 			-- actual names as used by engine
 			local settings = {
@@ -411,8 +411,8 @@ local function create_world_buttonhandler(this, fields)
 		return true
 	end
 
-	this.data.worldname = fields["te_world_name"]
-	this.data.seed = fields["te_seed"] or ""
+	this.data.worldname = fields.te_world_name
+	this.data.seed = fields.te_seed or ""
 
 	for k,v in pairs(fields) do
 		local split = string.split(k, "_", nil, 3)
@@ -426,13 +426,13 @@ local function create_world_buttonhandler(this, fields)
 		end
 	end
 
-	if fields["world_create_cancel"] then
+	if fields.world_create_cancel then
 		this:delete()
 		return true
 	end
 
-	if fields["mgv6_biomes"] then
-		local entry = core.formspec_escape(fields["mgv6_biomes"])
+	if fields.mgv6_biomes then
+		local entry = core.formspec_escape(fields.mgv6_biomes)
 		for b=1, #mgv6_biomes do
 			if entry == mgv6_biomes[b][1] then
 				local ftable = this.data.flags.v6
@@ -443,8 +443,8 @@ local function create_world_buttonhandler(this, fields)
 		end
 	end
 
-	if fields["dd_mapgen"] then
-		this.data.mg = fields["dd_mapgen"]
+	if fields.dd_mapgen then
+		this.data.mg = fields.dd_mapgen
 		return true
 	end
 
@@ -457,6 +457,7 @@ function create_create_world_dlg()
 					create_world_formspec,
 					create_world_buttonhandler,
 					nil)
+
 	retval.data = {
 		worldname = "",
 		-- settings the world is created with:

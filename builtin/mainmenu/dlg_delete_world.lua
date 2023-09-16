@@ -24,7 +24,7 @@ local function delete_world_formspec(dialogdata)
 end
 
 local function delete_world_buttonhandler(this, fields)
-	if fields["world_delete_confirm"] then
+	if fields.world_delete_confirm then
 		if this.data.delete_index > 0 and
 				this.data.delete_index <= #menudata.worldlist:get_raw_list() then
 			core.delete_world(this.data.delete_index)
@@ -34,7 +34,7 @@ local function delete_world_buttonhandler(this, fields)
 		return true
 	end
 
-	if fields["world_delete_cancel"] then
+	if fields.world_delete_cancel then
 		this:delete()
 		return true
 	end

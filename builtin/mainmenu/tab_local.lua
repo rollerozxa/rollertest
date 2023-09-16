@@ -275,7 +275,7 @@ local function main_button_handler(this, fields, name, tabdata)
 		return true
 	end
 
-	if fields["cb_creative_mode"] then
+	if fields.cb_creative_mode then
 		core.settings:set("creative_mode", fields["cb_creative_mode"])
 		local selected = core.get_textlist_index("sp_worlds")
 		menu_worldmt(selected, "creative_mode", fields["cb_creative_mode"])
@@ -283,7 +283,7 @@ local function main_button_handler(this, fields, name, tabdata)
 		return true
 	end
 
-	if fields["cb_enable_damage"] then
+	if fields.cb_enable_damage then
 		core.settings:set("enable_damage", fields["cb_enable_damage"])
 		local selected = core.get_textlist_index("sp_worlds")
 		menu_worldmt(selected, "enable_damage", fields["cb_enable_damage"])
@@ -291,13 +291,13 @@ local function main_button_handler(this, fields, name, tabdata)
 		return true
 	end
 
-	if fields["cb_server"] then
+	if fields.cb_server then
 		core.settings:set("enable_server", fields["cb_server"])
 
 		return true
 	end
 
-	if fields["play"] ~= nil or world_doubleclick or fields["key_enter"] then
+	if fields.play or world_doubleclick or fields["key_enter"] then
 		local enter_key_duration = core.get_us_time() - this.dlg_create_world_closed_at
 		if world_doubleclick and enter_key_duration <= 200000 then -- 200 ms
 			this.dlg_create_world_closed_at = 0
@@ -358,7 +358,7 @@ local function main_button_handler(this, fields, name, tabdata)
 		return true
 	end
 
-	if fields["world_delete"] ~= nil then
+	if fields.world_delete then
 		local selected = core.get_textlist_index("sp_worlds")
 		if selected ~= nil and
 			selected <= menudata.worldlist:size() then
@@ -378,14 +378,13 @@ local function main_button_handler(this, fields, name, tabdata)
 		return true
 	end
 
-	if fields["world_configure"] ~= nil then
+	if fields.world_configure then
 		local selected = core.get_textlist_index("sp_worlds")
-		if selected ~= nil then
+		if selected then
 			local configdialog =
-				create_configure_world_dlg(
-						menudata.worldlist:get_raw_index(selected))
+				create_configure_world_dlg(menudata.worldlist:get_raw_index(selected))
 
-			if (configdialog ~= nil) then
+			if configdialog then
 				configdialog:set_parent(this)
 				this:hide()
 				configdialog:show()

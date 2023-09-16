@@ -26,9 +26,9 @@ end
 
 --------------------------------------------------------------------------------
 local function delete_content_buttonhandler(this, fields)
-	if fields["dlg_delete_content_confirm"] ~= nil then
+	if fields.dlg_delete_content_confirm then
 
-		if this.data.content.path ~= nil and
+		if this.data.content.path and
 				this.data.content.path ~= "" and
 				this.data.content.path ~= core.get_modpath() and
 				this.data.content.path ~= core.get_gamepath() and
@@ -49,7 +49,7 @@ local function delete_content_buttonhandler(this, fields)
 		return true
 	end
 
-	if fields["dlg_delete_content_cancel"] then
+	if fields.dlg_delete_content_cancel then
 		this:delete()
 		return true
 	end

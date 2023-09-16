@@ -98,7 +98,7 @@ local function register_buttonhandler(this, fields)
 		core.start()
 	end
 
-	if fields["dlg_register_cancel"] then
+	if fields.dlg_register_cancel then
 		this:delete()
 		return true
 	end

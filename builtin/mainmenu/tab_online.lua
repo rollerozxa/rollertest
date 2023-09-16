@@ -105,24 +105,26 @@ local function get_formspec(tabview, name, tabdata)
 		"button[0.25,6;2.5,0.75;btn_mp_register;", fgettext("Register"), "]"
 	}
 
+	local function write(...) table.insert_all(retval, {...}) end
+
 	if tabdata.selected then
 		if gamedata.fav then
-			table.insert_all(retval, {
+			write(
 				"tooltip[btn_delete_favorite;", fgettext("Remove favorite"), "]",
 				"style[btn_delete_favorite;padding=6]",
 				"image_button[5,1.3;0.5,0.5;",
 					esc_texture("server_favorite_delete.png"), ";btn_delete_favorite;]"
-			})
+			)
 		end
 		if gamedata.serverdescription then
-			table.insert_all(retval, {
+			write(
 				"textarea[0.25,1.85;5.2,2.75;;;",
 					core.formspec_escape(gamedata.serverdescription), "]"
-			})
+			)
 		end
 	end
 
-	table.insert_all(retval, {
+	write(
 		"container_end[]",
 
 		-- Table
@@ -153,7 +155,7 @@ local function get_formspec(tabview, name, tabdata)
 		"color,align=inline,span=1;",
 		"text,align=inline,padding=1]",
 		"table[0.25,1;9.25,5.8;servers;"
-	})
+	)
 
 	local servers = get_sorted_servers()
 

@@ -270,11 +270,17 @@ function formspec_wrapper(formspec, variables)
 end
 
 function confirmation_formspec(message, confirm_id, confirm_label, cancel_id, cancel_label)
-	return "size[10,2.5,true]" ..
-			"label[0.5,0.5;" .. message .. "]" ..
-			"style[" .. confirm_id .. ";bgcolor=red]" ..
-			"button[0.5,1.5;2.5,0.5;" .. confirm_id .. ";" .. confirm_label .. "]" ..
-			"button[7.0,1.5;2.5,0.5;" .. cancel_id .. ";" .. cancel_label .. "]"
+	return table.concat({"size[10,2.5,true]",
+		"label[0.5,0.5;", message, "]",
+		"style[", confirm_id, ";bgcolor=red]",
+		"button[0.5,1.5;2.5,0.5;", confirm_id, ";", confirm_label, "]",
+		"button[7.0,1.5;2.5,0.5;", cancel_id, ";", cancel_label, "]"
+	})
+end
+
+-- Return an escaped path to a texture.
+function esc_texture(file)
+	return core.formspec_escape(defaulttexturedir .. file)
 end
 
 -- Common settings button and formspec handler
