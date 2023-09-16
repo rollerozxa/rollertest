@@ -23,10 +23,6 @@ local valid_disabled_settings = {
 	["enable_server"]=true,
 }
 
--- Name and port stored to persist when updating the formspec
-local current_name = core.settings:get("name")
-local current_port = core.settings:get("port")
-
 -- Currently chosen game in gamebar for theming and filtering
 function current_game()
 	local gameid = core.settings:get("menu_last_game")
@@ -245,14 +241,6 @@ local function main_button_handler(this, fields, name, tabdata)
 	end
 
 	local world_doubleclick = false
-
-	if fields["te_playername"] then
-		current_name = fields["te_playername"]
-	end
-
-	if fields["te_serverport"] then
-		current_port = fields["te_serverport"]
-	end
 
 	if fields["sp_worlds"] ~= nil then
 		local event = core.explode_textlist_event(fields["sp_worlds"])

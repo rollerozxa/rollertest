@@ -380,7 +380,7 @@ local function create_world_buttonhandler(this, fields)
 
 		if message == nil then
 			this.data.seed = fields.te_seed or ""
-			this.data.mg = fieldsdd_mapgen
+			this.data.mg = fields.dd_mapgen
 
 			-- actual names as used by engine
 			local settings = {
