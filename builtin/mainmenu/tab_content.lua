@@ -102,12 +102,7 @@ local function get_formspec(tabview, name, tabdata)
 			"box[7.1,2.4;8,3.1;#000]"
 		})
 
-		if selected_pkg.is_modpack then
-			table.insert_all(retval, {
-				"button[11.1,5.8;4,0.9;btn_mod_mgr_rename_modpack;",
-				fgettext("Rename"), "]"
-			})
-		elseif selected_pkg.type == "mod" then
+		if selected_pkg.type == "mod" then
 			-- Show dependencies for mods
 			desc = desc .. "\n\n"
 			local toadd_hard = table.concat(info.depends or {}, "\n")
@@ -185,16 +180,6 @@ local function handle_buttons(tabview, fields, tabname, tabdata)
 		dlg:set_parent(tabview)
 		tabview:hide()
 		dlg:show()
-		packages = nil
-		return true
-	end
-
-	if fields.btn_mod_mgr_rename_modpack then
-		local mod = packages:get_list()[tabdata.selected_pkg]
-		local dlg_renamemp = create_rename_modpack_dlg(mod)
-		dlg_renamemp:set_parent(tabview)
-		tabview:hide()
-		dlg_renamemp:show()
 		packages = nil
 		return true
 	end
