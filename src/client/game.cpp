@@ -31,6 +31,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "client/keys.h"
 #include "client/joystick_controller.h"
 #include "client/mapblock_mesh.h"
+#include "client/sound.h"
 #include "clientmap.h"
 #include "clouds.h"
 #include "config.h"
@@ -75,10 +76,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "clientdynamicinfo.h"
 
 #if USE_SOUND
-	#include "client/sound_openal.h"
-#else
-	#include "client/sound.h"
+	#include "client/sound/sound_openal.h"
 #endif
+
 /*
 	Text input system
 */
@@ -972,7 +972,7 @@ private:
 
 	bool m_first_loop_after_window_activation = false;
 	bool m_camera_offset_changed = false;
-	bool m_game_focused;
+	bool m_game_focused = false;
 
 	bool m_does_lost_focus_pause_game = false;
 
@@ -1953,7 +1953,7 @@ void Game::processUserInput(f32 dtime)
 {
 	// Reset input if window not active or some menu is active
 	if (!device->isWindowActive() || isMenuActive() || guienv->hasFocus(gui_chat_console)) {
-		if(m_game_focused) {
+		if (m_game_focused) {
 			m_game_focused = false;
 			infostream << "Game lost focus" << std::endl;
 			input->releaseAllKeys();

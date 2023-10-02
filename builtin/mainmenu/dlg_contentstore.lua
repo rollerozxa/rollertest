@@ -739,8 +739,16 @@ function store.sort_packages()
 		end
 	end
 
-	-- Sort installed content by title
+	-- Sort installed content first by "is there an update available?", then by title
 	table.sort(ret, function(a, b)
+		local a_updatable = a.installed_release < a.release
+		local b_updatable = b.installed_release < b.release
+		if a_updatable and not b_updatable then
+			return true
+		elseif b_updatable and not a_updatable then
+			return false
+		end
+
 		return a.title < b.title
 	end)
 
@@ -805,7 +813,7 @@ local function get_info_formspec(text)
 	return table.concat({
 		"formspec_version[6]",
 		"size[15.75,9.5]",
-		not TOUCHSCREEN_GUI and "position[0.5,0.55]" or "",
+		TOUCHSCREEN_GUI and "padding[0.01,0.01]" or "position[0.5,0.55]",
 
 		"label[4,4.35;", text, "]",
 		"container[0,", H - 0.8 - 0.375, "]",
@@ -836,11 +844,12 @@ function store.get_formspec(dlgdata)
 		"formspec_version[6]",
 		"size[",W,",",H,"]",
 		not TOUCHSCREEN_GUI and "position[0.5,0.55]" or "",
+
 		"style[status,downloading,queued;border=false]",
 
 		"container[0.375,0.375]",
 		"field[0,0;7.225,0.8;search_string;;", core.formspec_escape(search_string), "]",
-		"field_close_on_enter[search_string;false]",
+		"field_enter_after_edit[search_string;true]",
 		"image_button[7.3,0;0.8,0.8;", core.formspec_escape(defaulttexturedir .. "search.png"), ";search;]",
 		"image_button[8.125,0;0.8,0.8;", core.formspec_escape(defaulttexturedir .. "clear.png"), ";clear;]",
 		"dropdown[9.175,0;2.7875,0.8;type;", table.concat(filter_types_titles, ","), ";", filter_type, "]",
@@ -927,7 +936,10 @@ function store.get_formspec(dlgdata)
 		formspec[#formspec + 1] = "]"
 
 		-- buttons
-		local left_base = "image_button[-1.55,0;0.7,0.7;" .. core.formspec_escape(defaulttexturedir)
+		local description_width = W - 2.625 - 2 * 0.7 - 2 * 0.15
+
+		local second_base = "image_button[-1.55,0;0.7,0.7;" .. core.formspec_escape(defaulttexturedir)
+		local third_base = "image_button[-2.4,0;0.7,0.7;" .. core.formspec_escape(defaulttexturedir)
 		formspec[#formspec + 1] = "container["
 		formspec[#formspec + 1] = W - 0.375*2
 		formspec[#formspec + 1] = ",0.1]"
@@ -937,28 +949,28 @@ function store.get_formspec(dlgdata)
 			formspec[#formspec + 1] = core.formspec_escape(defaulttexturedir)
 			formspec[#formspec + 1] = "cdb_downloading.png;3;400;]"
 		elseif package.queued then
-			formspec[#formspec + 1] = left_base
+			formspec[#formspec + 1] = second_base
 			formspec[#formspec + 1] = "cdb_queued.png;queued;]"
 		elseif not package.path then
 			local elem_name = "install_" .. i .. ";"
 			formspec[#formspec + 1] = "style[" .. elem_name .. "bgcolor=#71aa34]"
-			formspec[#formspec + 1] = left_base .. "cdb_add.png;" .. elem_name .. "]"
+			formspec[#formspec + 1] = second_base .. "cdb_add.png;" .. elem_name .. "]"
 			formspec[#formspec + 1] = "tooltip[" .. elem_name .. fgettext("Install") .. tooltip_colors
 		else
 			if package.installed_release < package.release then
-
 				-- The install_ action also handles updating
 				local elem_name = "install_" .. i .. ";"
 				formspec[#formspec + 1] = "style[" .. elem_name .. "bgcolor=#28ccdf]"
-				formspec[#formspec + 1] = left_base .. "cdb_update.png;" .. elem_name .. "]"
+				formspec[#formspec + 1] = third_base .. "cdb_update.png;" .. elem_name .. "]"
 				formspec[#formspec + 1] = "tooltip[" .. elem_name .. fgettext("Update") .. tooltip_colors
-			else
 
-				local elem_name = "uninstall_" .. i .. ";"
-				formspec[#formspec + 1] = "style[" .. elem_name .. "bgcolor=#a93b3b]"
-				formspec[#formspec + 1] = left_base .. "cdb_clear.png;" .. elem_name .. "]"
-				formspec[#formspec + 1] = "tooltip[" .. elem_name .. fgettext("Uninstall") .. tooltip_colors
+				description_width = description_width - 0.7 - 0.15
 			end
+
+			local elem_name = "uninstall_" .. i .. ";"
+			formspec[#formspec + 1] = "style[" .. elem_name .. "bgcolor=#a93b3b]"
+			formspec[#formspec + 1] = second_base .. "cdb_clear.png;" .. elem_name .. "]"
+			formspec[#formspec + 1] = "tooltip[" .. elem_name .. fgettext("Uninstall") .. tooltip_colors
 		end
 
 		local web_elem_name = "view_" .. i .. ";"
@@ -969,7 +981,6 @@ function store.get_formspec(dlgdata)
 		formspec[#formspec + 1] = "container_end[]"
 
 		-- description
-		local description_width = W - 0.375*5 - 0.85 - 2*0.7 - 0.15
 		formspec[#formspec + 1] = "textarea[1.855,0.3;"
 		formspec[#formspec + 1] = tostring(description_width)
 		formspec[#formspec + 1] = ",1;;;"

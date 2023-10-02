@@ -18,7 +18,7 @@
 
 local packages_raw, packages
 
-local function get_formspec(tabview, name, tabdata)
+local function update_packages()
 	if not pkgmgr.global_mods then
 		pkgmgr.refresh_globals()
 	end
@@ -26,23 +26,33 @@ local function get_formspec(tabview, name, tabdata)
 		pkgmgr.update_gamelist()
 	end
 
+	packages_raw = {}
+	table.insert_all(packages_raw, pkgmgr.games)
+	table.insert_all(packages_raw, pkgmgr.get_texture_packs())
+	table.insert_all(packages_raw, pkgmgr.global_mods:get_list())
+
+	local function get_data()
+		return packages_raw
+	end
+
+	local function is_equal(element, uid) --uid match
+		return (element.type == "game" and element.id == uid) or
+				element.name == uid
+	end
+
+	packages = filterlist.create(get_data, pkgmgr.compare_package,
+			is_equal, nil, {})
+end
+
+local function on_change(type)
+	if type == "ENTER" then
+		update_packages()
+	end
+end
+
+local function get_formspec(tabview, name, tabdata)
 	if not packages then
-		packages_raw = {}
-		table.insert_all(packages_raw, pkgmgr.games)
-		table.insert_all(packages_raw, pkgmgr.get_texture_packs())
-		table.insert_all(packages_raw, pkgmgr.global_mods:get_list())
-
-		local function get_data()
-			return packages_raw
-		end
-
-		local function is_equal(element, uid) --uid match
-			return (element.type == "game" and element.id == uid) or
-					element.name == uid
-		end
-
-		packages = filterlist.create(get_data, pkgmgr.compare_package,
-				is_equal, nil, {})
+		update_packages()
 	end
 
 	if not tabdata.selected_pkg then
@@ -85,7 +95,7 @@ local function get_formspec(tabview, name, tabdata)
 		local info = core.get_content_info(selected_pkg.path)
 		local desc = fgettext("No package description available")
 		if info.description and info.description:trim() ~= "" then
-			desc = info.description
+			desc = core.formspec_escape(info.description)
 		end
 
 		local title_and_name
@@ -216,5 +226,5 @@ return {
 	caption = fgettext("Content"),
 	cbf_formspec = get_formspec,
 	cbf_button_handler = handle_buttons,
-	on_change = pkgmgr.update_gamelist
+	on_change = on_change
 }

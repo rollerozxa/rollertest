@@ -2643,6 +2643,9 @@ Version History
   * Added padding[] element
 * Formspec version 6 (5.6.0):
   * Add nine-slice images, animated_image, and fgimg_middle
+* Formspec version 7 (5.8.0):
+  * style[]: Add focused state for buttons
+  * Add field_enter_after_edit[] (experimental)
 
 Elements
 --------
@@ -2890,7 +2893,7 @@ Elements
 ### `pwdfield[<X>,<Y>;<W>,<H>;<name>;<label>]`
 
 * Textual password style field; will be sent to server when a button is clicked
-* When enter is pressed in field, fields.key_enter_field will be sent with the
+* When enter is pressed in field, `fields.key_enter_field` will be sent with the
   name of this field.
 * With the old coordinate system, fields are a set height, but will be vertically
   centered on `H`. With the new coordinate system, `H` will modify the height.
@@ -2923,12 +2926,21 @@ Elements
 * A "Proceed" button will be added automatically
 * See `field_close_on_enter` to stop enter closing the formspec
 
+### `field_enter_after_edit[<name>;<enter_after_edit>]`
+
+* Experimental, may be subject to change or removal at any time.
+* Only affects Android clients.
+* `<name>` is the name of the field.
+* If `<enter_after_edit>` is true, pressing the "Done" button in the Android
+  text input dialog will simulate an <kbd>Enter</kbd> keypress.
+* Defaults to false when not specified (i.e. no tag for a field).
+
 ### `field_close_on_enter[<name>;<close_on_enter>]`
 
-* <name> is the name of the field
-* if <close_on_enter> is false, pressing enter in the field will submit the
-  form but not close it.
-* defaults to true when not specified (ie: no tag for a field)
+* `<name>` is the name of the field.
+* If `<close_on_enter>` is false, pressing <kbd>Enter</kbd> in the field will
+  submit the form but not close it.
+* Defaults to true when not specified (i.e. no tag for a field).
 
 ### `textarea[<X>,<Y>;<W>,<H>;<name>;<label>;<default>]`
 
@@ -7496,8 +7508,8 @@ child will follow movement and rotation of that bone.
     * `frame_blend`: number, default: `0.0`
     * `frame_loop`: If `true`, animation will loop. If false, it will play once
        * default: `true`
-* `get_animation()`: returns current animation parameters set by `set_animaition`:
-    * `range`, `frame_speed`, `frame_blend`, `frame_loop`.
+* `get_animation()`: returns current animation parameters set by `set_animation`:
+    * `frame_range`, `frame_speed`, `frame_blend`, `frame_loop`.
 * `set_animation_frame_speed(frame_speed)`
     * Sets the frame speed of the object's animation
     * Unlike `set_animation`, this will not restart the animation
@@ -7693,16 +7705,44 @@ child will follow movement and rotation of that bone.
         * 9 - zoom
     * Returns `0` (no bits set) if the object is not a player.
 * `set_physics_override(override_table)`
+    * Overrides the physics attributes of the player
     * `override_table` is a table with the following fields:
-        * `speed`: multiplier to default walking speed value (default: `1`)
+        * `speed`: multiplier to default movement speed and acceleration values (default: `1`)
         * `jump`: multiplier to default jump value (default: `1`)
         * `gravity`: multiplier to default gravity value (default: `1`)
+        * `speed_climb`: multiplier to default climb speed value (default: `1`)
+            * Note: The actual climb speed is the product of `speed` and `speed_climb`
+        * `speed_crouch`: multiplier to default sneak speed value (default: `1`)
+            * Note: The actual sneak speed is the product of `speed` and `speed_crouch`
+        * `liquid_fluidity`: multiplier to liquid movement resistance value
+          (for nodes with `liquid_move_physics`); the higher this value, the lower the
+          resistance to movement. At `math.huge`, the resistance is zero and you can
+          move through any liquid like air. (default: `1`)
+            * Warning: Values below 1 are currently unsupported.
+        * `liquid_fluidity_smooth`: multiplier to default maximum liquid resistance value
+          (for nodes with `liquid_move_physics`); controls deceleration when entering
+          node at high speed. At higher values you come to a halt more quickly
+          (default: `1`)
+        * `liquid_sink`: multiplier to default liquid sinking speed value;
+          (for nodes with `liquid_move_physics`) (default: `1`)
+        * `acceleration_default`: multiplier to horizontal and vertical acceleration
+          on ground or when climbing (default: `1`)
+            * Note: The actual acceleration is the product of `speed` and `acceleration_default`
+        * `acceleration_air`: multiplier to acceleration
+          when jumping or falling (default: `1`)
+            * Note: The actual acceleration is the product of `speed` and `acceleration_air`
         * `sneak`: whether player can sneak (default: `true`)
         * `sneak_glitch`: whether player can use the new move code replications
           of the old sneak side-effects: sneak ladders and 2 node sneak jump
           (default: `false`)
         * `new_move`: use new move/sneak code. When `false` the exact old code
           is used for the specific old sneak behavior (default: `true`)
+    * Note: All numeric fields above modify a corresponding `movement_*` setting.
+    * For games, we recommend for simpler code to first modify the `movement_*`
+      settings (e.g. via the game's `minetest.conf`) to set a global base value
+      for all players and only use `set_physics_override` when you need to change
+      from the base value on a per-player basis
+
 * `get_physics_override()`: returns the table given to `set_physics_override`
 * `hud_add(hud definition)`: add a HUD element described by HUD def, returns ID
    number on success
@@ -7922,11 +7962,16 @@ child will follow movement and rotation of that bone.
     * `frame_speed` sets the animations frame speed. Default is 30.
 * `get_local_animation()`: returns idle, walk, dig, walk_while_dig tables and
   `frame_speed`.
-* `set_eye_offset([firstperson, thirdperson])`: defines offset vectors for
-  camera per player. An argument defaults to `{x=0, y=0, z=0}` if unspecified.
-    * in first person view
-    * in third person view (max. values `{x=-10/10,y=-10,15,z=-5/5}`)
-* `get_eye_offset()`: returns first and third person offsets.
+* `set_eye_offset([firstperson, thirdperson_back, thirdperson_front])`: Sets camera offset vectors.
+    * `firstperson`: Offset in first person view.
+      Defaults to `vector.zero()` if unspecified.
+    * `thirdperson_back`: Offset in third person back view.
+      Clamped between `vector.new(-10, -10, -5)` and `vector.new(10, 15, 5)`.
+      Defaults to `vector.zero()` if unspecified.
+    * `thirdperson_front`: Offset in third person front view.
+      Same limits as for `thirdperson_back` apply.
+      Defaults to `thirdperson_back` if unspecified.
+* `get_eye_offset()`: Returns camera offset vectors as set via `set_eye_offset`.
 * `send_mapblock(blockpos)`:
     * Sends an already loaded mapblock to the player.
     * Returns `false` if nothing was sent (note that this can also mean that
@@ -8881,6 +8926,10 @@ Used by `minetest.register_node`.
     --   settings apply.
     -- * nil: Will be treated as true if `liquidtype ~= "none"`
     --   and as false otherwise.
+
+    air_equivalent = nil,
+    -- unclear meaning, the engine sets this to true for 'air' and 'ignore'
+    -- deprecated.
 
     leveled = 0,
     -- Only valid for "nodebox" drawtype with 'type = "leveled"'.

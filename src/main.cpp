@@ -713,8 +713,8 @@ static void uninit_common()
 
 static void startup_message()
 {
-	infostream << PROJECT_NAME << " " << _("with")
-		<< " SER_FMT_VER_HIGHEST_READ="
+	infostream << PROJECT_NAME_C << " " << g_version_hash
+		<< "\nwith SER_FMT_VER_HIGHEST_READ="
 		<< (int)SER_FMT_VER_HIGHEST_READ << ", "
 		<< g_build_info << std::endl;
 }
@@ -998,8 +998,8 @@ static bool determine_subgame(GameParams *game_params)
 			if (game_params->is_dedicated_server) {
 				// If this is a dedicated server and no gamespec has been specified,
 				// print a friendly error pointing to ContentDB.
-				errorstream << "To run a " PROJECT_NAME_C " server, you will need some kind of game." << std::endl
-				            << "Check out content.minetest.net for a selection of games to pick from and download." << std::endl;
+				errorstream << "To run a " PROJECT_NAME_C " server, you need to select a game using the '--gameid' argument." << std::endl
+				            << "Check out https://content.minetest.net for a selection of games to pick from and download." << std::endl;
 			}
 
 			return false;

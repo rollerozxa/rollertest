@@ -118,7 +118,7 @@ local function get_formspec(tabview, name, tabdata)
 		end
 		if gamedata.serverdescription then
 			write(
-				"textarea[0.25,1.85;5.2,2.75;;;",
+				"textarea[0.25,1.85;5.25,2.7;;;",
 					core.formspec_escape(gamedata.serverdescription), "]"
 			)
 		end

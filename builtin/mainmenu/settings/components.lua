@@ -84,6 +84,7 @@ local function make_field(converter, validator, stringifier)
 
 				local fs = ("field[0,0.3;%f,0.8;%s;%s;%s]"):format(
 					avail_w - 2.3, setting.name, get_label(setting), core.formspec_escape(value))
+				fs = fs .. ("field_enter_after_edit[%s;true]"):format(setting.name)
 				fs = fs .. ("button[%f,0.3;1.5,0.8;%s;%s]"):format(avail_w - 2, "set_" .. setting.name, fgettext("Set"))
 
 				return fs, 1.1
@@ -192,7 +193,7 @@ function make.enum(setting)
 end
 
 
-function make.path(setting)
+local function make_path(setting)
 	return {
 		info_text = setting.comment,
 		setting = setting,
@@ -228,6 +229,15 @@ function make.path(setting)
 			end
 		end,
 	}
+end
+
+if PLATFORM == "Android" then
+	-- The Irrlicht file picker doesn't work on Android.
+	make.path = make.string
+	make.filepath = make.string
+else
+	make.path = make_path
+	make.filepath = make_path
 end
 
 
@@ -357,12 +367,16 @@ function make.flags(setting)
 end
 
 
-local function noise_params(setting)
+local function make_noise_params(setting)
 	return {
 		info_text = setting.comment,
 		setting = setting,
 
 		get_formspec = function(self, avail_w)
+			-- The "defaults" noise parameter flag doesn't reset a noise
+			-- setting to its default value, so we offer a regular reset button.
+			self.resettable = core.settings:has(setting.name)
+
 			local fs = "label[0,0.4;" .. get_label(setting) .. "]" ..
 					("button[%f,0;2.5,0.8;%s;%s]"):format(avail_w - 2.5, "edit_" .. setting.name, fgettext("Edit"))
 			return fs, 0.8
@@ -381,9 +395,8 @@ local function noise_params(setting)
 	}
 end
 
-make.filepath = make.path
-make.noise_params_2d = noise_params
-make.noise_params_3d = noise_params
+make.noise_params_2d = make_noise_params
+make.noise_params_3d = make_noise_params
 
 -- Irrlicht's goofy ahh file picker refuses to work on Android,
 -- treat 'filepath' and 'path' as regular 'string'.
