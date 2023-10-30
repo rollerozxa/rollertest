@@ -48,13 +48,13 @@ end
 
 
 local change_keys = {
-	query_text = "Change keys",
+	query_text = "Change Keys",
 	requires = {
 		keyboard_mouse = true,
 	},
 	get_formspec = function(self, avail_w)
 		local btn_w = math.min(avail_w, 3)
-		return ("button[0,0;%f,0.8;btn_change_keys;%s]"):format(btn_w, fgettext("Change keys")), 0.8
+		return ("button[0,0;%f,0.8;btn_change_keys;%s]"):format(btn_w, fgettext("Change Keys")), 0.8
 	end,
 	on_submit = function(self, fields)
 		if fields.btn_change_keys then
@@ -155,6 +155,7 @@ end
 
 -- These must not be translated, as they need to show in the local
 -- language no matter the user's current language.
+-- This list must be kept in sync with src/unsupported_language_list.txt.
 get_setting_info("language").option_labels = {
 	[""] = fgettext_ne("(Use system language)"),
 	--ar = " [ar]", blacklisted
@@ -290,7 +291,7 @@ local function update_filtered_pages(query)
 
 	for _, page in ipairs(all_pages) do
 		local content, page_weight = filter_page_content(page, query_keywords)
-		if page_has_contents(content) then
+		if page_has_contents(page, content) then
 			local new_page = table.copy(page)
 			new_page.content = content
 
@@ -346,8 +347,17 @@ local function check_requirements(name, requires)
 end
 
 
-function page_has_contents(content)
-	for _, item in ipairs(content) do
+function page_has_contents(page, actual_content)
+	local is_advanced =
+			page.id:sub(1, #"client_and_server") == "client_and_server" or
+			page.id:sub(1, #"mapgen") == "mapgen" or
+			page.id:sub(1, #"advanced") == "advanced"
+	local show_advanced = core.settings:get_bool("show_advanced")
+	if is_advanced and not show_advanced then
+		return false
+	end
+
+	for _, item in ipairs(actual_content) do
 		if item == false or item.heading then --luacheck: ignore
 			-- skip
 		elseif type(item) == "string" then
@@ -437,7 +447,7 @@ local formspec_show_hack = false
 
 
 local function get_formspec(dialogdata)
-	local page_id = dialogdata.page_id or "most_used"
+	local page_id = dialogdata.page_id or "accessibility"
 	local page = filtered_page_by_id[page_id]
 
 	local extra_h = 1 -- not included in tabsize.height
@@ -451,7 +461,10 @@ local function get_formspec(dialogdata)
 	local left_pane_width = 5
 	local search_width = left_pane_width - 0.25 + scrollbar_w - (0.75 * 2)
 
+	local back_w = 3
+	local checkbox_w = (tabsize.width - back_w - 2*0.2) / 2
 	local show_technical_names = core.settings:get_bool("show_technical_names")
+	local show_advanced = core.settings:get_bool("show_advanced")
 
 	formspec_show_hack = not formspec_show_hack
 
@@ -475,11 +488,20 @@ local function get_formspec(dialogdata)
 
 		"button[0.5,", tostring(tabsize.height), ";4.5,0.9;back;", fgettext("Back"), "]",
 
-		("box[%f,%f;5.25,0.8;#0000008C]"):format(tabsize.width - 5.25, tabsize.height + 0.1),
-		"checkbox[", tostring(tabsize.width - 5), ",", tostring(tabsize.height + 0.5), ";show_technical_names;",
-			fgettext("Show technical names"), ";", tostring(show_technical_names), "]",
+		("box[%f,%f;%f,0.8;#0000008C]"):format(
+			back_w + 0.2, tabsize.height + 0.2, checkbox_w),
+		("checkbox[%f,%f;show_technical_names;%s;%s]"):format(
+			back_w + 2*0.2, tabsize.height + 0.6,
+			fgettext("Show technical names"), tostring(show_technical_names)),
 
-		"field[0.25,0.25;", tostring(search_width), ",0.9;search_query;;",
+		("box[%f,%f;%f,0.8;#0000008C]"):format(
+			back_w + 2*0.2 + checkbox_w, tabsize.height + 0.2, checkbox_w),
+		("checkbox[%f,%f;show_advanced;%s;%s]"):format(
+			back_w + 3*0.2 + checkbox_w, tabsize.height + 0.6,
+			fgettext("Show advanced settings"), tostring(show_advanced)),
+
+		"field[0.25,0.25;", tostring(search_width), ",0.75;search_query;;",
+
 			core.formspec_escape(dialogdata.query or ""), "]",
 		"field_enter_after_edit[search_query;true]",
 		"container[", tostring(search_width + 0.25), ", 0.25]",
@@ -619,6 +641,23 @@ local function buttonhandler(this, fields)
 		return true
 	end
 
+	if fields.show_advanced ~= nil then
+		local value = core.is_yes(fields.show_advanced)
+		core.settings:set_bool("show_advanced", value)
+
+		local suggested_page_id = update_filtered_pages(dialogdata.query)
+
+		if not filtered_page_by_id[dialogdata.page_id] then
+			dialogdata.components = nil
+			dialogdata.leftscroll = 0
+			dialogdata.rightscroll = 0
+
+			dialogdata.page_id = suggested_page_id
+		end
+
+		return true
+	end
+
 	if fields.search or fields.key_enter_field == "search_query" then
 		dialogdata.components = nil
 		dialogdata.leftscroll = 0
@@ -666,8 +705,19 @@ local function buttonhandler(this, fields)
 end
 
 
+local function eventhandler(event)
+	if event == "DialogShow" then
+		-- Don't show the "MINETEST" header behind the dialog.
+		mm_game_theme.set_engine(true)
+		return true
+	end
+
+	return false
+end
+
+
 function create_settings_dlg()
-	local dlg = dialog_create("dlg_settings", get_formspec, buttonhandler, nil)
+	local dlg = dialog_create("dlg_settings", get_formspec, buttonhandler, eventhandler)
 
 	dlg.data.page_id = update_filtered_pages("")
 

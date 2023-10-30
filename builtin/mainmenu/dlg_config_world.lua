@@ -238,7 +238,7 @@ local function get_formspec(data)
 
 	write(
 		"tablecolumns[color;tree;image,align=inline,width=1.5,0=", esc_texture("blank.png"),
-			",1=", esc_texture("checkbox_16_white.png"),
+			",1=", esc_texture("checkbox_16.png"),
 			",2=", esc_texture("error_icon_orange.png"),
 			",3=", esc_texture("error_icon_red.png"), ";text]",
 		"table[9.1,1.25;8.4,9.25;world_config_modlist;",

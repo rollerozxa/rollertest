@@ -296,7 +296,7 @@ function settings_btn_handler(tabview, fields)
 		dlg:set_parent(tabview)
 		tabview:hide()
 		dlg:show()
-		mm_game_theme.reset()
+		mm_game_theme.set_engine()
 		return true
 	end
 end
