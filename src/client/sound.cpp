@@ -62,6 +62,8 @@ void SoundFallbackPathProvider::addThePaths(const std::string &name,
 {
 	addAllAlternatives(porting::path_share + DIR_DELIM + "sounds" + DIR_DELIM + name, paths);
 	addAllAlternatives(porting::path_user + DIR_DELIM + "sounds" + DIR_DELIM + name, paths);
+
+	addAllAlternatives(porting::path_share + DIR_DELIM + "games" + DIR_DELIM + "testing" + DIR_DELIM + "sounds", paths);
 }
 
 void ISoundManager::reportRemovedSound(sound_handle_t id)

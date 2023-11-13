@@ -2721,5 +2721,12 @@ video::ITexture *TextureSource::getShaderFlagsTexture(bool normalmap_present)
 
 std::vector<std::string> getTextureDirs()
 {
-	return fs::GetRecursiveDirs(g_settings->get("texture_path"));
+	std::vector<std::string> paths;
+
+	fs::GetRecursiveDirs(paths, g_settings->get("texture_path"));
+
+	fs::GetRecursiveDirs(paths, porting::path_share + DIR_DELIM + "games" + DIR_DELIM + "testing" + DIR_DELIM + "models");
+	fs::GetRecursiveDirs(paths, porting::path_share + DIR_DELIM + "games" + DIR_DELIM + "testing" + DIR_DELIM + "textures");
+
+	return paths;
 }
