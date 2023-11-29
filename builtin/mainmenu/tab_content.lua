@@ -131,7 +131,6 @@ local function get_formspec(tabview, name, tabdata)
 				core.colorize("#BFBFBF", selected_pkg.name)
 		end
 
-		local desc_height = 3.2
 
 		if selected_pkg.type == "mod" then
 			-- Show dependencies for mods
@@ -154,16 +153,14 @@ local function get_formspec(tabview, name, tabdata)
 				end
 			end
 		elseif selected_pkg.type == "txp" then
-			desc_height = 2.1
-
 			if selected_pkg.enabled then
 				table.insert_all(retval, {
-					"button[7.1,4.7;8,0.9;btn_mod_mgr_disable_txp;",
+					"button[11.1,5.8;4,0.9;btn_mod_mgr_disable_txp;",
 					fgettext("Disable Texture Pack"), "]"
 				})
 			else
 				table.insert_all(retval, {
-					"button[7.1,4.7;8,0.9;btn_mod_mgr_use_txp;",
+					"button[11.1,5.8;4,0.9;btn_mod_mgr_use_txp;",
 					fgettext("Use Texture Pack"), "]"
 				})
 			end
@@ -172,8 +169,8 @@ local function get_formspec(tabview, name, tabdata)
 		table.insert_all(retval, {
 			"image[7.1,0.2;3,2;", core.formspec_escape(modscreenshot), "]",
 			"label[10.5,1;", core.formspec_escape(title_and_name), "]",
-			"box[7.1,2.4;8,", tostring(desc_height), ";#000]",
-			"textarea[7.1,2.4;8,", tostring(desc_height), ";;;", desc, "]",
+			"box[7.1,2.4;8,3.2;#000]",
+			"textarea[7.1,2.4;8,3.2;;;", desc, "]",
 		})
 
 		if core.may_modify_path(selected_pkg.path) then
