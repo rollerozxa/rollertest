@@ -26,7 +26,7 @@ For Fedora users:
 
 For openSUSE users:
 
-	sudo zypper install gcc cmake libjpeg8-devel libpng16-devel openal-soft-devel libcurl-devel sqlite3-devel luajit-devel libzstd-devel
+	sudo zypper install gcc cmake libjpeg8-devel libpng16-devel openal-soft-devel libcurl-devel sqlite3-devel luajit-devel libzstd-devel Mesa-libGL-devel libXi-devel libvorbis-devel freetype2-devel
 
 For Arch users:
 
@@ -72,6 +72,7 @@ Download source (this is the URL to the latest of source repository, which might
 Download IrrlichtMt to `lib/irrlichtmt`, it will be used to satisfy the IrrlichtMt dependency that way:
 
     git clone --depth 1 https://github.com/minetest/irrlicht.git lib/irrlichtmt
+
 
 ## Build
 

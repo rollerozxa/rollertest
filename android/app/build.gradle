@@ -75,7 +75,7 @@ task prepareAssets() {
 			from "${projRoot}/fonts" include "*.ttf" into "${assetsFolder}/fonts"
 		}
 		copy {
-			from "${projRoot}/textures/base" into "${assetsFolder}/textures/base"
+			from "${projRoot}/textures/base/pack" into "${assetsFolder}/textures/base/pack"
 		}
 
 		// compile translations

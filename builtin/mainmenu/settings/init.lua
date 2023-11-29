@@ -26,4 +26,4 @@ dofile(path .. DIR_DELIM .. "dlg_file_browser.lua")
 -- For RUN_IN_PLACE the generated files may appear in the 'bin' folder.
 -- See comment and alternative line at the end of 'generate_from_settingtypes.lua'.
 
--- assert(loadfile(path .. DIR_DELIM .. "generate_from_settingtypes.lua"))(settingtypes.parse_config_file(true, false))
+-- dofile(path .. DIR_DELIM .. "generate_from_settingtypes.lua")

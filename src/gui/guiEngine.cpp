@@ -283,10 +283,15 @@ void GUIEngine::run()
 		else
 			drawBackground(driver);
 
-		drawHeader(driver);
 		drawFooter(driver);
 
 		m_rendering_engine->get_gui_env()->drawAll();
+
+		// The header *must* be drawn after the menu because it uses
+		// GUIFormspecMenu::getAbsoluteRect().
+		// The header *can* be drawn after the menu because it never intersects
+		// the menu.
+		drawHeader(driver);
 
 		driver->endScene();
 
@@ -478,18 +483,30 @@ void GUIEngine::drawHeader(video::IVideoDriver *driver)
 
 	video::ITexture* texture = m_textures[TEX_LAYER_HEADER].texture;
 
-	/* If no texture, draw nothing */
-	if(!texture)
+	// If no texture, draw nothing
+	if (!texture)
 		return;
 
+	/*
+	 * Calculate the maximum rectangle
+	 */
+	core::rect<s32> formspec_rect = m_menu->getAbsoluteRect();
+	// 4 px of padding on each side
+	core::rect<s32> max_rect(4, 4, screensize.Width - 8, formspec_rect.UpperLeftCorner.Y - 8);
+
+	// If no space (less than 16x16 px), draw nothing
+	if (max_rect.getWidth() < 16 || max_rect.getHeight() < 16)
+		return;
+
+	/*
+	 * Calculate the preferred rectangle
+	 */
 	f32 mult = (((f32)screensize.Width / 2.0)) /
 			((f32)texture->getOriginalSize().Width);
 
 	v2s32 splashsize(((f32)texture->getOriginalSize().Width) * mult,
 			((f32)texture->getOriginalSize().Height) * mult);
 
-#define SEXY_HEADER true
-#if SEXY_HEADER
 	core::rect<s32> splashrect(0, 0, splashsize.X, splashsize.Y);
 	splashrect += v2s32((screensize.Width/2)-(splashsize.X/2), 32);
 
@@ -497,21 +514,7 @@ void GUIEngine::drawHeader(video::IVideoDriver *driver)
 		core::rect<s32>(core::position2d<s32>(0,0),
 		core::dimension2di(texture->getOriginalSize())),
 		NULL, NULL, true);
-#else
-	// Don't draw the header if there isn't enough room
-	s32 free_space = (((s32)screensize.Height)-320)/2;
 
-	if (free_space > splashsize.Y) {
-		core::rect<s32> splashrect(0, 0, splashsize.X, splashsize.Y);
-		splashrect += v2s32((screensize.Width/2)-(splashsize.X/2),
-				((free_space/2)-splashsize.Y/2)+10);
-
-	draw2DImageFilterScaled(driver, texture, splashrect,
-		core::rect<s32>(core::position2d<s32>(0,0),
-		core::dimension2di(texture->getOriginalSize())),
-		NULL, NULL, true);
-	}
-#endif
 }
 
 /******************************************************************************/

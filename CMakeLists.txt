@@ -258,6 +258,20 @@ endif()
 
 
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/builtin" DESTINATION "${SHAREDIR}")
+if(RUN_IN_PLACE)
+	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/mods/mods_here.txt" DESTINATION "${SHAREDIR}/mods")
+	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/textures/texture_packs_here.txt" DESTINATION "${SHAREDIR}/textures")
+endif()
+
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/games/minetest_game" DESTINATION "${SHAREDIR}/games/"
+	COMPONENT "SUBGAME_MINETEST_GAME" OPTIONAL PATTERN ".git*" EXCLUDE )
+
+set(INSTALL_DEVTEST FALSE CACHE BOOL "Install Development Test")
+
+if(INSTALL_DEVTEST)
+	install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/games/devtest" DESTINATION "${SHAREDIR}/games/"
+		PATTERN ".git*" EXCLUDE )
+endif()
 
 if(BUILD_CLIENT)
 	install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/client/shaders" DESTINATION "${SHAREDIR}/client")
@@ -268,7 +282,7 @@ if(BUILD_CLIENT)
 	install(FILES "doc/client_lua_api.md" DESTINATION "${DOCDIR}")
 	install(FILES "doc/menu_lua_api.md" DESTINATION "${DOCDIR}")
 	install(FILES "doc/texture_packs.md" DESTINATION "${DOCDIR}")
-	install(FILES "doc/world_format.txt" DESTINATION "${DOCDIR}")
+	install(FILES "doc/world_format.md" DESTINATION "${DOCDIR}")
 	install(FILES "minetest.conf.example" DESTINATION "${EXAMPLE_CONF_DIR}")
 
 	if(UNIX AND NOT APPLE)
