@@ -458,7 +458,7 @@ local function get_formspec(dialogdata)
 	local left_pane_width = 5
 	local search_width = left_pane_width - 0.25 + scrollbar_w - (0.75 * 2)
 
-	local back_w = 3
+	local back_w = 7
 	local checkbox_w = (tabsize.width - back_w - 2*0.2) / 2
 	local show_technical_names = core.settings:get_bool("show_technical_names")
 	local show_advanced = core.settings:get_bool("show_advanced")

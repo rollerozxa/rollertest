@@ -507,10 +507,29 @@ void GUIEngine::drawHeader(video::IVideoDriver *driver)
 	v2s32 splashsize(((f32)texture->getOriginalSize().Width) * mult,
 			((f32)texture->getOriginalSize().Height) * mult);
 
-	core::rect<s32> splashrect(0, 0, splashsize.X, splashsize.Y);
-	splashrect += v2s32((screensize.Width/2)-(splashsize.X/2), 32);
+	s32 free_space = (((s32)screensize.Height)-320)/2;
 
-	draw2DImageFilterScaled(driver, texture, splashrect,
+	core::rect<s32> desired_rect(0, 0, splashsize.X, splashsize.Y);
+	desired_rect += v2s32((screensize.Width/2)-(splashsize.X/2),
+			((free_space/2)-splashsize.Y/2)+10);
+
+	/*
+	 * Make the preferred rectangle fit into the maximum rectangle
+	 */
+	// 1. Scale
+	f32 scale = std::min((f32)max_rect.getWidth() / (f32)desired_rect.getWidth(),
+			(f32)max_rect.getHeight() / (f32)desired_rect.getHeight());
+	if (scale < 1.0f) {
+		v2s32 old_center = desired_rect.getCenter();
+		desired_rect.LowerRightCorner.X = desired_rect.UpperLeftCorner.X + desired_rect.getWidth() * scale;
+		desired_rect.LowerRightCorner.Y = desired_rect.UpperLeftCorner.Y + desired_rect.getHeight() * scale;
+		desired_rect += old_center - desired_rect.getCenter();
+	}
+
+	// 2. Move
+	desired_rect.constrainTo(max_rect);
+
+	draw2DImageFilterScaled(driver, texture, desired_rect,
 		core::rect<s32>(core::position2d<s32>(0,0),
 		core::dimension2di(texture->getOriginalSize())),
 		NULL, NULL, true);
