@@ -288,8 +288,8 @@ if(BUILD_CLIENT)
 		install(FILES "misc/net.minetest.minetest.desktop" DESTINATION "${XDG_APPS_DIR}")
 		install(FILES "misc/net.minetest.minetest.appdata.xml" DESTINATION "${APPDATADIR}")
 		install(FILES "misc/minetest.svg" DESTINATION "${ICONDIR}/hicolor/scalable/apps")
-		install(FILES "misc/minetest-xorg-icon-128.png"
-			DESTINATION "${ICONDIR}/hicolor/128x128/apps"
+		install(FILES "textures/base/pack/logo.png"
+			DESTINATION "${ICONDIR}/hicolor/256x256/apps"
 			RENAME "minetest.png")
 	endif()
 
