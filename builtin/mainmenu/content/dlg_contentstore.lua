@@ -849,19 +849,10 @@ function store.sort_packages()
 		return a.title < b.title
 	end)
 
-	-- MTG first
-	for i=1, #store.packages_full_unordered do
-		local package = store.packages_full_unordered[i]
-		if not package.path and package.name == "minetest_game" then
-			ret[#ret + 1] = package
-		end
-	end
-
-	-- then the rest
-	for i=1, #store.packages_full_unordered do
-		local package = store.packages_full_unordered[i]
-		if not package.path and package.name ~= "minetest_game" then
-			ret[#ret + 1] = package
+	-- Add uninstalled content
+	for _, pkg in ipairs(store.packages_full_unordered) do
+		if not pkg.path and pkg ~= auto_install_pkg then
+			ret[#ret + 1] = pkg
 		end
 	end
 
@@ -909,11 +900,13 @@ function store.filter_packages(query)
 end
 
 local function get_info_formspec(text)
-	local H = 9.5
+	local W = 16.75
+	local H = 10.75
 	return table.concat({
 		"formspec_version[6]",
-		"size[15.75,9.5]",
-		TOUCHSCREEN_GUI and "padding[0.01,0.01]" or "position[0.5,0.55]",
+		"size[",W,",",H,"]",
+		not TOUCHSCREEN_GUI and "position[0.5,0.55]" or "",
+		"padding[0.04,0.04]",
 
 		"label[4,4.35;", text, "]",
 		"container[0,", H - 0.8 - 0.375, "]",
@@ -939,11 +932,12 @@ function store.get_formspec(dlgdata)
 	end
 
 	local W = 16.75
-	local H = 10.5
+	local H = 10.75
 	local formspec = {
 		"formspec_version[6]",
 		"size[",W,",",H,"]",
 		not TOUCHSCREEN_GUI and "position[0.5,0.55]" or "",
+		"padding[0.04,0.04]",
 
 		"style[status,downloading,queued;border=false]",
 
@@ -972,7 +966,7 @@ function store.get_formspec(dlgdata)
 	}
 
 	if number_downloading > 0 then
-		formspec[#formspec + 1] = "button[12.5875,0.375;2.7875,0.8;downloading;"
+		formspec[#formspec + 1] = "button[12.5875,0.375;3.7875,0.8;downloading;"
 		if #download_queue > 0 then
 			formspec[#formspec + 1] = fgettext("$1 downloading,\n$2 queued", number_downloading, #download_queue)
 		else
@@ -990,11 +984,11 @@ function store.get_formspec(dlgdata)
 		end
 
 		if num_avail_updates == 0 then
-			formspec[#formspec + 1] = "button[12.5875,0.375;2.7875,0.8;status;"
+			formspec[#formspec + 1] = "button[12.5875,0.375;3.7875,0.8;status;"
 			formspec[#formspec + 1] = fgettext("No updates")
 			formspec[#formspec + 1] = "]"
 		else
-			formspec[#formspec + 1] = "button[12.5875,0.375;2.7875,0.8;update_all;"
+			formspec[#formspec + 1] = "button[12.5875,0.375;3.7875,0.8;update_all;"
 			formspec[#formspec + 1] = fgettext("Update All [$1]", num_avail_updates)
 			formspec[#formspec + 1] = "]"
 		end
@@ -1014,14 +1008,10 @@ function store.get_formspec(dlgdata)
 	local start_idx = (cur_page - 1) * num_per_page + 1
 	for i=start_idx, math.min(#store.packages, start_idx+num_per_page-1) do
 		local package = store.packages[i]
-		local container_y = (i - start_idx) * 1.55 + (2*0.375 + 0.8)
+		local container_y = (i - start_idx) * 1.6 + (2*0.375 + 0.8)
 		formspec[#formspec + 1] = "container[0.375,"
 		formspec[#formspec + 1] = container_y
 		formspec[#formspec + 1] = "]"
-
-		if package.title == "Minetest Game" then
-			formspec[#formspec + 1] = "box[-0.1,-0.25;16.25,1.4;#53c958]"
-		end
 
 		-- image
 		formspec[#formspec + 1] = "image[0,-0.1;1.6,1.1;"

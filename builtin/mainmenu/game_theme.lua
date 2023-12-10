@@ -69,8 +69,6 @@ function mm_game_theme.set_game(gamedetails)
 	mm_game_theme.gameid = gamedetails.id
 	mm_game_theme.set_music(gamedetails)
 
-	core.set_topleft_text(gamedetails.name)
-
 	local have_bg      = false
 	local have_overlay = mm_game_theme.set_game_single("overlay", gamedetails)
 
