@@ -380,8 +380,6 @@ static void set_allowed_options(OptionList *allowed_options)
 	allowed_options->insert(std::make_pair("recompress", ValueSpec(VALUETYPE_FLAG,
 			_("Recompress the blocks of the given map database."))));
 #ifndef SERVER
-	allowed_options->insert(std::make_pair("speedtests", ValueSpec(VALUETYPE_FLAG,
-			_("Run speed tests"))));
 	allowed_options->insert(std::make_pair("address", ValueSpec(VALUETYPE_STRING,
 			_("Address to connect to. ('' = local game)"))));
 	allowed_options->insert(std::make_pair("random-input", ValueSpec(VALUETYPE_FLAG,
@@ -517,7 +515,7 @@ static bool setup_log_params(const Settings &cmd_args)
 
 	// In certain cases, output info level on stderr
 	if (cmd_args.getFlag("info") || cmd_args.getFlag("verbose") ||
-			cmd_args.getFlag("trace") || cmd_args.getFlag("speedtests"))
+			cmd_args.getFlag("trace"))
 		g_logger.addOutput(&stderr_output, LL_INFO);
 
 	// In certain cases, output verbose level on stderr
