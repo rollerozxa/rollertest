@@ -123,9 +123,6 @@ local function init_globals()
 	ui.set_default("maintab")
 	tv_main:show()
 	ui.update()
-
-	check_reinstall_mtg()
-	check_new_version()
 end
 
 init_globals()
