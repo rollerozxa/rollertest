@@ -741,6 +741,8 @@ struct ActiveABM
 	s16 max_y;
 };
 
+#define CONTENT_TYPE_CACHE_MAX 64
+
 class ABMHandler
 {
 private:
@@ -851,7 +853,8 @@ public:
 		// Check the content type cache first
 		// to see whether there are any ABMs
 		// to be run at all for this block.
-		if (block->contents_cached) {
+		if (!block->contents.empty()) {
+			assert(!block->do_not_cache_contents); // invariant
 			blocks_cached++;
 			bool run_abms = false;
 			for (content_t c : block->contents) {
@@ -862,9 +865,6 @@ public:
 			}
 			if (!run_abms)
 				return;
-		} else {
-			// Clear any caching
-			block->contents.clear();
 		}
 		blocks_scanned++;
 
@@ -874,6 +874,8 @@ public:
 		u32 active_object_count = this->countObjects(block, map, active_object_count_wider);
 		m_env->m_added_objects = 0;
 
+		bool want_contents_cached = block->contents.empty() && !block->do_not_cache_contents;
+
 		v3s16 p0;
 		for(p0.X=0; p0.X<MAP_BLOCKSIZE; p0.X++)
 		for(p0.Y=0; p0.Y<MAP_BLOCKSIZE; p0.Y++)
@@ -881,13 +883,17 @@ public:
 		{
 			MapNode n = block->getNodeNoCheck(p0);
 			content_t c = n.getContent();
+
 			// Cache content types as we go
-			if (!block->contents_cached && !block->do_not_cache_contents) {
-				block->contents.insert(c);
-				if (block->contents.size() > 64) {
+			if (want_contents_cached && !CONTAINS(block->contents, c)) {
+				if (block->contents.size() >= CONTENT_TYPE_CACHE_MAX) {
 					// Too many different nodes... don't try to cache
+					want_contents_cached = false;
 					block->do_not_cache_contents = true;
 					block->contents.clear();
+					block->contents.shrink_to_fit();
+				} else {
+					block->contents.push_back(c);
 				}
 			}
 
@@ -951,7 +957,6 @@ public:
 					break;
 			}
 		}
-		block->contents_cached = !block->do_not_cache_contents;
 	}
 };
 

@@ -81,40 +81,40 @@ jobs:
 
   win32:
     name: "MinGW cross-compiler (32-bit)"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - name: Install compiler
         run: |
           sudo apt-get update && sudo apt-get install -y gettext
-          wget http://minetest.kitsunemimi.pw/mingw-w64-i686_11.2.0_ubuntu20.04.tar.xz -O mingw.tar.xz
-          sudo tar -xaf mingw.tar.xz -C /usr
+          sudo ./util/buildbot/download_toolchain.sh i686 /usr
 
       - name: Build
         run: |
-          EXISTING_MINETEST_DIR=$PWD ./util/buildbot/buildwin32.sh winbuild
+           EXISTING_MINETEST_DIR=$PWD ./util/buildbot/buildwin32.sh B
 
-      - name: Upload output as artifact
-        uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
-          path: winbuild/build/minetest-*-win32.7z
+          name: mingw32
+          path: B/build/*.zip
+          if-no-files-found: error
 
   win64:
     name: "MinGW cross-compiler (64-bit)"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - name: Install compiler
         run: |
           sudo apt-get update && sudo apt-get install -y gettext
-          wget http://minetest.kitsunemimi.pw/mingw-w64-x86_64_11.2.0_ubuntu20.04.tar.xz -O mingw.tar.xz
-          sudo tar -xaf mingw.tar.xz -C /usr
+          sudo ./util/buildbot/download_toolchain.sh x86_64 /usr
 
       - name: Build
         run: |
-          EXISTING_MINETEST_DIR=$PWD ./util/buildbot/buildwin64.sh winbuild
+          EXISTING_MINETEST_DIR=$PWD ./util/buildbot/buildwin64.sh B
 
-      - name: Upload output as artifact
-        uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
-          path: winbuild/build/minetest-*-win64.7z
+          name: mingw64
+          path: B/build/*.zip
+          if-no-files-found: error

@@ -5350,6 +5350,12 @@ Utilities
       -- HUD Scaling multiplier
       -- Equal to the setting `hud_scaling` multiplied by `dpi / 96`
       real_hud_scaling = 1,
+
+      -- Whether the touchscreen controls are enabled.
+      -- Usually (but not always) `true` on Android.
+      -- Requires at least Minetest 5.9.0 on the client. For older clients, it
+      -- is always set to `false`.
+      touch_controls = false,
   }
   ```
 
@@ -8837,8 +8843,8 @@ Used by `minetest.register_node`.
     --           depending on the alpha channel being below/above 50% in value
     -- * "blend": The alpha channel specifies how transparent a given pixel
     --            of the rendered node is
-    -- The default is "opaque" for drawtypes normal, liquid and flowingliquid;
-    -- "clip" otherwise.
+    -- The default is "opaque" for drawtypes normal, liquid and flowingliquid,
+    -- mesh and nodebox or "clip" otherwise.
     -- If set to a boolean value (deprecated): true either sets it to blend
     -- or clip, false sets it to clip or opaque mode depending on the drawtype.
 

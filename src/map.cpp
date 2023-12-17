@@ -164,11 +164,11 @@ MapNode Map::getNode(v3s16 p, bool *is_valid_position)
 	return node;
 }
 
-static void set_node_in_block(MapBlock *block, v3s16 relpos, MapNode n)
+static void set_node_in_block(const NodeDefManager *nodedef, MapBlock *block,
+		v3s16 relpos, MapNode n)
 {
 	// Never allow placing CONTENT_IGNORE, it causes problems
 	if(n.getContent() == CONTENT_IGNORE){
-		const NodeDefManager *nodedef = block->getParent()->getNodeDefManager();
 		v3s16 blockpos = block->getPos();
 		v3s16 p = blockpos * MAP_BLOCKSIZE + relpos;
 		errorstream<<"Not allowing to place CONTENT_IGNORE"
@@ -186,7 +186,7 @@ void Map::setNode(v3s16 p, MapNode n)
 	v3s16 blockpos = getNodeBlockPos(p);
 	MapBlock *block = getBlockNoCreate(blockpos);
 	v3s16 relpos = p - blockpos*MAP_BLOCKSIZE;
-	set_node_in_block(block, relpos, n);
+	set_node_in_block(m_gamedef->ndef(), block, relpos, n);
 }
 
 void Map::addNodeAndUpdate(v3s16 p, MapNode n,
@@ -215,14 +215,14 @@ void Map::addNodeAndUpdate(v3s16 p, MapNode n,
 		// No light update needed, just copy over the old light.
 		n.setLight(LIGHTBANK_DAY, oldnode.getLightRaw(LIGHTBANK_DAY, oldf), f);
 		n.setLight(LIGHTBANK_NIGHT, oldnode.getLightRaw(LIGHTBANK_NIGHT, oldf), f);
-		set_node_in_block(block, relpos, n);
+		set_node_in_block(m_gamedef->ndef(), block, relpos, n);
 
 		modified_blocks[blockpos] = block;
 	} else {
 		// Ignore light (because calling voxalgo::update_lighting_nodes)
 		n.setLight(LIGHTBANK_DAY, 0, f);
 		n.setLight(LIGHTBANK_NIGHT, 0, f);
-		set_node_in_block(block, relpos, n);
+		set_node_in_block(m_gamedef->ndef(), block, relpos, n);
 
 		// Update lighting
 		std::vector<std::pair<v3s16, MapNode> > oldnodes;
@@ -1155,7 +1155,7 @@ bool Map::isOccluded(const v3s16 &pos_camera, const v3s16 &pos_target,
 	return false;
 }
 
-bool Map::isBlockOccluded(MapBlock *block, v3s16 cam_pos_nodes)
+bool Map::isBlockOccluded(MapBlock *block, v3s16 cam_pos_nodes, bool simple_check)
 {
 	// Check occlusion for center and all 8 corners of the mapblock
 	// Overshoot a little for less flickering
@@ -1192,6 +1192,14 @@ bool Map::isBlockOccluded(MapBlock *block, v3s16 cam_pos_nodes)
 	// require at least two solid blocks
 	// this is a HACK, we should think of a more precise algorithm
 	u32 needed_count = 2;
+
+	v3s16 random_point(myrand_range(-bs2, bs2), myrand_range(-bs2, bs2), myrand_range(-bs2, bs2));
+	if (!isOccluded(cam_pos_nodes, pos_blockcenter + random_point, step, stepfac,
+				start_offset, end_offset, needed_count))
+		return false;
+
+	if (simple_check)
+		return true;
 
 	// Additional occlusion check, see comments in that function
 	v3s16 check;
