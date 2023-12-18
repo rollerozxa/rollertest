@@ -826,6 +826,8 @@ endif()
 # Installation
 
 if(WIN32)
+	install(DIRECTORY ${CMAKE_BINARY_DIR}/dlls/ DESTINATION ${BINDIR} OPTIONAL)
+
 	if(EXTRA_DLL)
 		install(FILES ${EXTRA_DLL} DESTINATION ${BINDIR})
 	endif()

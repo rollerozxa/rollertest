@@ -29,9 +29,6 @@ on:
       - 'Dockerfile'
       - '.dockerignore'
 
-env:
-  MINETEST_POSTGRESQL_CONNECT_STRING: 'host=localhost user=minetest password=minetest dbname=minetest'
-
 jobs:
   # Current gcc version
   gcc_12:
@@ -54,67 +51,57 @@ jobs:
         run: |
           ./bin/minetest --run-unittests
 
-  # Current clang version
-  clang_14:
-    runs-on: ubuntu-22.04
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - uses: actions/checkout@v3
-      - name: Install deps
-        run: |
-          source ./util/ci/common.sh
-          install_linux_deps clang-14 gdb
 
-      - name: Build
-        run: |
-          ./util/ci/build.sh
-        env:
-          CC: clang-14
-          CXX: clang++-14
-
-      - name: Test
-        run: |
-          ./bin/minetest --run-unittests
-
-      - name: Integration test + devtest
-        run: |
-          ./util/test_multiplayer.sh
-
-  win32:
-    name: "MinGW cross-compiler (32-bit)"
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install compiler
-        run: |
-          sudo apt-get update && sudo apt-get install -y gettext
-          sudo ./util/buildbot/download_toolchain.sh i686 /usr
-
-      - name: Build
-        run: |
-           EXISTING_MINETEST_DIR=$PWD ./util/buildbot/buildwin32.sh B
-
-      - uses: actions/upload-artifact@v3
+      - uses: msys2/setup-msys2@v2
         with:
-          name: mingw32
-          path: B/build/*.zip
-          if-no-files-found: error
+          update: true
+          msystem: UCRT64
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-gettext
+            mingw-w64-ucrt-x86_64-leveldb
+            mingw-w64-ucrt-x86_64-libjpeg-turbo
+            mingw-w64-ucrt-x86_64-libogg
+            mingw-w64-ucrt-x86_64-libpng
+            mingw-w64-ucrt-x86_64-libvorbis
+            mingw-w64-ucrt-x86_64-luajit
+            mingw-w64-ucrt-x86_64-openal
+            mingw-w64-ucrt-x86_64-sqlite3
+            mingw-w64-ucrt-x86_64-zstd
 
-  win64:
-    name: "MinGW cross-compiler (64-bit)"
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install compiler
+      - name: Install external packages
         run: |
-          sudo apt-get update && sudo apt-get install -y gettext
-          sudo ./util/buildbot/download_toolchain.sh x86_64 /usr
+          wget https://grejer.voxelmanip.se/msys-pkgs/mingw-w64-ucrt-x86_64-{curl-winssl-8.4.0-3,freetype-2.13.2-1}-any.pkg.tar.zst
+          pacman -U --noconfirm *.pkg.tar.zst
+
+          git clone https://github.com/minetest/irrlicht lib/irrlichtmt --depth 1
 
       - name: Build
         run: |
-          EXISTING_MINETEST_DIR=$PWD ./util/buildbot/buildwin64.sh B
+          mkdir build
+          cd build
+          cmake .. -DBUILD_UNITTESTS=0 -DRUN_IN_PLACE=0 -DENABLE_POSTGRESQL=OFF -DENABLE_SYSTEM_GMP=OFF -DENABLE_SYSTEM_JSONCPP=OFF -DUSE_SDL2=OFF -DVERSION_EXTRA=rollertest -G Ninja
+          ninja -j4
 
-      - uses: actions/upload-artifact@v3
+      - name: Bundle up and package
+        run: |
+          cd build
+          mkdir dlls
+          ../util/bundledlls ../minetest.exe dlls/
+          ninja package
+
+      - name: Upload output as artifact
+        uses: actions/upload-artifact@v2
         with:
-          name: mingw64
-          path: B/build/*.zip
-          if-no-files-found: error
+          path: build/minetest-*-win64.7z

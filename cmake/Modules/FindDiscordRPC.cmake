@@ -1,6 +1,6 @@
 # Use the bundled Discord RPC library in lib/ if RPC is
 
-option(ENABLE_DISCORD "Enable Discord RPC support" TRUE)
+option(ENABLE_DISCORD "Enable Discord RPC support" FALSE)
 set(USE_DISCORD FALSE)
 if(ENABLE_DISCORD)
 	set(USE_DISCORD TRUE)
