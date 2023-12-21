@@ -258,6 +258,7 @@ void set_default_settings()
 	settings->setDefault("enable_waving_plants", "false");
 	settings->setDefault("exposure_compensation", "0.0");
 	settings->setDefault("enable_auto_exposure", "false");
+	settings->setDefault("debanding", "true");
 	settings->setDefault("antialiasing", "none");
 	settings->setDefault("enable_bloom", "false");
 	settings->setDefault("enable_bloom_debug", "false");
@@ -357,6 +358,7 @@ void set_default_settings()
 	settings->setDefault("max_packets_per_iteration", "1024");
 	settings->setDefault("port", "30000");
 	settings->setDefault("strict_protocol_version_checking", "false");
+	settings->setDefault("protocol_version_min", "1");
 	settings->setDefault("player_transfer_distance", "0");
 	settings->setDefault("max_simultaneous_block_sends_per_client", "40");
 	settings->setDefault("time_send_interval", "5");
@@ -489,8 +491,8 @@ void set_default_settings()
 	settings->setDefault("active_block_range", "2");
 	settings->setDefault("viewing_range", "90");
 	settings->setDefault("leaves_style", "simple");
-	settings->setDefault("curl_verify_cert","false");
 	settings->setDefault("transparency_sorting_distance", "1");
+	settings->setDefault("debanding", "false");
 	settings->setDefault("curl_verify_cert", "false");
 
 	// Apply settings according to screen size

@@ -2619,7 +2619,7 @@ void Game::updateCameraOrientation(CameraOrientation *cam, float dtime)
 #ifdef HAVE_TOUCHSCREENGUI
 	if (g_touchscreengui) {
 		cam->camera_yaw   += g_touchscreengui->getYawChange();
-		cam->camera_pitch  = g_touchscreengui->getPitch();
+		cam->camera_pitch += g_touchscreengui->getPitchChange();
 	} else {
 #endif
 		v2s32 center(driver->getScreenSize().Width / 2, driver->getScreenSize().Height / 2);
@@ -4013,31 +4013,6 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	client->getParticleManager()->step(dtime);
 
 	/*
-		Fog
-	*/
-	if (m_cache_enable_fog) {
-		driver->setFog(
-				sky->getBgColor(),
-				video::EFT_FOG_LINEAR,
-				runData.fog_range * sky->getFogStart(),
-				runData.fog_range * 1.0,
-				0.01,
-				false, // pixel fog
-				true // range fog
-		);
-	} else {
-		driver->setFog(
-				sky->getBgColor(),
-				video::EFT_FOG_LINEAR,
-				100000 * BS,
-				110000 * BS,
-				0.01f,
-				false, // pixel fog
-				false // range fog
-		);
-	}
-
-	/*
 		Damage camera tilt
 	*/
 	if (player->hurt_tilt_timer > 0.0f) {
@@ -4136,7 +4111,8 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	/*
 		==================== Drawing begins ====================
 	*/
-	drawScene(graph, stats);
+	if (RenderingEngine::shouldRender())
+		drawScene(graph, stats);
 	/*
 		==================== End scene ====================
 	*/
@@ -4216,10 +4192,39 @@ void Game::updateShadows()
 
 void Game::drawScene(ProfilerGraph *graph, RunStats *stats)
 {
-	const video::SColor skycolor = this->sky->getSkyColor();
+	const video::SColor bg_color = this->sky->getBgColor();
+	const video::SColor sky_color = this->sky->getSkyColor();
 
+	/*
+		Fog
+	*/
+	if (this->m_cache_enable_fog) {
+		this->driver->setFog(
+				bg_color,
+				video::EFT_FOG_LINEAR,
+				this->runData.fog_range * this->sky->getFogStart(),
+				this->runData.fog_range * 1.0f,
+				0.01f,
+				false, // pixel fog
+				true // range fog
+		);
+	} else {
+		this->driver->setFog(
+				bg_color,
+				video::EFT_FOG_LINEAR,
+				100000 * BS,
+				110000 * BS,
+				0.01f,
+				false, // pixel fog
+				false // range fog
+		);
+	}
+
+	/*
+		Drawing
+	*/
 	TimeTaker tt_draw("Draw scene", nullptr, PRECISION_MICRO);
-	this->driver->beginScene(true, true, skycolor);
+	this->driver->beginScene(true, true, sky_color);
 
 	const LocalPlayer *player = this->client->getEnv().getLocalPlayer();
 	bool draw_wield_tool = (this->m_game_ui->m_flags.show_hud &&
@@ -4232,7 +4237,7 @@ void Game::drawScene(ProfilerGraph *graph, RunStats *stats)
 	if (this->isNoCrosshairAllowed())
 		draw_crosshair = false;
 #endif
-	this->m_rendering_engine->draw_scene(skycolor, this->m_game_ui->m_flags.show_hud,
+	this->m_rendering_engine->draw_scene(sky_color, this->m_game_ui->m_flags.show_hud,
 			this->m_game_ui->m_flags.show_minimap, draw_wield_tool, draw_crosshair);
 
 	/*
