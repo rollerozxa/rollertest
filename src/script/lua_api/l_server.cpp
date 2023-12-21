@@ -253,7 +253,8 @@ int ModApiServer::l_get_player_information(lua_State *L)
 	lua_pushstring(L, info.lang_code.c_str());
 	lua_settable(L, table);
 
-#ifndef NDEBUG
+	// ROllertest lets the version info be free!!!
+
 	lua_pushstring(L,"serialization_version");
 	lua_pushnumber(L, info.ser_vers);
 	lua_settable(L, table);
@@ -277,7 +278,6 @@ int ModApiServer::l_get_player_information(lua_State *L)
 	lua_pushstring(L,"state");
 	lua_pushstring(L, ClientInterface::state2Name(info.state).c_str());
 	lua_settable(L, table);
-#endif
 
 	return 1;
 }
