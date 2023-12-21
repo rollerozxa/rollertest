@@ -36,17 +36,6 @@ jobs:
       - uses: actions/checkout@v3
 
       - uses: msys2/setup-msys2@v2
-      - uses: actions/checkout@v3
-      - name: Install compiler
-        run: |
-          sudo apt-get update && sudo apt-get install -y gettext
-          sudo ./util/buildbot/download_toolchain.sh i686 /usr
-
-      - name: Build
-        run: |
-           EXISTING_MINETEST_DIR=$PWD ./util/buildbot/buildwin32.sh B
-
-      - uses: actions/upload-artifact@v3
         with:
           update: true
           msystem: UCRT64
