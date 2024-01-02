@@ -134,6 +134,21 @@ int ObjectRef::l_set_pos(lua_State *L)
 	return 0;
 }
 
+// add_pos(self, pos)
+int ObjectRef::l_add_pos(lua_State *L)
+{
+	NO_MAP_LOCK_REQUIRED;
+	ObjectRef *ref = checkObject<ObjectRef>(L, 1);
+	ServerActiveObject *sao = getobject(ref);
+	if (sao == nullptr)
+		return 0;
+
+	v3f pos = checkFloatPos(L, 2);
+
+	sao->addPos(pos);
+	return 0;
+}
+
 // move_to(self, pos, continuous)
 int ObjectRef::l_move_to(lua_State *L)
 {
@@ -2495,7 +2510,14 @@ int ObjectRef::l_set_lighting(lua_State *L)
 			lighting.exposure.center_weight_power = getfloatfield_default(L, -1, "center_weight_power", lighting.exposure.center_weight_power);
 		}
 		lua_pop(L, 1); // exposure
-	}
+
+		lua_getfield(L, 2, "volumetric_light");
+		if (lua_istable(L, -1)) {
+			getfloatfield(L, -1, "strength", lighting.volumetric_light_strength);
+			lighting.volumetric_light_strength = rangelim(lighting.volumetric_light_strength, 0.0f, 1.0f);
+		}
+		lua_pop(L, 1); // volumetric_light
+}
 
 	getServer(L)->setLighting(player, lighting);
 	return 0;
@@ -2533,6 +2555,10 @@ int ObjectRef::l_get_lighting(lua_State *L)
 	lua_pushnumber(L, lighting.exposure.center_weight_power);
 	lua_setfield(L, -2, "center_weight_power");
 	lua_setfield(L, -2, "exposure");
+	lua_newtable(L); // "volumetric_light"
+	lua_pushnumber(L, lighting.volumetric_light_strength);
+	lua_setfield(L, -2, "strength");
+	lua_setfield(L, -2, "volumetric_light");
 	return 1;
 }
 
@@ -2586,6 +2612,7 @@ luaL_Reg ObjectRef::methods[] = {
 	luamethod(ObjectRef, remove),
 	luamethod_aliased(ObjectRef, get_pos, getpos),
 	luamethod_aliased(ObjectRef, set_pos, setpos),
+	luamethod(ObjectRef, add_pos),
 	luamethod_aliased(ObjectRef, move_to, moveto),
 	luamethod(ObjectRef, punch),
 	luamethod(ObjectRef, right_click),

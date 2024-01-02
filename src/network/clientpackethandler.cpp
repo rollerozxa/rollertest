@@ -635,6 +635,17 @@ void Client::handleCommand_MovePlayer(NetworkPacket* pkt)
 	m_client_event_queue.push(event);
 }
 
+void Client::handleCommand_MovePlayerRel(NetworkPacket *pkt)
+{
+	v3f added_pos;
+
+	*pkt >> added_pos;
+
+	LocalPlayer *player = m_env.getLocalPlayer();
+	assert(player);
+	player->addPosition(added_pos);
+}
+
 void Client::handleCommand_DeathScreen(NetworkPacket* pkt)
 {
 	bool set_camera_point_target;
@@ -1804,4 +1815,6 @@ void Client::handleCommand_SetLighting(NetworkPacket *pkt)
 				>> lighting.exposure.speed_bright_dark
 				>> lighting.exposure.center_weight_power;
 	}
+	if (pkt->getRemainingBytes() >= 4)
+		*pkt >> lighting.volumetric_light_strength;
 }
