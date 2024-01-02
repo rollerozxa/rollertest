@@ -419,8 +419,8 @@ bool setSystemPaths()
 
 	std::string exepath(buf);
 
-	// Use ".\bin\.."
-	path_share = exepath + "\\..";
+	// Use ".\"
+	path_share = exepath;
 	if (detectMSVCBuildDir(exepath)) {
 		// The msvc build dir schould normaly not be present if properly installed,
 		// but its useful for debugging.
