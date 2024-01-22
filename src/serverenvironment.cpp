@@ -1416,7 +1416,7 @@ void ServerEnvironment::step(float dtime)
 		*/
 
 		for (const v3s16 &p: blocks_added) {
-			MapBlock *block = m_map->getBlockOrEmerge(p);
+			MapBlock *block = m_map->getBlockOrEmerge(p, true);
 			if (!block) {
 				// TODO: The blocks removed here will only be picked up again
 				// on the next cycle. To minimize the latency of objects being
@@ -1789,7 +1789,8 @@ bool ServerEnvironment::getActiveObjectMessage(ActiveObjectMessage *dest)
 
 void ServerEnvironment::getSelectedActiveObjects(
 	const core::line3d<f32> &shootline_on_map,
-	std::vector<PointedThing> &objects)
+	std::vector<PointedThing> &objects,
+	const std::optional<Pointabilities> &pointabilities)
 {
 	std::vector<ServerActiveObject *> objs;
 	getObjectsInsideRadius(objs, shootline_on_map.start,
@@ -1822,10 +1823,26 @@ void ServerEnvironment::getSelectedActiveObjects(
 			current_raw_normal = current_normal;
 		}
 		if (collision) {
-			current_intersection += pos;
-			objects.emplace_back(
-				(s16) obj->getId(), current_intersection, current_normal, current_raw_normal,
-				(current_intersection - shootline_on_map.start).getLengthSQ());
+			PointabilityType pointable;
+			if (pointabilities) {
+				if (LuaEntitySAO* lsao = dynamic_cast<LuaEntitySAO*>(obj)) {
+					pointable = pointabilities->matchObject(lsao->getName(),
+							usao->getArmorGroups()).value_or(props->pointable);
+				} else if (PlayerSAO* psao = dynamic_cast<PlayerSAO*>(obj)) {
+					pointable = pointabilities->matchPlayer(psao->getArmorGroups()).value_or(
+							props->pointable);
+				} else {
+					pointable = props->pointable;
+				}
+			} else {
+				pointable = props->pointable;
+			}
+			if (pointable != PointabilityType::POINTABLE_NOT) {
+				current_intersection += pos;
+				objects.emplace_back(
+					(s16) obj->getId(), current_intersection, current_normal, current_raw_normal,
+					(current_intersection - shootline_on_map.start).getLengthSQ(), pointable);
+			}
 		}
 	}
 }

@@ -22,6 +22,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "irrlichttypes_extrabloated.h"
 #include "irr_ptr.h"
 #include "util/string.h"
+#ifdef __ANDROID__
+	#include <porting_android.h>
+#endif
 
 enum class PointerType {
 	Mouse,
@@ -59,8 +62,8 @@ public:
 	virtual bool OnEvent(const SEvent &event) { return false; };
 	virtual bool pausesGame() { return false; } // Used for pause menu
 #ifdef __ANDROID__
-	virtual bool getAndroidUIInput() { return false; }
-	bool hasAndroidUIInput();
+	virtual void getAndroidUIInput() {};
+	porting::AndroidDialogState getAndroidUIInputState();
 #endif
 
 	PointerType getPointerType() { return m_pointer_type; };
@@ -68,13 +71,6 @@ public:
 protected:
 	virtual std::wstring getLabelByID(s32 id) = 0;
 	virtual std::string getNameByID(s32 id) = 0;
-
-	/**
-	 * check if event is part of a double click
-	 * @param event event to evaluate
-	 * @return true/false if a doubleclick was detected
-	 */
-	bool DoubleClickDetection(const SEvent &event);
 
 	// Stores the last known pointer type.
 	PointerType m_pointer_type = PointerType::Mouse;
@@ -97,13 +93,6 @@ protected:
 	bool m_simulated_mouse = false;
 
 private:
-	struct clickpos
-	{
-		v2s32 pos;
-		s64 time;
-	};
-	clickpos m_doubleclickdetect[2];
-
 	IMenuManager *m_menumgr;
 	/* If true, remap a double-click (or double-tap) action to ESC. This is so
 	 * that, for example, Android users can double-tap to close a formspec.
@@ -112,6 +101,8 @@ private:
 	 * and the default value for the setting is true.
 	 */
 	bool m_remap_dbl_click;
+	bool remapDoubleClick(const SEvent &event);
+
 	// This might be necessary to expose to the implementation if it
 	// wants to launch other menus
 	bool m_allow_focus_removal = false;
@@ -120,7 +111,13 @@ private:
 
 	irr_ptr<gui::IGUIElement> m_touch_hovered;
 
-	bool simulateMouseEvent(gui::IGUIElement *target, ETOUCH_INPUT_EVENT touch_event);
+	bool simulateMouseEvent(ETOUCH_INPUT_EVENT touch_event, bool second_try=false);
 	void enter(gui::IGUIElement *element);
 	void leave();
+
+	// Used to detect double-taps and convert them into double-click events.
+	struct {
+		v2s32 pos;
+		s64 time;
+	} m_last_touch;
 };

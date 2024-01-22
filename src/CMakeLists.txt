@@ -47,7 +47,7 @@ option(ENABLE_CURL "Enable cURL support for fetching media" TRUE)
 set(USE_CURL FALSE)
 
 if(ENABLE_CURL)
-	find_package(CURL)
+	find_package(CURL 7.28.0)
 	if (CURL_FOUND)
 		message(STATUS "cURL support enabled.")
 		set(USE_CURL TRUE)
@@ -326,6 +326,9 @@ if(HAVE_LINK_ATOMIC)
 	set(PLATFORM_LIBS ${PLATFORM_LIBS} "-latomic")
 endif()
 
+include(CheckSymbolExists)
+check_symbol_exists(strlcpy "string.h" HAVE_STRLCPY)
+
 check_include_files(endian.h HAVE_ENDIAN_H)
 
 configure_file(
@@ -538,7 +541,11 @@ endif()
 # When cross-compiling assume the user doesn't want to run the executable anyway,
 # otherwise place it in <source dir>/bin/ since Minetest can only run from there.
 if(NOT CMAKE_CROSSCOMPILING)
-	set(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin")
+	if(WIN32 AND NOT RUN_IN_PLACE)
+		set(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}")
+	else()
+		set(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin")
+	endif()
 endif()
 
 if(BUILD_CLIENT)
@@ -698,7 +705,6 @@ endif()
 # Set some optimizations and tweaks
 
 include(CheckCSourceCompiles)
-include(CheckSymbolExists)
 
 set(CMAKE_REQUIRED_INCLUDES ${LUA_INCLUDE_DIR})
 if(USE_LUAJIT)
@@ -778,7 +784,9 @@ else()
 	endif()
 
 	if(MINGW)
-		set(OTHER_FLAGS "${OTHER_FLAGS} -mthreads -fexceptions")
+		if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+			set(OTHER_FLAGS "${OTHER_FLAGS} -mthreads")
+		endif()
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_WIN32_WINNT=0x0601 -DWIN32_LEAN_AND_MEAN")
 	endif()
 
@@ -818,7 +826,7 @@ else()
 	endif()
 
 	if(MINGW)
-		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mwindows")
+		set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-mwindows")
 	endif()
 endif()
 

@@ -213,6 +213,7 @@ int main(int argc, char *argv[])
 
 	// Run unit tests
 	if (cmd_args.getFlag("run-unittests")) {
+		porting::attachOrCreateConsole();
 #if BUILD_UNITTESTS
 		if (cmd_args.exists("test-module"))
 			return run_tests(cmd_args.get("test-module")) ? 0 : 1;
@@ -228,6 +229,7 @@ int main(int argc, char *argv[])
 
 	// Run benchmarks
 	if (cmd_args.getFlag("run-benchmarks")) {
+		porting::attachOrCreateConsole();
 #if BUILD_BENCHMARKS
 		if (cmd_args.exists("test-module"))
 			return run_benchmarks(cmd_args.get("test-module").c_str()) ? 0 : 1;
@@ -633,6 +635,7 @@ static bool use_debugger(int argc, char *argv[])
 			continue;
 		new_args.push_back(argv[i]);
 	}
+	new_args.push_back("--console");
 	new_args.push_back(nullptr);
 
 #ifdef _WIN32
@@ -686,8 +689,12 @@ static bool init_common(const Settings &cmd_args, int argc, char *argv[])
 	init_log_streams(cmd_args);
 
 	// Initialize random seed
-	srand(time(0));
-	mysrand(time(0));
+	{
+		u32 seed = static_cast<u32>(time(nullptr)) << 16;
+		seed |= porting::getTimeUs() & 0xffff;
+		srand(seed);
+		mysrand(seed);
+	}
 
 	// Initialize HTTP fetcher
 	httpfetch_init(g_settings->getS32("curl_parallel_limit"));

@@ -90,7 +90,7 @@
 #    Smooths rotation of camera, also called look or mouse smoothing. 0 to disable.
 camera_smoothing (Camera smoothing) float 0.0 0.0 0.99
 
-#    Smooths rotation of camera when in cinematic mode, 0 to disable. Enter cinematic mode by using the key set in Change Keys.
+#    Smooths rotation of camera when in cinematic mode, 0 to disable. Enter cinematic mode by using the key set in Controls.
 #
 #    Requires: keyboard_mouse
 cinematic_camera_smoothing (Camera smoothing in cinematic mode) float 0.7 0.0 0.99
@@ -440,7 +440,6 @@ enable_raytraced_culling (Enable Raytraced Culling) bool true
 
 #    Shaders allow advanced visual effects and may increase performance on some video
 #    cards.
-#    This only works with the OpenGL video backend.
 #
 #    Requires: shaders_support
 enable_shaders (Shaders) bool true
@@ -649,7 +648,7 @@ mute_sound (Mute sound) bool false
 
 [*User Interfaces]
 
-#    Set the language. Leave empty to use the system language.
+#    Set the language. By default, the system language is used.
 #    A restart is required after changing this.
 language (Language) enum   ,be,bg,ca,cs,da,de,el,en,eo,es,et,eu,fi,fr,gd,gl,hu,id,it,ja,jbo,kk,ko,lt,lv,ms,nb,nl,nn,pl,pt,pt_BR,ro,ru,sk,sl,sr_Cyrl,sr_Latn,sv,sw,tr,uk,vi,zh_CN,zh_TW
 
@@ -1788,8 +1787,8 @@ shader_path (Shader path) path
 #    The rendering back-end.
 #    Note: A restart is required after changing this!
 #    OpenGL is the default for desktop, and OGLES2 for Android.
-#    Shaders are supported by OpenGL and OGLES2 (experimental).
-video_driver (Video driver) enum  ,opengl,ogles1,ogles2
+#    Shaders are supported by everything but OGLES1.
+video_driver (Video driver) enum  ,opengl,opengl3,ogles1,ogles2
 
 #    Distance in nodes at which transparency depth sorting is enabled
 #    Use this to limit the performance impact of transparency depth sorting
@@ -1813,11 +1812,6 @@ mesh_generation_interval (Mapblock mesh generation delay) int 0 0 50
 #    Number of threads to use for mesh generation.
 #    Value of 0 (default) will let Minetest autodetect the number of available threads.
 mesh_generation_threads (Mapblock mesh generation threads) int 0 0 8
-
-#    Size of the MapBlock cache of the mesh generator. Increasing this will
-#    increase the cache hit %, reducing the data being copied from the main
-#    thread, thus reducing jitter.
-meshgen_block_cache_size (Mapblock mesh generator's MapBlock cache size in MB) int 20 0 1000
 
 #    True = 256
 #    False = 128
@@ -1856,6 +1850,11 @@ texture_min_size (Base texture size) int 64 1 32768
 #    draw calls, benefiting especially high-end GPUs.
 #    Systems with a low-end GPU (or no GPU) would benefit from smaller values.
 client_mesh_chunk (Client Mesh Chunksize) int 1 1 16
+
+[**Sound]
+#    Comma-separated list of AL and ALC extensions that should not be used.
+#    Useful for testing. See al_extensions.[h,cpp] for details.
+sound_extensions_blacklist (Sound Extensions Blacklist) string
 
 [**Font]
 
@@ -2085,7 +2084,7 @@ server_side_occlusion_culling (Server-side occlusion culling) bool true
 #    rendering glitches (missing blocks).
 #    This is especially useful for very large viewing range (upwards of 500).
 #    Stated in MapBlocks (16 nodes).
-block_cull_optimize_distance (Block cull optimize distance) int 20 2 2047
+block_cull_optimize_distance (Block cull optimize distance) int 25 2 2047
 
 [**Mapgen]
 
