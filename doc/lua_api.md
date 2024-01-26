@@ -5841,8 +5841,20 @@ Authentication
     * `name`: string; if omitted, all auth data should be considered modified
 * `minetest.set_player_password(name, password_hash)`: Set password hash of
   player `name`.
-* `minetest.set_player_privs(name, {priv1=true,...})`: Set privileges of player
-  `name`.
+* `minetest.set_player_privs(name, privs)`: Set privileges of player `name`.
+    * `privs` is a **set** of privileges:
+      A table where the keys are names of privileges and the values are `true`.
+    * Example: `minetest.set_player_privs("singleplayer", {interact = true, fly = true})`.
+      This **sets** the player privileges to `interact` and `fly`;
+      `singleplayer` will only have these two privileges afterwards.
+* `minetest.change_player_privs(name, changes)`: Helper to grant or revoke privileges.
+    * `changes`: Table of changes to make.
+      A field `[privname] = true` grants a privilege,
+      whereas `[privname] = false` revokes a privilege.
+    * Example: `minetest.change_player_privs("singleplayer", {interact = true, fly = false})`
+      will grant singleplayer the `interact` privilege
+      and revoke singleplayer's `fly` privilege.
+      All other privileges will remain unchanged.
 * `minetest.auth_reload()`
     * See `reload()` in authentication handler definition
 
@@ -7880,8 +7892,7 @@ child will follow movement and rotation of that bone.
       whether `set_sky` accepts this format. Check the legacy format otherwise.
     * Passing no arguments resets the sky to its default values.
     * `sky_parameters` is a table with the following optional fields:
-        * `base_color`: ColorSpec, changes fog in "skybox" and "plain".
-          (default: `#ffffff`)
+        * `base_color`: ColorSpec, meaning depends on `type` (default: `#ffffff`)
         * `body_orbit_tilt`: Float, rotation angle of sun/moon orbit in degrees.
            By default, orbit is controlled by a client-side setting, and this field is not set.
            After a value is assigned, it can only be changed to another float value.
@@ -7938,6 +7949,9 @@ child will follow movement and rotation of that bone.
                Any value between [0.0, 0.99] set the fog_start as a fraction of the viewing_range.
                Any value < 0, resets the behavior to being client-controlled.
                (default: -1)
+            * `fog_color`: ColorSpec, override the color of the fog.
+               Unlike `base_color` above this will apply regardless of the skybox type.
+               (default: `"#00000000"`, which means no override)
 * `set_sky(base_color, type, {texture names}, clouds)`
     * Deprecated. Use `set_sky(sky_parameters)`
     * `base_color`: ColorSpec, defaults to white
@@ -8184,10 +8198,10 @@ Can be obtained using `player:get_meta()`.
 A 16-bit pseudorandom number generator.
 Uses a well-known LCG algorithm introduced by K&R.
 
-> [!NOTE]
-> `PseudoRandom` is slower and has worse random distribution than `PcgRandom`.
-> Use `PseudoRandom` only if you need output to match the well-known LCG algorithm introduced by K&R.
-> Otherwise, use `PcgRandom`.
+**Note**:
+`PseudoRandom` is slower and has worse random distribution than `PcgRandom`.
+Use `PseudoRandom` only if you need output to match the well-known LCG algorithm introduced by K&R.
+Otherwise, use `PcgRandom`.
 
 * constructor `PseudoRandom(seed)`
   * `seed`: 32-bit signed number
@@ -8766,12 +8780,12 @@ Used by `minetest.register_node`, `minetest.register_craftitem`, and
     -- The index can be a node/entity name or a group with the prefix `"group:"`.
     -- (For objects `armor_groups` are used and for players the entity name is irrelevant.)
     -- If multiple fields fit, the following priority order is applied:
-    --  value of matching node/entity name
-	--	`true` for any group
-	--	`false` for any group
-	--	`"blocking"` for any group
-	--	`liquids_pointable` if it is a liquid node
-	--	`pointable` property of the node or object
+    -- 1. value of matching node/entity name
+    -- 2. `true` for any group
+    -- 3. `false` for any group
+    -- 4. `"blocking"` for any group
+    -- 5. `liquids_pointable` if it is a liquid node
+    -- 6. `pointable` property of the node or object
 
     light_source = 0,
     -- When used for nodes: Defines amount of light emitted by node.
@@ -10745,8 +10759,8 @@ Used by `minetest.register_authentication_handler`.
 
     set_privileges = function(name, privileges),
     -- Set privileges of player `name`.
-    -- `privileges` is in table form, auth data should be created if not
-    -- present.
+    -- `privileges` is in table form: keys are privilege names, values are `true`;
+    -- auth data should be created if not present.
 
     reload = function(),
     -- Reload authentication data from the storage location.
