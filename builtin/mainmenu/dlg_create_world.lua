@@ -70,6 +70,8 @@ local flag_checkboxes = {
 		{ "trees", fgettext("Trees and jungle grass") },
 		{ "flat", fgettext("Flat terrain") },
 		{ "mudflow", fgettext("Mud flow"), fgettext("Terrain surface erosion") },
+		{ "temples", fgettext("Desert temples"),
+		fgettext("Different dungeon variant generated in desert biomes (only if dungeons enabled)") },
 		-- Biome settings are in mgv6_biomes below
 	},
 }
