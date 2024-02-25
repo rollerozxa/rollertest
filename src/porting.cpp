@@ -575,7 +575,7 @@ void migrateCachePath()
 
 void initializePaths()
 {
-#if 1
+#if RUN_IN_PLACE
 	infostream << "Using relative paths (RUN_IN_PLACE)" << std::endl;
 
 	char buf[BUFSIZ];
