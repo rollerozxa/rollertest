@@ -71,7 +71,7 @@ local function get_formspec(self)
 		--[[prepend = string.format("size[%f,%f,%s]", tsize.width, tsize.height,
 				dump(self.fixed_size))]]
 
-		local padding = TOUCHSCREEN_GUI and "0.05,0.05" or "0,0"
+		local padding = core.settings:get_bool("enable_touch") and "0.05,0.05" or "0,0"
 
 		prepend = string.format([[
 			formspec_version[6]

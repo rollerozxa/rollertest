@@ -17,8 +17,10 @@
 --51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-local BASE_SPACING = TOUCHSCREEN_GUI and 0.1 or 0.176
-local SCROLL_BTN_WIDTH = TOUCHSCREEN_GUI and 0.8 or 0.6
+local BASE_SPACING = 0.1
+local function get_scroll_btn_width()
+	return core.settings:get_bool("enable_touch") and 0.8 or 0.6
+end
 
 local function buttonbar_formspec(self)
 	if self.hidden then
@@ -39,7 +41,7 @@ local function buttonbar_formspec(self)
 
 	-- The number of buttons per page is always calculated as if the scroll
     -- buttons were visible.
-	local avail_space = self.size.x - 2*BASE_SPACING - 2*SCROLL_BTN_WIDTH
+	local avail_space = self.size.x - 2*BASE_SPACING - 2*get_scroll_btn_width()
 	local btns_per_page = math.floor((avail_space - BASE_SPACING) / (btn_size + BASE_SPACING))
 
 
@@ -56,7 +58,7 @@ local function buttonbar_formspec(self)
 
 	local btn_start_x = self.pos.x + btn_spacing
 	if show_scroll_btns then
-		btn_start_x = btn_start_x + BASE_SPACING + SCROLL_BTN_WIDTH
+		btn_start_x = btn_start_x + BASE_SPACING + get_scroll_btn_width()
 	end
 
 	for i = first_btn, first_btn + btns_per_page - 1 do
@@ -81,7 +83,7 @@ local function buttonbar_formspec(self)
 			y = self.pos.y,
 		}
 		local btn_next_pos = {
-			x = self.pos.x + self.size.x - SCROLL_BTN_WIDTH,
+			x = self.pos.x + self.size.x - get_scroll_btn_width(),
 			y = self.pos.y,
 		}
 
@@ -89,11 +91,11 @@ local function buttonbar_formspec(self)
 				self.btn_prev_name, self.btn_next_name))
 
 		table.insert(formspec, string.format("button[%f,%f;%f,%f;%s;<]",
-				btn_prev_pos.x, btn_prev_pos.y, SCROLL_BTN_WIDTH, btn_size,
+				btn_prev_pos.x, btn_prev_pos.y, get_scroll_btn_width(), btn_size,
 				self.btn_prev_name))
 
 		table.insert(formspec, string.format("button[%f,%f;%f,%f;%s;>]",
-				btn_next_pos.x, btn_next_pos.y, SCROLL_BTN_WIDTH, btn_size,
+				btn_next_pos.x, btn_next_pos.y, get_scroll_btn_width(), btn_size,
 				self.btn_next_name))
 	end
 

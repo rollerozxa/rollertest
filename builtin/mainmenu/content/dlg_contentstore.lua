@@ -905,8 +905,9 @@ local function get_info_formspec(text)
 	return table.concat({
 		"formspec_version[6]",
 		"size[",W,",",H,"]",
-		not TOUCHSCREEN_GUI and "position[0.5,0.55]" or "",
+		not core.settings:get_bool("enable_touch") and "position[0.5,0.55]" or "",
 		"padding[0.04,0.04]",
+
 
 		"label[4,4.35;", text, "]",
 		"container[0,", H - 0.8 - 0.375, "]",
@@ -936,7 +937,7 @@ function store.get_formspec(dlgdata)
 	local formspec = {
 		"formspec_version[6]",
 		"size[",W,",",H,"]",
-		not TOUCHSCREEN_GUI and "position[0.5,0.55]" or "",
+		not core.settings:get_bool("enable_touch") and "position[0.5,0.55]" or "",
 		"padding[0.04,0.04]",
 
 		"style[status,downloading,queued;border=false]",
@@ -1184,8 +1185,8 @@ end
 
 function store.handle_events(event)
 	if event == "DialogShow" then
-		-- On mobile, don't show the "MINETEST" header behind the dialog.
-		mm_game_theme.set_engine(TOUCHSCREEN_GUI)
+		-- On touchscreen, don't show the "MINETEST" header behind the dialog.
+		mm_game_theme.set_engine(core.settings:get_bool("enable_touch"))
 
 		-- If the store is already loaded, auto-install packages here.
 		do_auto_install()

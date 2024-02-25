@@ -316,8 +316,8 @@ local function check_requirements(name, requires)
 	local special = {
 		android = PLATFORM == "Android",
 		desktop = PLATFORM ~= "Android",
-		touchscreen_gui = TOUCHSCREEN_GUI,
-		keyboard_mouse = not TOUCHSCREEN_GUI,
+		touchscreen_gui = core.settings:get_bool("enable_touch"),
+		keyboard_mouse = not core.settings:get_bool("enable_touch"),
 		shaders_support = shaders_support,
 		shaders = core.settings:get_bool("enable_shaders") and shaders_support,
 		opengl = video_driver == "opengl",
@@ -450,10 +450,10 @@ local function get_formspec(dialogdata)
 	local extra_h = 1 -- not included in tabsize.height
 	local tabsize = {
 		width = 18,
-		height = TOUCHSCREEN_GUI and (10 - extra_h) or 12,
+		height = core.settings:get_bool("enable_touch") and (10 - extra_h) or 12,
 	}
 
-	local scrollbar_w = TOUCHSCREEN_GUI and 0.6 or 0.4
+	local scrollbar_w = core.settings:get_bool("enable_touch") and 0.6 or 0.4
 
 	local left_pane_width = 5
 	local search_width = left_pane_width - 0.25 + scrollbar_w - (0.75 * 2)
@@ -654,11 +654,22 @@ local function buttonhandler(this, fields)
 		local value = core.is_yes(fields.show_advanced)
 		core.settings:set_bool("show_advanced", value)
 		write_settings_early()
+	end
 
+	-- enable_touch is a checkbox in a setting component. We handle this
+	-- setting differently so we can hide/show pages using the next if-statement
+	if fields.enable_touch ~= nil then
+		local value = core.is_yes(fields.enable_touch)
+		core.settings:set_bool("enable_touch", value)
+		write_settings_early()
+	end
+
+	if fields.show_advanced ~= nil or fields.enable_touch ~= nil then
 		local suggested_page_id = update_filtered_pages(dialogdata.query)
 
+		dialogdata.components = nil
+
 		if not filtered_page_by_id[dialogdata.page_id] then
-			dialogdata.components = nil
 			dialogdata.leftscroll = 0
 			dialogdata.rightscroll = 0
 

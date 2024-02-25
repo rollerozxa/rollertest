@@ -122,12 +122,6 @@ bool ClientLauncher::run(GameStartData &start_data, const Settings &cmd_args)
 
 	m_rendering_engine->setupTopLevelWindow();
 
-	/*
-		This changes the minimum allowed number of vertices in a VBO.
-		Default is 500.
-	*/
-	//driver->setMinHardwareBufferVertexCount(50);
-
 	// Create game callback for menus
 	g_gamecallback = new MainGameCallback();
 
@@ -220,11 +214,18 @@ bool ClientLauncher::run(GameStartData &start_data, const Settings &cmd_args)
 	while (m_rendering_engine->run() && !*kill &&
 		!g_gamecallback->shutdown_requested) {
 		// Set the window caption
+#if IRRLICHT_VERSION_MT_REVISION >= 15
+		auto driver_name = m_rendering_engine->getVideoDriver()->getName();
+#else
+		auto driver_name = wide_to_utf8(m_rendering_engine->getVideoDriver()->getName());
+#endif
+		std::string caption = std::string(PROJECT_NAME_C) +
+			" " + g_version_hash +
+			" [" + gettext("Main Menu") + "]" +
+			" [" + driver_name + "]";
+
 		m_rendering_engine->get_raw_device()->
-			setWindowCaption((utf8_to_wide(PROJECT_NAME_C) +
-			L" " + utf8_to_wide(g_version_hash) +
-			L" [" + wstrgettext("Main Menu") + L"]" +
-			L" [" + m_rendering_engine->getVideoDriver()->getName() + L"]"	).c_str());
+			setWindowCaption(utf8_to_wide(caption).c_str());
 
 		try {	// This is used for catching disconnects
 
@@ -264,10 +265,10 @@ bool ClientLauncher::run(GameStartData &start_data, const Settings &cmd_args)
 			m_rendering_engine->get_video_driver()->setTextureCreationFlag(
 					video::ETCF_CREATE_MIP_MAPS, g_settings->getBool("mip_map"));
 
-#ifdef HAVE_TOUCHSCREENGUI
-			receiver->m_touchscreengui = new TouchScreenGUI(m_rendering_engine->get_raw_device(), receiver);
-			g_touchscreengui = receiver->m_touchscreengui;
-#endif
+			if (g_settings->getBool("enable_touch")) {
+				receiver->m_touchscreengui = new TouchScreenGUI(m_rendering_engine->get_raw_device(), receiver);
+				g_touchscreengui = receiver->m_touchscreengui;
+			}
 
 			the_game(
 				kill,
@@ -298,11 +299,11 @@ bool ClientLauncher::run(GameStartData &start_data, const Settings &cmd_args)
 
 		m_rendering_engine->get_scene_manager()->clear();
 
-#ifdef HAVE_TOUCHSCREENGUI
-		delete g_touchscreengui;
-		g_touchscreengui = NULL;
-		receiver->m_touchscreengui = NULL;
-#endif
+		if (g_touchscreengui) {
+			delete g_touchscreengui;
+			g_touchscreengui = NULL;
+			receiver->m_touchscreengui = NULL;
+		}
 
 		/* Save the settings when leaving the game.
 		 * This makes sure that setting changes made in-game are persisted even

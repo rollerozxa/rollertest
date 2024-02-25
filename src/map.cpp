@@ -228,11 +228,11 @@ void Map::addNodeAndUpdate(v3s16 p, MapNode n,
 		std::vector<std::pair<v3s16, MapNode> > oldnodes;
 		oldnodes.emplace_back(p, oldnode);
 		voxalgo::update_lighting_nodes(this, oldnodes, modified_blocks);
-
-		for (auto &modified_block : modified_blocks) {
-			modified_block.second->expireDayNightDiff();
-		}
 	}
+
+	if (n.getContent() != oldnode.getContent() &&
+			(oldnode.getContent() == CONTENT_AIR || n.getContent() == CONTENT_AIR))
+		block->expireIsAirCache();
 
 	// Report for rollback
 	if(m_gamedef->rollback())
@@ -1462,14 +1462,14 @@ void ServerMap::finishBlockMake(BlockMakeData *data,
 		if (!block)
 			continue;
 		/*
-			Update day/night difference cache of the MapBlocks
+			Update is air cache of the MapBlocks
 		*/
-		block->expireDayNightDiff();
+		block->expireIsAirCache();
 		/*
 			Set block as modified
 		*/
 		block->raiseModified(MOD_STATE_WRITE_NEEDED,
-			MOD_REASON_EXPIRE_DAYNIGHTDIFF);
+			MOD_REASON_EXPIRE_IS_AIR);
 	}
 
 	/*
@@ -1798,6 +1798,7 @@ bool ServerMap::saveBlock(MapBlock *block, MapDatabase *db, int compression_leve
 	o.write((char*) &version, 1);
 	block->serialize(o, version, true, compression_level);
 
+	// FIXME: zero copy possible in c++20 or with custom rdbuf
 	bool ret = db->saveBlock(p3d, o.str());
 	if (ret) {
 		// We just wrote it to the disk so clear modified flag
@@ -2063,6 +2064,7 @@ void MMVManip::blitBackAll(std::map<v3s16, MapBlock*> *modified_blocks,
 
 		block->copyFrom(*this);
 		block->raiseModified(MOD_STATE_WRITE_NEEDED, MOD_REASON_VMANIP);
+		block->expireIsAirCache();
 
 		if(modified_blocks)
 			(*modified_blocks)[p] = block;

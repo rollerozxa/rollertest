@@ -27,7 +27,7 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Install deps
       run: |
         sudo apt-get update
@@ -37,7 +37,7 @@ jobs:
       run: cd android; ./gradlew assemblerelease
 
     - name: Save artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app-release-unsigned.apk
         path: android/app/build/outputs/apk/release/app-release-unsigned.apk
