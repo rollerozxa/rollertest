@@ -129,11 +129,11 @@ bool setSystemPaths()
 
 	// Set share path
 	{
-		jmethodID getShareDataPath = jnienv->GetMethodID(nativeActivity,
+		jmethodID getShareDataPath = jnienv->GetMethodID(activityClass,
 				"getShareDataPath", "()Ljava/lang/String;");
 		FATAL_ERROR_IF(getShareDataPath==nullptr,
 				"porting::initializePathsAndroid unable to find Java getShareDataPath method");
-		jobject result = jnienv->CallObjectMethod(app_global->activity->clazz, getShareDataPath);
+		jobject result = jnienv->CallObjectMethod(activity, getShareDataPath);
 		std::string str = readJavaString((jstring) result);
 		path_share = str;
 	}

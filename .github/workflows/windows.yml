@@ -53,5 +53,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: "mingw${{ matrix.bits }}"
-          path: B/build/*.zip
+          path: B/build/*.7z
           if-no-files-found: error

@@ -135,12 +135,14 @@ local function build_hacky_list(items, spacing)
 	return table.concat(ret, ""), y
 end
 
+--[[
 local function get_credits()
 	local f = assert(io.open(core.get_mainmenu_path() .. "/credits.json"))
 	local json = core.parse_json(f:read("*all"))
 	f:close()
 	return json
 end
+]]
 
 return {
 	name = "about",
@@ -152,8 +154,6 @@ return {
 		if version.project == "Minetest" then
 			version.project = "ROllertest"
 		end
-
-		local credits = get_credits()
 
 		local credit_list = {}
 		prepare_credits(credit_list, rollertest_info)
