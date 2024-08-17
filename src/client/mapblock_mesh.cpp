@@ -33,6 +33,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <array>
 #include <algorithm>
 #include <cmath>
+#include "client/texturesource.h"
 
 /*
 	MeshMakeData
@@ -328,32 +329,6 @@ void final_color_blend(video::SColor *result,
 	Mesh generation helpers
 */
 
-// This table is moved outside getNodeVertexDirs to avoid the compiler using
-// a mutex to initialize this table at runtime right in the hot path.
-// For details search the internet for "cxa_guard_acquire".
-static const v3s16 vertex_dirs_table[] = {
-	// ( 1, 0, 0)
-	v3s16( 1,-1, 1), v3s16( 1,-1,-1),
-	v3s16( 1, 1,-1), v3s16( 1, 1, 1),
-	// ( 0, 1, 0)
-	v3s16( 1, 1,-1), v3s16(-1, 1,-1),
-	v3s16(-1, 1, 1), v3s16( 1, 1, 1),
-	// ( 0, 0, 1)
-	v3s16(-1,-1, 1), v3s16( 1,-1, 1),
-	v3s16( 1, 1, 1), v3s16(-1, 1, 1),
-	// invalid
-	v3s16(), v3s16(), v3s16(), v3s16(),
-	// ( 0, 0,-1)
-	v3s16( 1,-1,-1), v3s16(-1,-1,-1),
-	v3s16(-1, 1,-1), v3s16( 1, 1,-1),
-	// ( 0,-1, 0)
-	v3s16( 1,-1, 1), v3s16(-1,-1, 1),
-	v3s16(-1,-1,-1), v3s16( 1,-1,-1),
-	// (-1, 0, 0)
-	v3s16(-1,-1,-1), v3s16(-1,-1, 1),
-	v3s16(-1, 1, 1), v3s16(-1, 1,-1)
-};
-
 /*
 	Gets nth node tile (0 <= n <= 5).
 */
@@ -645,7 +620,6 @@ MapBlockMesh::MapBlockMesh(Client *client, MeshMakeData *data, v3s16 camera_offs
 	for (auto &m : m_mesh)
 		m = new scene::SMesh();
 	m_enable_shaders = data->m_use_shaders;
-	m_enable_vbo = g_settings->getBool("enable_vbo");
 
 	auto mesh_grid = client->getMeshGrid();
 	v3s16 bp = data->m_blockpos;
@@ -689,6 +663,8 @@ MapBlockMesh::MapBlockMesh(Client *client, MeshMakeData *data, v3s16 camera_offs
 	m_bounding_radius = std::sqrt(collector.m_bounding_radius_sq);
 
 	for (int layer = 0; layer < MAX_TILE_LAYERS; layer++) {
+		scene::SMesh *mesh = (scene::SMesh *)m_mesh[layer];
+
 		for(u32 i = 0; i < collector.prebuffers[layer].size(); i++)
 		{
 			PreMeshBuffer &p = collector.prebuffers[layer][i];
@@ -774,8 +750,6 @@ MapBlockMesh::MapBlockMesh(Client *client, MeshMakeData *data, v3s16 camera_offs
 				p.layer.applyMaterialOptions(material);
 			}
 
-			scene::SMesh *mesh = (scene::SMesh *)m_mesh[layer];
-
 			scene::SMeshBuffer *buf = new scene::SMeshBuffer();
 			buf->Material = material;
 			if (p.layer.isTransparent()) {
@@ -799,10 +773,9 @@ MapBlockMesh::MapBlockMesh(Client *client, MeshMakeData *data, v3s16 camera_offs
 			buf->drop();
 		}
 
-		if (m_mesh[layer]) {
+		if (mesh) {
 			// Use VBO for mesh (this just would set this for ever buffer)
-			if (m_enable_vbo)
-				m_mesh[layer]->setHardwareMappingHint(scene::EHM_STATIC);
+			mesh->setHardwareMappingHint(scene::EHM_STATIC);
 		}
 	}
 
@@ -818,11 +791,16 @@ MapBlockMesh::MapBlockMesh(Client *client, MeshMakeData *data, v3s16 camera_offs
 
 MapBlockMesh::~MapBlockMesh()
 {
+	size_t sz = 0;
 	for (scene::IMesh *m : m_mesh) {
+		for (u32 i = 0; i < m->getMeshBufferCount(); i++)
+			sz += m->getMeshBuffer(i)->getSize();
 		m->drop();
 	}
 	for (MinimapMapblock *block : m_minimap_mapblocks)
 		delete block;
+
+	porting::TrackFreedMemory(sz);
 }
 
 bool MapBlockMesh::animate(bool faraway, float time, int crack,
@@ -887,15 +865,13 @@ bool MapBlockMesh::animate(bool faraway, float time, int crack,
 
 	// Day-night transition
 	if (!m_enable_shaders && (daynight_ratio != m_last_daynight_ratio)) {
-		// Force reload mesh to VBO
-		if (m_enable_vbo)
-			for (scene::IMesh *m : m_mesh)
-				m->setDirty();
 		video::SColorf day_color;
 		get_sunlight_color(&day_color, daynight_ratio);
 
 		for (auto &daynight_diff : m_daynight_diffs) {
-			scene::IMeshBuffer *buf = m_mesh[daynight_diff.first.first]->
+			auto *mesh = m_mesh[daynight_diff.first.first];
+			mesh->setDirty(scene::EBT_VERTEX); // force reload to VBO
+			scene::IMeshBuffer *buf = mesh->
 				getMeshBuffer(daynight_diff.first.second);
 			video::S3DVertex *vertices = (video::S3DVertex *)buf->getVertices();
 			for (const auto &j : daynight_diff.second)
@@ -1000,7 +976,6 @@ video::SColor encode_light(u16 light, u8 emissive_light)
 u8 get_solid_sides(MeshMakeData *data)
 {
 	std::unordered_map<v3s16, u8> results;
-	v3s16 ofs;
 	v3s16 blockpos_nodes = data->m_blockpos * MAP_BLOCKSIZE;
 	const NodeDefManager *ndef = data->nodedef;
 

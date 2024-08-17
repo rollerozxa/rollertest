@@ -154,12 +154,18 @@ local function get_formspec(tabview, name, tabdata)
 
 	-- Point the player to ContentDB when no games are found
 	if #pkgmgr.games == 0 then
-		return table.concat{
-			"style[label_button;border=false]",
-			"button[2.75,1.5;10,1;label_button;", fgettext("You have no games installed."), "]",
-			"button[5.25,3.5;5,1.2;game_open_cdb;", fgettext("Install a game"), "]",
-			settings_btn_fs()},
-			"size[15.5,7.1,false]position[0.5,0.55]real_coordinates[true]"
+		local W = tabview.width
+		local H = tabview.height
+
+		local hypertext = "<global valign=middle halign=center size=18>" ..
+				fgettext_ne("Minetest is a game-creation platform that allows you to play many different games.") .. "\n" ..
+				fgettext_ne("Minetest doesn't come with a game by default.") .. " " ..
+				fgettext_ne("You need to install a game before you can create a world.")
+
+		local button_y = H * 2/3 - 0.6
+		return table.concat({
+			"hypertext[0.375,0;", W - 2*0.375, ",", button_y, ";ht;", core.formspec_escape(hypertext), "]",
+			"button[5.25,", button_y, ";5,1.2;game_open_cdb;", fgettext("Install a game"), "]"})
 	end
 
 	local index = filterlist.get_current_index(menudata.worldlist,
@@ -221,7 +227,7 @@ local function main_button_handler(this, fields, name, tabdata)
 
 	if fields.game_open_cdb then
 		local maintab = ui.find_by_name("maintab")
-		local dlg = create_store_dlg("game")
+		local dlg = create_contentdb_dlg("game")
 		dlg:set_parent(maintab)
 		maintab:hide()
 		dlg:show()

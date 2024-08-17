@@ -37,6 +37,11 @@ core.features = {
 	blocking_pointability_type = true,
 	dynamic_add_media_startup = true,
 	dynamic_add_media_filepath = true,
+	lsystem_decoration_type = true,
+	item_meta_range = true,
+	node_interaction_actor = true,
+	moveresult_new_pos = true,
+	override_item_remove_fields = true,
 }
 
 function core.has_feature(arg)

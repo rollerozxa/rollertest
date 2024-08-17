@@ -15,6 +15,14 @@
 --with this program; if not, write to the Free Software Foundation, Inc.,
 --51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+
+local rollertest_info = {
+	"This is a custom build of Minetest called ROllertest.",
+	"Do not report bugs specific to ROllertest to",
+	"the Minetest core developers!",
+	""
+}
+
 -- https://github.com/orgs/minetest/teams/engine/members
 
 local core_developers = {
@@ -30,6 +38,7 @@ local core_developers = {
 	"Desour/DS",
 	"srifqi",
 	"Gregor Parzefall (grorp)",
+	"Lars Müller (luatic)",
 }
 
 -- currently only https://github.com/orgs/minetest/teams/triagers/members
@@ -43,19 +52,24 @@ local core_team = {
 -- For updating active/previous contributors, see the script in ./util/gather_git_credits.py
 
 local active_contributors = {
-	"Wuzzy [Features, translations, documentation]",
-	"numzero [Optimizations, work on OpenGL driver]",
-	"ROllerozxa [Bugfixes, Mainmenu]",
-	"Lars Müller [Bugfixes]",
-	"AFCMS [Documentation]",
-	"savilli [Bugfixes]",
-	"fluxionary [Bugfixes]",
-	"Bradley Pierce (Thresher) [Documentation]",
-	"Stvk imension [Android]",
-	"JosiahWI [Code cleanups]",
-	"OgelGames [UI, Bugfixes]",
-	"ndren [Bugfixes]",
-	"Abdou-31 [Documentation]",
+	"cx384",
+	"numzero",
+	"AFCMS",
+	"sfence",
+	"Wuzzy",
+	"ROllerozxa",
+	"JosiahWI",
+	"OgelGames",
+	"David Heidelberg",
+	"1F616EMO",
+	"HybridDog",
+	"Bradley Pierce (Thresher)",
+	"savilli",
+	"Stvk imension",
+	"y5nw",
+	"chmodsayshello",
+	"jordan4ibanez",
+	"superfloh247",
 }
 
 local previous_core_developers = {
@@ -100,13 +114,6 @@ local previous_contributors = {
 	"Jeija <jeija@mesecons.net>",
 }
 
-local rollertest_info = {
-	"This is a custom build of Minetest called ROllertest.",
-	"Do not report bugs specific to ROllertest to",
-	"the Minetest core developers!",
-	""
-}
-
 local function prepare_credits(dest, source)
 	for _, s in ipairs(source) do
 		-- if there's text inside brackets make it gray-ish
@@ -128,6 +135,13 @@ local function build_hacky_list(items, spacing)
 	return table.concat(ret, ""), y
 end
 
+local function get_credits()
+	local f = assert(io.open(core.get_mainmenu_path() .. "/credits.json"))
+	local json = core.parse_json(f:read("*all"))
+	f:close()
+	return json
+end
+
 return {
 	name = "about",
 	caption = fgettext("About"),
@@ -138,6 +152,8 @@ return {
 		if version.project == "Minetest" then
 			version.project = "ROllertest"
 		end
+
+		local credits = get_credits()
 
 		local credit_list = {}
 		prepare_credits(credit_list, rollertest_info)

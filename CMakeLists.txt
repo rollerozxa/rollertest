@@ -11,7 +11,7 @@ set(CLANG_MINIMUM_VERSION "7.0.1")
 
 # You should not need to edit these manually, use util/bump_version.sh
 set(VERSION_MAJOR 5)
-set(VERSION_MINOR 9)
+set(VERSION_MINOR 10)
 set(VERSION_PATCH 0)
 set(VERSION_EXTRA "" CACHE STRING "Stuff to append to version string")
 
@@ -42,6 +42,18 @@ set(DEFAULT_ENABLE_LTO TRUE)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(DEFAULT_ENABLE_LTO FALSE)
 endif()
+#### LTO testing list ####
+# - Linux: seems to work always
+# - win32/msvc: works
+# - win32/gcc: fails to link
+# - win32/clang: works
+# - macOS on x86: seems to be fine
+# - macOS on ARM: crashes, see <https://github.com/minetest/minetest/issues/14397>
+# Note: since CMake has no easy architecture detection disabling for Mac entirely
+#### ####
+if((WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR APPLE)
+	set(DEFAULT_ENABLE_LTO FALSE)
+endif()
 set(ENABLE_LTO ${DEFAULT_ENABLE_LTO} CACHE BOOL "Use Link Time Optimization")
 
 set(DEFAULT_RUN_IN_PLACE FALSE)
@@ -66,20 +78,6 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type: Debug or Release" FORCE)
 endif()
 
-# FIXME: Windows build fails in multiple places to link, needs to be investigated.
-if (ENABLE_LTO AND NOT WIN32)
-	include(CheckIPOSupported)
-	check_ipo_supported(RESULT lto_supported OUTPUT lto_output)
-	if(lto_supported)
-		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-		message(STATUS "LTO/IPO is enabled")
-	else()
-		message(STATUS "LTO/IPO requested but it is not supported by the compiler: ${lto_output}")
-	endif()
-else()
-	message(STATUS "LTO/IPO is not enabled")
-endif()
-
 set(ENABLE_UPDATE_CHECKER (NOT ${DEVELOPMENT_BUILD}) CACHE BOOL
 	"Whether to enable update checks by default")
 
@@ -92,28 +90,10 @@ if(ANDROID)
 	include(MinetestAndroidLibs)
 endif()
 
-set(IRRLICHTMT_BUILD_DIR "" CACHE PATH "Path to IrrlichtMt build directory.")
-if(ANDROID)
-	# currently manually provided
-elseif(NOT "${IRRLICHTMT_BUILD_DIR}" STREQUAL "")
-	find_package(IrrlichtMt QUIET
-		PATHS "${IRRLICHTMT_BUILD_DIR}"
-		NO_DEFAULT_PATH
-	)
-
-	if(NOT TARGET IrrlichtMt::IrrlichtMt)
-		# find_package() searches certain subdirectories. ${PATH}/cmake is not
-		# the only one, but it is the one where IrrlichtMt is supposed to export
-		# IrrlichtMtConfig.cmake
-		message(FATAL_ERROR "Could not find IrrlichtMtConfig.cmake in ${IRRLICHTMT_BUILD_DIR}/cmake.")
-	endif()
-elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/irrlichtmt" AND NOT IRRLICHTMT_FORCE_BINARY)
-	message(STATUS "Using user-provided IrrlichtMt at subdirectory 'lib/irrlichtmt'")
+if(TRUE)
+	message(STATUS "Using imported IrrlichtMt at subdirectory 'irr'")
 	if(BUILD_CLIENT)
-		# tell IrrlichtMt to create a static library
-		set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared library" FORCE)
-		add_subdirectory(lib/irrlichtmt EXCLUDE_FROM_ALL)
-		unset(BUILD_SHARED_LIBS CACHE)
+		add_subdirectory(irr EXCLUDE_FROM_ALL)
 
 		if(NOT TARGET IrrlichtMt)
 			message(FATAL_ERROR "IrrlichtMt project is missing a CMake target?!")
@@ -121,45 +101,22 @@ elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/irrlichtmt" AND NOT IRRLICHTMT_FO
 	else()
 		add_library(IrrlichtMt::IrrlichtMt INTERFACE IMPORTED)
 		set_target_properties(IrrlichtMt::IrrlichtMt PROPERTIES
-			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/lib/irrlichtmt/include")
-	endif()
-else()
-	find_package(IrrlichtMt QUIET)
-	if(NOT TARGET IrrlichtMt::IrrlichtMt)
-		string(CONCAT explanation_msg
-			"You must install IrrlichMt as described in docs/compiling/\n")
-		if(BUILD_CLIENT)
-			message(FATAL_ERROR "IrrlichtMt is required to build the client, but it was not found.\n${explanation_msg}")
-		endif()
-
-		include(MinetestFindIrrlichtHeaders)
-		if(NOT IRRLICHT_INCLUDE_DIR)
-			message(FATAL_ERROR "IrrlichtMt headers are required to build the server, but none found.\n${explanation_msg}")
-		endif()
-		message(STATUS "Found IrrlichtMt headers: ${IRRLICHT_INCLUDE_DIR}")
-		add_library(IrrlichtMt::IrrlichtMt INTERFACE IMPORTED)
-		# Note that we can't use target_include_directories() since that doesn't work for IMPORTED targets before CMake 3.11
-		set_target_properties(IrrlichtMt::IrrlichtMt PROPERTIES
-			INTERFACE_INCLUDE_DIRECTORIES "${IRRLICHT_INCLUDE_DIR}")
+			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/irr/include")
 	endif()
 endif()
 
-if(ANDROID)
-	# skipped for now
-elseif(BUILD_CLIENT AND TARGET IrrlichtMt::IrrlichtMt)
-	# retrieve version somehow
-	if(NOT IrrlichtMt_VERSION)
-		get_target_property(IrrlichtMt_VERSION IrrlichtMt VERSION)
+if (ENABLE_LTO OR CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+	include(CheckIPOSupported)
+	check_ipo_supported(RESULT lto_supported OUTPUT lto_output)
+	if(lto_supported)
+		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+		message(STATUS "LTO/IPO is enabled")
+	else()
+		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION FALSE)
+		message(STATUS "LTO/IPO was requested but is not supported by the compiler: ${lto_output}")
 	endif()
-	message(STATUS "Found IrrlichtMt ${IrrlichtMt_VERSION}")
-
-	set(TARGET_VER_S 1.9.0mt14)
-	string(REPLACE "mt" "." TARGET_VER ${TARGET_VER_S})
-	if(IrrlichtMt_VERSION VERSION_LESS ${TARGET_VER})
-		message(FATAL_ERROR "At least IrrlichtMt ${TARGET_VER_S} is required to build")
-	elseif(NOT DEVELOPMENT_BUILD AND IrrlichtMt_VERSION VERSION_GREATER ${TARGET_VER})
-		message(FATAL_ERROR "IrrlichtMt ${TARGET_VER_S} is required to build")
-	endif()
+else()
+	message(STATUS "LTO/IPO is not enabled")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -202,7 +159,7 @@ elseif(UNIX) # Linux, BSD etc
 		set(EXAMPLE_CONF_DIR ".")
 		set(MANDIR "unix/man")
 		set(XDG_APPS_DIR "unix/applications")
-		set(APPDATADIR "unix/metainfo")
+		set(METAINFODIR "unix/metainfo")
 		set(ICONDIR "unix/icons")
 		set(LOCALEDIR "locale")
 	else()
@@ -213,7 +170,7 @@ elseif(UNIX) # Linux, BSD etc
 		set(MANDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_MANDIR}")
 		set(EXAMPLE_CONF_DIR ${DOCDIR})
 		set(XDG_APPS_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/applications")
-		set(APPDATADIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/metainfo")
+		set(METAINFODIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/metainfo")
 		set(ICONDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/icons")
 		set(LOCALEDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LOCALEDIR}")
 	endif()
@@ -302,7 +259,7 @@ if(BUILD_CLIENT)
 	if(UNIX AND NOT APPLE)
 		install(FILES "doc/minetest.6" "doc/minetestserver.6" DESTINATION "${MANDIR}/man6")
 		install(FILES "misc/net.minetest.minetest.desktop" DESTINATION "${XDG_APPS_DIR}")
-		install(FILES "misc/net.minetest.minetest.appdata.xml" DESTINATION "${APPDATADIR}")
+		install(FILES "misc/net.minetest.minetest.metainfo.xml" DESTINATION "${METAINFODIR}")
 		install(FILES "misc/minetest.svg" DESTINATION "${ICONDIR}/hicolor/scalable/apps")
 		install(FILES "textures/base/pack/logo.png"
 			DESTINATION "${ICONDIR}/hicolor/256x256/apps"
@@ -323,8 +280,9 @@ find_package(DiscordRPC REQUIRED)
 if(NOT USE_LUAJIT)
 	add_subdirectory(lib/bitop)
 endif()
+add_subdirectory(lib/sha256)
 
-if(BUILD_BENCHMARKS)
+if(BUILD_UNITTESTS OR BUILD_BENCHMARKS)
 	add_subdirectory(lib/catch2)
 endif()
 

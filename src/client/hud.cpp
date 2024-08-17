@@ -40,9 +40,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "client/renderingengine.h"
 #include "client/minimap.h"
 #include "gui/touchscreengui.h"
+#include "util/enriched_string.h"
+#include "irrlicht_changes/CGUITTFont.h"
 
 #define OBJECT_CROSSHAIR_LINE_SIZE 8
 #define CROSSHAIR_LINE_SIZE 10
+
+static void setting_changed_callback(const std::string &name, void *data)
+{
+	static_cast<Hud*>(data)->readScalingSetting();
+}
 
 Hud::Hud(Client *client, LocalPlayer *player,
 		Inventory *inventory)
@@ -52,12 +59,9 @@ Hud::Hud(Client *client, LocalPlayer *player,
 	this->player      = player;
 	this->inventory   = inventory;
 
-	m_hud_scaling      = g_settings->getFloat("hud_scaling", 0.5f, 20.0f);
-	m_scale_factor     = m_hud_scaling * RenderingEngine::getDisplayDensity();
-	m_hotbar_imagesize = std::floor(HOTBAR_IMAGE_SIZE *
-		RenderingEngine::getDisplayDensity() + 0.5f);
-	m_hotbar_imagesize *= m_hud_scaling;
-	m_padding = m_hotbar_imagesize / 12;
+	readScalingSetting();
+	g_settings->registerChangedCallback("dpi_change_notifier", setting_changed_callback, this);
+	g_settings->registerChangedCallback("hud_scaling", setting_changed_callback, this);
 
 	for (auto &hbar_color : hbar_colors)
 		hbar_color = video::SColor(255, 255, 255, 255);
@@ -97,7 +101,7 @@ Hud::Hud(Client *client, LocalPlayer *player,
 
 	if (g_settings->getBool("enable_shaders")) {
 		IShaderSource *shdrsrc = client->getShaderSource();
-		u16 shader_id = shdrsrc->getShader(
+		auto shader_id = shdrsrc->getShader(
 			m_mode == HIGHLIGHT_HALO ? "selection_shader" : "default_shader", TILE_MATERIAL_ALPHA);
 		m_selection_material.MaterialType = shdrsrc->getShaderInfo(shader_id).material;
 	} else {
@@ -135,10 +139,24 @@ Hud::Hud(Client *client, LocalPlayer *player,
 
 	m_rotation_mesh_buffer.getMaterial().Lighting = false;
 	m_rotation_mesh_buffer.getMaterial().MaterialType = video::EMT_TRANSPARENT_ALPHA_CHANNEL;
+	m_rotation_mesh_buffer.setHardwareMappingHint(scene::EHM_STATIC);
+}
+
+void Hud::readScalingSetting()
+{
+	m_hud_scaling      = g_settings->getFloat("hud_scaling", 0.5f, 20.0f);
+	m_scale_factor     = m_hud_scaling * RenderingEngine::getDisplayDensity();
+	m_hotbar_imagesize = std::floor(HOTBAR_IMAGE_SIZE *
+		RenderingEngine::getDisplayDensity() + 0.5f);
+	m_hotbar_imagesize *= m_hud_scaling;
+	m_padding = m_hotbar_imagesize / 12;
 }
 
 Hud::~Hud()
 {
+	g_settings->deregisterChangedCallback("dpi_change_notifier", setting_changed_callback, this);
+	g_settings->deregisterChangedCallback("hud_scaling", setting_changed_callback, this);
+
 	if (m_selection_mesh)
 		m_selection_mesh->drop();
 }
@@ -376,10 +394,14 @@ void Hud::drawLuaElements(const v3s16 &camera_offset)
 					(e->style & HUD_STYLE_MONO) ? FM_Mono : FM_Unspecified,
 					e->style & HUD_STYLE_BOLD, e->style & HUD_STYLE_ITALIC));
 
+				irr::gui::CGUITTFont *ttfont = nullptr;
+				if (textfont->getType() == irr::gui::EGFT_CUSTOM)
+					ttfont = static_cast<irr::gui::CGUITTFont *>(textfont);
+
 				video::SColor color(255, (e->number >> 16) & 0xFF,
 										 (e->number >> 8)  & 0xFF,
 										 (e->number >> 0)  & 0xFF);
-				std::wstring text = unescape_translate(utf8_to_wide(e->text));
+				EnrichedString text(unescape_string(utf8_to_wide(e->text)), color);
 				core::dimension2d<u32> textsize = textfont->getDimension(text.c_str());
 
 				v2s32 offset(0, (e->align.Y - 1.0) * (textsize.Height / 2));
@@ -387,13 +409,19 @@ void Hud::drawLuaElements(const v3s16 &camera_offset)
 						text_height * e->scale.Y * m_scale_factor);
 				v2s32 offs(e->offset.X * m_scale_factor,
 						e->offset.Y * m_scale_factor);
-				std::wstringstream wss(text);
-				std::wstring line;
-				while (std::getline(wss, line, L'\n'))
-				{
+
+				// Draw each line
+				// See also: GUIFormSpecMenu::parseLabel
+				size_t str_pos = 0;
+				while (str_pos < text.size()) {
+					EnrichedString line = text.getNextLine(&str_pos);
+
 					core::dimension2d<u32> linesize = textfont->getDimension(line.c_str());
 					v2s32 line_offset((e->align.X - 1.0) * (linesize.Width / 2), 0);
-					textfont->draw(line.c_str(), size + pos + offset + offs + line_offset, color);
+					if (ttfont)
+						ttfont->draw(line, size + pos + offset + offs + line_offset);
+					else
+						textfont->draw(line.c_str(), size + pos + offset + offs + line_offset, color);
 					offset.Y += linesize.Height;
 				}
 				break; }
@@ -755,7 +783,7 @@ void Hud::drawHotbar(u16 playeritem)
 
 	v2s32 centerlowerpos(m_displaycenter.X, m_screensize.Y);
 
-	s32 hotbar_itemcount = player->hud_hotbar_itemcount;
+	s32 hotbar_itemcount = player->getMaxHotbarItemcount();
 	s32 width = hotbar_itemcount * (m_hotbar_imagesize + m_padding * 2);
 	v2s32 pos = centerlowerpos - v2s32(width / 2, m_hotbar_imagesize + m_padding * 3);
 
@@ -785,9 +813,9 @@ void Hud::drawCrosshair()
 {
 	auto draw_image_crosshair = [this] (video::ITexture *tex) {
 		core::dimension2di orig_size(tex->getOriginalSize());
-		core::dimension2di scaled_size(
-				core::round32(orig_size.Width * m_scale_factor),
-				core::round32(orig_size.Height * m_scale_factor));
+		// Integer scaling to avoid artifacts, floor instead of round since too
+		// small looks better than too large in this case.
+		core::dimension2di scaled_size = orig_size * std::max(std::floor(m_scale_factor), 1.0f);
 
 		core::rect<s32> src_rect(orig_size);
 		core::position2d pos(m_displaycenter.X - scaled_size.Width / 2,
@@ -887,7 +915,7 @@ enum Hud::BlockBoundsMode Hud::toggleBlockBounds()
 {
 	m_block_bounds_mode = static_cast<BlockBoundsMode>(m_block_bounds_mode + 1);
 
-	if (m_block_bounds_mode >= BLOCK_BOUNDS_MAX) {
+	if (m_block_bounds_mode > BLOCK_BOUNDS_NEAR) {
 		m_block_bounds_mode = BLOCK_BOUNDS_OFF;
 	}
 	return m_block_bounds_mode;
@@ -1020,8 +1048,7 @@ void drawItemStack(
 		return;
 	}
 
-	const static thread_local bool enable_animations =
-		g_settings->getBool("inventory_items_animations");
+	const bool enable_animations = g_settings->getBool("inventory_items_animations");
 
 	auto *idef = client->idef();
 	const ItemDefinition &def = item.getDefinition(idef);
@@ -1099,24 +1126,23 @@ void drawItemStack(
 		video::SColor basecolor =
 			client->idef()->getItemstackColor(item, client);
 
-		u32 mc = mesh->getMeshBufferCount();
+		const u32 mc = mesh->getMeshBufferCount();
+		if (mc > imesh->buffer_colors.size())
+			imesh->buffer_colors.resize(mc);
 		for (u32 j = 0; j < mc; ++j) {
 			scene::IMeshBuffer *buf = mesh->getMeshBuffer(j);
-			// we can modify vertices relatively fast,
-			// because these meshes are not buffered.
-			assert(buf->getHardwareMappingHint_Vertex() == scene::EHM_NEVER);
 			video::SColor c = basecolor;
 
-			if (imesh->buffer_colors.size() > j) {
-				ItemPartColor *p = &imesh->buffer_colors[j];
-				if (p->override_base)
-					c = p->color;
-			}
+			auto &p = imesh->buffer_colors[j];
+			p.applyOverride(c);
 
-			if (imesh->needs_shading)
-				colorizeMeshBuffer(buf, &c);
-			else
-				setMeshBufferColor(buf, c);
+			if (p.needColorize(c)) {
+				buf->setDirty(scene::EBT_VERTEX);
+				if (imesh->needs_shading)
+					colorizeMeshBuffer(buf, &c);
+				else
+					setMeshBufferColor(buf, c);
+			}
 
 			video::SMaterial &material = buf->getMaterial();
 			material.MaterialType = video::EMT_TRANSPARENT_ALPHA_CHANNEL_REF;

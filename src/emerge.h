@@ -39,7 +39,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 class EmergeThread;
 class NodeDefManager;
 class Settings;
-
+class MapSettingsManager;
 class BiomeManager;
 class OreManager;
 class DecorationManager;
@@ -50,6 +50,7 @@ class ModApiMapgen;
 // Structure containing inputs/outputs for chunk generation
 struct BlockMakeData {
 	MMVManip *vmanip = nullptr;
+	// Global map seed
 	u64 seed = 0;
 	v3s16 blockpos_min;
 	v3s16 blockpos_max;
@@ -70,7 +71,7 @@ enum EmergeAction {
 	EMERGE_GENERATED,
 };
 
-const static std::string emergeActionStrs[] = {
+constexpr const char *emergeActionStrs[] = {
 	"cancelled",
 	"errored",
 	"from_memory",

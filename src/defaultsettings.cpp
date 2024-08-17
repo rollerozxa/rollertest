@@ -26,9 +26,74 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "mapgen/mapgen.h" // Mapgen::setDefaultSettings
 #include "util/string.h"
 
+
+/*
+ * inspired by https://github.com/systemd/systemd/blob/7aed43437175623e0f3ae8b071bbc500c13ce893/src/hostname/hostnamed.c#L406
+ * this could be done in future with D-Bus using query:
+ * busctl get-property org.freedesktop.hostname1 /org/freedesktop/hostname1 org.freedesktop.hostname1 Chassis
+ */
+static bool detect_touch()
+{
+#if defined(__ANDROID__)
+	return true;
+#elif defined(__linux__)
+	std::string chassis_type;
+
+	// device-tree platforms (non-X86)
+	std::ifstream dtb_file("/proc/device-tree/chassis-type");
+	if (dtb_file.is_open()) {
+		std::getline(dtb_file, chassis_type);
+		chassis_type.pop_back();
+
+		if (chassis_type == "tablet" ||
+		    chassis_type == "handset" ||
+		    chassis_type == "watch")
+			return true;
+
+		if (!chassis_type.empty())
+			return false;
+	}
+	// SMBIOS
+	std::ifstream dmi_file("/sys/class/dmi/id/chassis_type");
+	if (dmi_file.is_open()) {
+		std::getline(dmi_file, chassis_type);
+
+		if (chassis_type == "11" /* Handheld */ ||
+		    chassis_type == "30" /* Tablet */)
+			return true;
+
+		return false;
+	}
+
+	// ACPI-based platforms
+	std::ifstream acpi_file("/sys/firmware/acpi/pm_profile");
+	if (acpi_file.is_open()) {
+		std::getline(acpi_file, chassis_type);
+
+		if (chassis_type == "8" /* Tablet */)
+			return true;
+
+		return false;
+	}
+
+	return false;
+#elif defined(_WIN32)
+	// 0x01 The device has an integrated touch digitizer
+	// 0x80 The device is ready to receive digitizer input.
+	if ((GetSystemMetrics(SM_DIGITIZER) & 0x81) == 0x81)
+		return true;
+
+	return false;
+#else
+	// we don't know, return default
+	return false;
+#endif
+}
+
 void set_default_settings()
 {
 	Settings *settings = Settings::createLayer(SL_DEFAULTS);
+	bool has_touch = detect_touch();
 
 	// Client and server
 	settings->setDefault("language", "");
@@ -39,11 +104,7 @@ void set_default_settings()
 	// Client
 	settings->setDefault("address", "");
 	settings->setDefault("enable_sound", "true");
-#if ENABLE_TOUCH
-	settings->setDefault("enable_touch", "true");
-#else
-	settings->setDefault("enable_touch", "false");
-#endif
+	settings->setDefault("enable_touch", bool_to_cstr(has_touch));
 	settings->setDefault("sound_volume", "0.8");
 	settings->setDefault("sound_volume_unfocused", "0.3");
 	settings->setDefault("mute_sound", "false");
@@ -51,7 +112,6 @@ void set_default_settings()
 	settings->setDefault("enable_mesh_cache", "false");
 	settings->setDefault("mesh_generation_interval", "0");
 	settings->setDefault("mesh_generation_threads", "0");
-	settings->setDefault("enable_vbo", "true");
 	settings->setDefault("free_move", "false");
 	settings->setDefault("pitch_move", "false");
 	settings->setDefault("fast_move", "false");
@@ -95,6 +155,7 @@ void set_default_settings()
 	settings->setDefault("keymap_minimap", "KEY_KEY_V");
 	settings->setDefault("keymap_console", "KEY_F10");
 	settings->setDefault("keymap_rangeselect", "KEY_KEY_R");
+
 	settings->setDefault("keymap_freemove", "KEY_KEY_K");
 	settings->setDefault("keymap_pitchmove", "");
 	settings->setDefault("keymap_fastmove", "KEY_KEY_J");
@@ -109,7 +170,7 @@ void set_default_settings()
 	settings->setDefault("keymap_toggle_hud", "KEY_F1");
 	settings->setDefault("keymap_toggle_chat", "KEY_F2");
 	settings->setDefault("keymap_toggle_fog", "KEY_F3");
-#if DEBUG
+#ifndef NDEBUG
 	settings->setDefault("keymap_toggle_update_camera", "KEY_F4");
 #else
 	settings->setDefault("keymap_toggle_update_camera", "");
@@ -118,6 +179,7 @@ void set_default_settings()
 	settings->setDefault("keymap_toggle_profiler", "KEY_F6");
 	settings->setDefault("keymap_camera_mode", "KEY_KEY_C");
 	settings->setDefault("keymap_screenshot", "KEY_F12");
+	settings->setDefault("keymap_fullscreen", "KEY_F11");
 	settings->setDefault("keymap_increase_viewing_range_min", "+");
 	settings->setDefault("keymap_decrease_viewing_range_min", "-");
 	settings->setDefault("keymap_slot1", "KEY_KEY_1");
@@ -169,8 +231,10 @@ void set_default_settings()
 	// Visuals
 #ifdef NDEBUG
 	settings->setDefault("show_debug", "false");
+	settings->setDefault("opengl_debug", "false");
 #else
 	settings->setDefault("show_debug", "true");
+	settings->setDefault("opengl_debug", "true");
 #endif
 	settings->setDefault("fsaa", "2");
 	settings->setDefault("undersampling", "1");
@@ -191,11 +255,7 @@ void set_default_settings()
 	settings->setDefault("screen_h", "720");
 	settings->setDefault("window_maximized", "false");
 	settings->setDefault("autosave_screensize", "true");
-#ifdef ENABLE_TOUCH
-	settings->setDefault("fullscreen", "true");
-#else
-	settings->setDefault("fullscreen", "false");
-#endif
+	settings->setDefault("fullscreen", bool_to_cstr(has_touch));
 	settings->setDefault("vsync", "false");
 	settings->setDefault("fov", "72");
 	settings->setDefault("leaves_style", "fancy");
@@ -220,7 +280,7 @@ void set_default_settings()
 	settings->setDefault("enable_3d_clouds", "true");
 	settings->setDefault("cloud_radius", "12");
 	settings->setDefault("menu_clouds", "true");
-	settings->setDefault("opaque_water", "false");
+	settings->setDefault("translucent_liquids", "true");
 	settings->setDefault("console_height", "0.6");
 	settings->setDefault("console_color", "(0,0,0)");
 	settings->setDefault("console_alpha", "200");
@@ -237,6 +297,8 @@ void set_default_settings()
 	settings->setDefault("gui_scaling", "1.0");
 	settings->setDefault("gui_scaling_filter", "false");
 	settings->setDefault("gui_scaling_filter_txr2img", "true");
+	settings->setDefault("smooth_scrolling", "true");
+
 	settings->setDefault("hud_hotbar_max_width", "1.0");
 	settings->setDefault("enable_local_map_saving", "false");
 	settings->setDefault("show_entity_selectionbox", "false");
@@ -296,16 +358,13 @@ void set_default_settings()
 	settings->setDefault("invert_hotbar_mouse_wheel", "false");
 	settings->setDefault("mouse_sensitivity", "0.2");
 	settings->setDefault("repeat_place_time", "0.25");
+	settings->setDefault("repeat_dig_time", "0.0");
 	settings->setDefault("safe_dig_and_place", "false");
 	settings->setDefault("random_input", "false");
 	settings->setDefault("aux1_descends", "false");
 	settings->setDefault("doubletap_jump", "false");
 	settings->setDefault("always_fly_fast", "true");
-#ifdef ENABLE_TOUCH
-	settings->setDefault("autojump", "true");
-#else
-	settings->setDefault("autojump", "false");
-#endif
+	settings->setDefault("autojump", bool_to_cstr(has_touch));
 	settings->setDefault("continuous_forward", "false");
 	settings->setDefault("enable_joysticks", "false");
 	settings->setDefault("joystick_id", "0");
@@ -341,6 +400,7 @@ void set_default_settings()
 
 	// ContentDB
 	settings->setDefault("contentdb_url", "https://content.minetest.net");
+	settings->setDefault("contentdb_enable_updates_indicator", "true");
 	settings->setDefault("contentdb_max_concurrent_downloads", "3");
 
 #ifdef __ANDROID__
@@ -349,16 +409,20 @@ void set_default_settings()
 	settings->setDefault("contentdb_flag_blacklist", "nonfree, desktop_default");
 #endif
 
-	settings->setDefault("update_information_url", "https://www.minetest.net/release_info.json");
 #if ENABLE_UPDATE_CHECKER
-	settings->setDefault("update_last_checked", "");
+	settings->setDefault("update_information_url", "https://www.minetest.net/release_info.json");
 #else
-	settings->setDefault("update_last_checked", "disabled");
+	settings->setDefault("update_information_url", "");
 #endif
 
 	// Server
 	settings->setDefault("disable_escape_sequences", "false");
 	settings->setDefault("strip_color_codes", "false");
+#ifndef NDEBUG
+	settings->setDefault("random_mod_load_order", "true");
+#else
+	settings->setDefault("random_mod_load_order", "false");
+#endif
 #if USE_PROMETHEUS
 	settings->setDefault("prometheus_listener_address", "127.0.0.1:30000");
 #endif
@@ -469,27 +533,26 @@ void set_default_settings()
 	settings->setDefault("server_address", "");
 	settings->setDefault("server_name", "");
 	settings->setDefault("server_description", "");
+	settings->setDefault("server_announce_send_players", "true");
 
 	settings->setDefault("enable_console", "false");
-	settings->setDefault("screen_dpi", "72");
 	settings->setDefault("display_density_factor", "1");
+	settings->setDefault("dpi_change_notifier", "0");
 
-	// Altered settings for macOS
-#if defined(__MACH__) && defined(__APPLE__)
+	// Altered settings for CIrrDeviceOSX
+#if !USE_SDL2 && defined(__MACH__) && defined(__APPLE__)
 	settings->setDefault("keymap_sneak", "KEY_SHIFT");
 #endif
 
-	settings->setDefault("touchscreen_threshold", "20");
 	settings->setDefault("touchscreen_sensitivity", "0.2");
+	settings->setDefault("touchscreen_threshold", "20");
+	settings->setDefault("touch_long_tap_delay", "400");
 	settings->setDefault("touch_use_crosshair", "true");
 	settings->setDefault("fixed_virtual_joystick", "false");
 	settings->setDefault("virtual_joystick_triggers_aux1", "false");
-
-#ifdef ENABLE_TOUCH
-	settings->setDefault("clickable_chat_weblinks", "false");
-#else
+	settings->setDefault("touch_punch_gesture", "short_tap");
 	settings->setDefault("clickable_chat_weblinks", "true");
-#endif
+
 	// Altered settings for Android
 #ifdef __ANDROID__
 	settings->setDefault("screen_w", "0");

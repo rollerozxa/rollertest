@@ -114,7 +114,11 @@ always_fly_fast (Always fly fast) bool true
 #    the place button.
 #
 #    Requires: keyboard_mouse
-repeat_place_time (Place repetition interval) float 0.25 0.16 2
+repeat_place_time (Place repetition interval) float 0.25 0.16 2.0
+
+#    The minimum time in seconds it takes between digging nodes when holding
+#    the dig button.
+repeat_dig_time (Minimum dig repetition interval) float 0.0 0.0 2.0
 
 #    Automatically jump up single-node obstacles.
 autojump (Automatic jumping) bool false
@@ -153,15 +157,20 @@ invert_hotbar_mouse_wheel (Hotbar: Invert mouse wheel direction) bool false
 #    Requires: !android
 enable_touch (Enable touchscreen) bool true
 
-#    The length in pixels it takes for touchscreen interaction to start.
-#
-#    Requires: touchscreen_gui
-touchscreen_threshold (Touchscreen threshold) int 20 0 100
-
 #    Touchscreen sensitivity multiplier.
 #
 #    Requires: touchscreen_gui
 touchscreen_sensitivity (Touchscreen sensitivity) float 0.2 0.001 10.0
+
+#    The length in pixels after which a touch interaction is considered movement.
+#
+#    Requires: touchscreen_gui
+touchscreen_threshold (Movement threshold) int 20 0 100
+
+#    The delay in milliseconds after which a touch interaction is considered a long tap.
+#
+#    Requires: touchscreen_gui
+touch_long_tap_delay (Threshold for long taps) int 400 100 1000
 
 #    Use crosshair to select object instead of whole screen.
 #    If enabled, a crosshair will be shown and will be used for selecting object.
@@ -180,6 +189,19 @@ fixed_virtual_joystick (Fixed virtual joystick) bool false
 #
 #    Requires: touchscreen_gui
 virtual_joystick_triggers_aux1 (Virtual joystick triggers Aux1 button) bool false
+
+#    The gesture for punching players/entities.
+#    This can be overridden by games and mods.
+#
+#    * short_tap
+#      Easy to use and well-known from other games that shall not be named.
+#
+#    * long_tap
+#      Known from the classic Minetest mobile controls.
+#      Combat is more or less impossible.
+#
+#    Requires: touchscreen_gui
+touch_punch_gesture (Punch gesture) enum short_tap short_tap,long_tap
 
 
 [Graphics and Audio]
@@ -245,8 +267,8 @@ undersampling (Undersampling) int 1 1 8
 
 [**Graphics Effects]
 
-#    Makes all liquids opaque
-opaque_water (Opaque liquids) bool false
+#    Allows liquids to be translucent.
+translucent_liquids (Translucent liquids) bool true
 
 #    Leaves style:
 #    -   Fancy:  all faces visible
@@ -672,6 +694,9 @@ language (Language) enum   ,be,bg,ca,cs,da,de,el,en,eo,es,et,eu,fi,fr,gd,gl,hu,i
 #    edge pixels when images are scaled by non-integer sizes.
 gui_scaling (GUI scaling) float 1.0 0.5 20
 
+#    Enables smooth scrolling.
+smooth_scrolling (Smooth scrolling) bool true
+
 #    Enables animation of inventory items.
 inventory_items_animations (Inventory items animations) bool false
 
@@ -741,6 +766,10 @@ chat_font_size (Chat font size) int 0 0 72
 #    The URL for the content repository
 contentdb_url (ContentDB URL) string https://content.minetest.net
 
+#    If enabled and you have ContentDB packages installed, Minetest may contact ContentDB to
+#    check for package updates when opening the mainmenu.
+contentdb_enable_updates_indicator (Enable updates available indicator on content tab) bool true
+
 #    Comma-separated list of flags to hide in the content repository.
 #    "nonfree" can be used to hide packages which do not qualify as 'free software',
 #    as defined by the Free Software Foundation.
@@ -787,6 +816,9 @@ server_url (Server URL) string https://minetest.net
 
 #    Automatically report to the serverlist.
 server_announce (Announce server) bool false
+
+#    Send names of online players to the serverlist. If disabled only the player count is revealed.
+server_announce_send_players (Send player names to the server list) bool true
 
 #    Announce to this serverlist.
 serverlist_url (Serverlist URL) string servers.minetest.net
@@ -1729,6 +1761,9 @@ deprecated_lua_api_handling (Deprecated Lua API handling) enum log none,log,erro
 #    Enable random user input (only used for testing).
 random_input (Random input) bool false
 
+#    Enable random mod loading (mainly used for testing).
+random_mod_load_order (Random mod load order) bool false
+
 #    Enable mod channels support.
 enable_mod_channels (Mod channels) bool false
 
@@ -1806,10 +1841,6 @@ video_driver (Video driver) enum  ,opengl,opengl3,ogles1,ogles2
 #    Use this to limit the performance impact of transparency depth sorting
 transparency_sorting_distance (Transparency Sorting Distance) int 16 0 128
 
-#    Enable vertex buffer objects.
-#    This should greatly improve graphics performance.
-enable_vbo (VBO) bool true
-
 #    Radius of cloud area stated in number of 64 node cloud squares.
 #    Values larger than 26 will start to produce sharp cutoffs at cloud area corners.
 cloud_radius (Cloud radius) int 12 1 62
@@ -1862,6 +1893,9 @@ texture_min_size (Base texture size) int 64 1 32768
 #    draw calls, benefiting especially high-end GPUs.
 #    Systems with a low-end GPU (or no GPU) would benefit from smaller values.
 client_mesh_chunk (Client Mesh Chunksize) int 1 1 16
+
+#    Enables debug and error-checking in the OpenGL driver.
+opengl_debug (OpenGL debug) bool false
 
 [**Sound]
 #    Comma-separated list of AL and ALC extensions that should not be used.
@@ -2006,9 +2040,10 @@ ask_reconnect_on_crash (Ask to reconnect after crash) bool false
 
 [**Server/Env Performance]
 
-#    Length of a server tick and the interval at which objects are generally updated over
-#    network, stated in seconds.
-dedicated_server_step (Dedicated server step) float 0.09 0.0
+#    Length of a server tick (the interval at which everything is generally updated),
+#    stated in seconds.
+#    Does not apply to sessions hosted from the client menu.
+dedicated_server_step (Dedicated server step) float 0.09 0.0 1.0
 
 #    Whether players are shown to clients without any range limit.
 #    Deprecated, use the setting player_transfer_distance instead.
@@ -2150,9 +2185,6 @@ curl_file_download_timeout (cURL file download timeout) int 300000 5000 21474836
 
 [**Miscellaneous]
 
-#    Adjust dpi configuration to your screen (non X11/Android only) e.g. for 4k screens.
-screen_dpi (DPI) int 72 1
-
 #    Adjust the detected display density, used for scaling UI elements.
 display_density_factor (Display Density Scaling Factor) float 1 0.5 5.0
 
@@ -2277,16 +2309,6 @@ show_advanced (Show advanced settings) bool false
 #    Changing this setting requires a restart.
 enable_sound (Sound) bool true
 
-#    Version number which was last seen during an update check.
-#
-#    Representation: MMMIIIPPP, where M=Major, I=Minor, P=Patch
-#    Ex: 5.5.0 is 005005000
-update_last_known (Last known version update) int 0
-
-#    If this is set to true, the user will never (again) be shown the
-#    "reinstall Minetest Game" notification.
-no_mtg_notification (Don't show "reinstall Minetest Game" notification) bool false
-
 #    Key for moving the player forward.
 keymap_forward (Forward key) key KEY_KEY_W
 
@@ -2371,6 +2393,9 @@ keymap_minimap (Minimap key) key KEY_KEY_V
 
 #    Key for taking screenshots.
 keymap_screenshot (Screenshot) key KEY_F12
+
+#    Key for toggling fullscreen mode.
+keymap_fullscreen (Fullscreen key) key KEY_F11
 
 #    Key for dropping the currently selected item.
 keymap_drop (Drop item key) key KEY_KEY_Q
@@ -2484,9 +2509,9 @@ keymap_toggle_chat (Chat toggle key) key KEY_F2
 keymap_console (Large chat console key) key KEY_F10
 
 #    Key for toggling the display of fog.
-keymap_toggle_force_fog_off (Fog toggle key) key KEY_F3
+keymap_toggle_fog (Fog toggle key) key KEY_F3
 
-#    Key for toggling the camera update. Only used for development
+#    Key for toggling the camera update. Only usable with 'debug' privilege.
 keymap_toggle_update_camera (Camera update toggle key) key
 
 #    Key for toggling the display of debug info.
@@ -2494,6 +2519,9 @@ keymap_toggle_debug (Debug info toggle key) key KEY_F5
 
 #    Key for toggling the display of the profiler. Used for development.
 keymap_toggle_profiler (Profiler toggle key) key KEY_F6
+
+#    Key for toggling the display of mapblock boundaries.
+keymap_toggle_block_bounds (Block bounds toggle key) key
 
 #    Key for switching between first- and third-person camera.
 keymap_camera_mode (Toggle camera mode key) key KEY_KEY_C

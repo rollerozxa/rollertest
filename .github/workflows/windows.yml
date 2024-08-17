@@ -8,9 +8,11 @@ on:
       - 'lib/**.cpp'
       - 'src/**.[ch]'
       - 'src/**.cpp'
+      - 'irr/**.[ch]'
+      - 'irr/**.cpp'
       - '**/CMakeLists.txt'
       - 'cmake/Modules/**'
-      - 'misc/irrlichtmt_tag.txt'
+      - 'util/buildbot/**'
       - 'misc/*.manifest'
       - '.github/workflows/windows.yml'
   pull_request:
@@ -19,64 +21,37 @@ on:
       - 'lib/**.cpp'
       - 'src/**.[ch]'
       - 'src/**.cpp'
+      - 'irr/**.[ch]'
+      - 'irr/**.cpp'
       - '**/CMakeLists.txt'
       - 'cmake/Modules/**'
-      - 'misc/irrlichtmt_tag.txt'
+      - 'util/buildbot/**'
       - 'misc/*.manifest'
       - '.github/workflows/windows.yml'
 
 jobs:
-  windows:
-    name: Windows
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: msys2 {0}
+  mingw:
+    name: "MinGW cross-compiler (${{ matrix.bits }}-bit)"
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        bits: [32, 64]
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          msystem: UCRT64
-          install: >-
-            git
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-cmake
-            mingw-w64-ucrt-x86_64-ninja
-            mingw-w64-ucrt-x86_64-gettext
-            mingw-w64-ucrt-x86_64-leveldb
-            mingw-w64-ucrt-x86_64-libjpeg-turbo
-            mingw-w64-ucrt-x86_64-libogg
-            mingw-w64-ucrt-x86_64-libpng
-            mingw-w64-ucrt-x86_64-libvorbis
-            mingw-w64-ucrt-x86_64-luajit
-            mingw-w64-ucrt-x86_64-openal
-            mingw-w64-ucrt-x86_64-sqlite3
-            mingw-w64-ucrt-x86_64-zstd
-
-      - name: Install external packages
+      - uses: actions/checkout@v4
+      - name: Install compiler
         run: |
-          wget https://grejer.voxelmanip.se/msys-pkgs/mingw-w64-ucrt-x86_64-{curl-winssl-8.4.0-3,freetype-2.13.2-1}-any.pkg.tar.zst
-          pacman -U --noconfirm *.pkg.tar.zst
-
-          git clone https://github.com/minetest/irrlicht lib/irrlichtmt --depth 1
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gettext
+          sudo ./util/buildbot/download_toolchain.sh /usr
 
       - name: Build
         run: |
-          mkdir build
-          cd build
-          cmake .. -DBUILD_UNITTESTS=0 -DRUN_IN_PLACE=0 -DENABLE_POSTGRESQL=OFF -DENABLE_SYSTEM_GMP=OFF -DENABLE_SYSTEM_JSONCPP=OFF -DUSE_SDL2=OFF -DVERSION_EXTRA=rollertest -G Ninja
-          ninja -j4
+           EXISTING_MINETEST_DIR=$PWD \
+           ./util/buildbot/buildwin${{ matrix.bits }}.sh B
 
-      - name: Bundle up and package
-        run: |
-          cd build
-          mkdir dlls
-          ../util/bundledlls ../minetest.exe dlls/
-          ninja package
-
-      - name: Upload output as artifact
-        uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
-          path: build/minetest-*-win64.7z
+          name: "mingw${{ matrix.bits }}"
+          path: B/build/*.zip
+          if-no-files-found: error

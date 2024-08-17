@@ -33,6 +33,25 @@ minetest.register_node("testnodes:anim", {
 	groups = { dig_immediate = 2 },
 })
 
+minetest.register_node("testnodes:fill_positioning", {
+	description = S("Fill Modifier Test Node") .. "\n" ..
+		S("The node should have the same look as " ..
+		"testnodes:fill_positioning_reference."),
+	drawtype = "glasslike",
+	paramtype = "light",
+	tiles = {"[fill:16x16:#ffffff^[fill:6x6:1,1:#00ffdc" ..
+		"^[fill:6x6:1,9:#00ffdc^[fill:6x6:9,1:#00ffdc^[fill:6x6:9,9:#00ffdc"},
+	groups = {dig_immediate = 3},
+})
+
+minetest.register_node("testnodes:fill_positioning_reference", {
+	description = S("Fill Modifier Test Node Reference"),
+	drawtype = "glasslike",
+	paramtype = "light",
+	tiles = {"testnodes_fill_positioning_reference.png"},
+	groups = {dig_immediate = 3},
+})
+
 -- Node texture transparency test
 
 local alphas = { 64, 128, 191 }
@@ -68,6 +87,21 @@ for a=1,#alphas do
 		groups = { dig_immediate = 3 },
 	})
 end
+
+minetest.register_node("testnodes:alpha_compositing", {
+	description = S("Texture Overlay Test Node") .. "\n" ..
+		S("A regular grid should be visible where each cell contains two " ..
+		"texels with the same color.") .. "\n" ..
+		S("Texture overlay is gamma-incorrect, " ..
+		"and in general it does not do alpha compositing, " ..
+		"both for backwards compatibility."),
+	drawtype = "glasslike",
+	paramtype = "light",
+	tiles = {"testnodes_alpha_compositing_bottom.png^"  ..
+		"testnodes_alpha_compositing_top.png"},
+	use_texture_alpha = "blend",
+	groups = {dig_immediate = 3},
+})
 
 -- Generate PNG textures
 
@@ -148,14 +182,6 @@ end
 fractal = nil
 frac_emb = nil
 checker = nil
-
-do
-	-- we used to write the textures to our mod folder. in order to avoid
-	-- duplication errors delete them if they still exist.
-	local path = core.get_modpath(core.get_current_modname()) .. "/textures/"
-	os.remove(path .. "testnodes_generated_mb.png")
-	os.remove(path .. "testnodes_generated_ck.png")
-end
 
 local textures_path = core.get_worldpath() .. "/"
 core.safe_file_write(

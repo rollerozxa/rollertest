@@ -26,7 +26,15 @@ do
 		core.print = nil -- don't pollute our namespace
 	end
 end
-math.randomseed(os.time())
+
+do
+	-- Note that PUC Lua just calls srand() which is already initialized by C++,
+	-- but we don't want to rely on this implementation detail.
+	local seed = 1048576 * (os.time() % 1048576)
+	seed = seed + core.get_us_time() % 1048576
+	math.randomseed(seed)
+end
+
 minetest = core
 
 -- Load other files
@@ -63,6 +71,7 @@ elseif INIT == "mainmenu" then
 elseif INIT == "async"  then
 	dofile(asyncpath .. "mainmenu.lua")
 elseif INIT == "async_game" then
+	dofile(commonpath .. "metatable.lua")
 	dofile(asyncpath .. "game.lua")
 elseif INIT == "client" then
 	dofile(scriptdir .. "client" .. DIR_DELIM .. "init.lua")

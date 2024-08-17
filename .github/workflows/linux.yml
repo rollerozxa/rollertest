@@ -8,10 +8,11 @@ on:
       - 'lib/**.cpp'
       - 'src/**.[ch]'
       - 'src/**.cpp'
+      - 'irr/**.[ch]'
+      - 'irr/**.cpp'
       - '**/CMakeLists.txt'
       - 'cmake/Modules/**'
       - 'util/ci/**'
-      - 'misc/irrlichtmt_tag.txt'
       - 'Dockerfile'
       - '.dockerignore'
       - '.github/workflows/linux.yml'
@@ -21,31 +22,32 @@ on:
       - 'lib/**.cpp'
       - 'src/**.[ch]'
       - 'src/**.cpp'
+      - 'irr/**.[ch]'
+      - 'irr/**.cpp'
       - '**/CMakeLists.txt'
       - 'cmake/Modules/**'
       - 'util/ci/**'
-      - 'misc/irrlichtmt_tag.txt'
       - 'Dockerfile'
       - '.dockerignore'
       - '.github/workflows/linux.yml'
 
 jobs:
   # Current gcc version
-  gcc_12:
-    runs-on: ubuntu-22.04
+  gcc_14:
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Install deps
         run: |
           source ./util/ci/common.sh
-          install_linux_deps g++-12 libluajit-5.1-dev
+          install_linux_deps g++-14 libluajit-5.1-dev
 
       - name: Build
         run: |
           ./util/ci/build.sh
         env:
-          CC: gcc-12
-          CXX: g++-12
+          CC: gcc-14
+          CXX: g++-14
 
       - name: Test
         run: |
@@ -55,21 +57,21 @@ jobs:
           ../bin/minetest --run-unittests
 
   # Current clang version
-  clang_14:
-    runs-on: ubuntu-22.04
+  clang_18:
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Install deps
         run: |
           source ./util/ci/common.sh
-          install_linux_deps clang-14 gdb
+          install_linux_deps clang-18 lldb
 
       - name: Build
         run: |
           ./util/ci/build.sh
         env:
-          CC: clang-14
-          CXX: clang++-14
+          CC: clang-18
+          CXX: clang++-18
 
       - name: Test
         run: |

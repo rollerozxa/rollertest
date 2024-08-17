@@ -25,6 +25,7 @@ extern "C" {
 #include "util/numeric.h"
 #include "util/serialize.h"
 #include "util/string.h"
+#include "log.h"
 #include "common/c_converter.h"
 #include "common/c_internal.h"
 #include "constants.h"
@@ -57,6 +58,7 @@ extern "C" {
  */
 static void read_v3_aux(lua_State *L, int index)
 {
+	CHECK_POS_TAB(index);
 	lua_pushvalue(L, index);
 	lua_rawgeti(L, LUA_REGISTRYINDEX, CUSTOM_RIDX_READ_VECTOR);
 	lua_insert(L, -2);

@@ -40,7 +40,7 @@ class RemotePlayer : public Player
 {
 
 public:
-	RemotePlayer(const char *name, IItemDefManager *idef);
+	RemotePlayer(const std::string &name, IItemDefManager *idef);
 	virtual ~RemotePlayer();
 
 	PlayerSAO *getPlayerSAO() { return m_sao; }

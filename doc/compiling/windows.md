@@ -14,13 +14,7 @@ It is highly recommended to use vcpkg as package manager.
 
 After you successfully built vcpkg you can easily install the required libraries:
 ```powershell
-vcpkg install zlib zstd curl[winssl] openal-soft libvorbis libogg libjpeg-turbo sqlite3 freetype luajit gmp jsoncpp opengl-registry gettext sdl2 --triplet x64-windows
-```
-
-- **Don't forget about IrrlichtMt.** The easiest way is to clone it to `lib/irrlichtmt`:
-
-```bat
-for /F %i in (misc\irrlichtmt_tag.txt) do git clone --depth 1 --branch %i https://github.com/minetest/irrlicht.git lib\irrlichtmt
+vcpkg install zlib zstd curl[winssl] openal-soft libvorbis libogg libjpeg-turbo sqlite3 freetype luajit gmp jsoncpp gettext sdl2 --triplet x64-windows
 ```
 
 - `curl` is optional, but required to read the serverlist, `curl[winssl]` is required to use the content store.

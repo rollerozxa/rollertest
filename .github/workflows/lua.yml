@@ -14,32 +14,9 @@ on:
       - '.github/workflows/**.yml'
 
 jobs:
-  # Note that the integration tests are also run build.yml, but only when C++ code is changed.
-  integration_tests:
-    name: "Compile and run multiplayer tests"
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install deps
-      run: |
-        source ./util/ci/common.sh
-        install_linux_deps clang-10 gdb libluajit-5.1-dev
-
-    - name: Build
-      run: |
-        ./util/ci/build.sh
-      env:
-        CC: clang-10
-        CXX: clang++-10
-        CMAKE_FLAGS: "-DENABLE_GETTEXT=0 -DBUILD_SERVER=0"
-
-    - name: Integration test + devtest
-      run: |
-        ./util/test_multiplayer.sh
-
   luacheck:
     name: "Builtin Luacheck and Unit Tests"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
 
@@ -50,11 +27,7 @@ jobs:
     - uses: leafo/gh-actions-luarocks@v4.3.0
 
     - name: Install LuaJIT
-      run: |
-        cd $HOME
-        git clone https://github.com/LuaJIT/LuaJIT/
-        cd LuaJIT
-        make -j$(nproc)
+      run: ./util/ci/build_luajit.sh
 
     - name: Install luarocks tools
       run: |

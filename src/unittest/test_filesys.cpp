@@ -41,6 +41,7 @@ public:
 	void testRemoveRelativePathComponent();
 	void testSafeWriteToFile();
 	void testCopyFileContents();
+	void testNonExist();
 };
 
 static TestFileSys g_test_instance;
@@ -54,6 +55,7 @@ void TestFileSys::runTests(IGameDef *gamedef)
 	TEST(testRemoveRelativePathComponent);
 	TEST(testSafeWriteToFile);
 	TEST(testCopyFileContents);
+	TEST(testNonExist);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -111,6 +113,7 @@ void TestFileSys::testPathStartsWith()
 	};
 	/*
 		expected fs::PathStartsWith results
+		(row for every path, column for every prefix)
 		0 = returns false
 		1 = returns true
 		2 = returns false on windows, true elsewhere
@@ -120,17 +123,17 @@ void TestFileSys::testPathStartsWith()
 	*/
 	int expected_results[numpaths][numpaths] = {
 		{1,2,0,0,0,0,0,0,0,0,0,0},
-		{1,1,0,0,0,0,0,0,0,0,0,0},
-		{1,1,1,0,0,0,0,0,0,0,0,0},
-		{1,1,1,1,0,0,0,0,0,0,0,0},
-		{1,1,0,0,1,0,0,0,0,0,0,0},
-		{1,1,0,0,0,1,0,0,1,1,0,0},
-		{1,1,0,0,0,0,1,4,1,0,0,0},
-		{1,1,0,0,0,0,4,1,4,0,0,0},
-		{1,1,0,0,0,0,0,0,1,0,0,0},
-		{1,1,0,0,0,0,0,0,1,1,0,0},
-		{1,1,0,0,0,0,0,0,0,0,1,0},
-		{1,1,0,0,0,0,0,0,0,0,0,1},
+		{0,1,0,0,0,0,0,0,0,0,0,0},
+		{0,1,1,0,0,0,0,0,0,0,0,0},
+		{0,1,1,1,0,0,0,0,0,0,0,0},
+		{0,1,0,0,1,0,0,0,0,0,0,0},
+		{0,1,0,0,0,1,0,0,1,1,0,0},
+		{0,1,0,0,0,0,1,4,1,0,0,0},
+		{0,1,0,0,0,0,4,1,4,0,0,0},
+		{0,1,0,0,0,0,0,0,1,0,0,0},
+		{0,1,0,0,0,0,0,0,1,1,0,0},
+		{0,1,0,0,0,0,0,0,0,0,1,0},
+		{0,1,0,0,0,0,0,0,0,0,0,1},
 	};
 
 	for (int i = 0; i < numpaths; i++)
@@ -310,4 +313,28 @@ void TestFileSys::testCopyFileContents()
 	contents_actual.clear();
 	UASSERT(fs::ReadFile(file2, contents_actual));
 	UASSERTEQ(auto, contents_actual, test_data);
+}
+
+void TestFileSys::testNonExist()
+{
+	const auto path = getTestTempFile();
+	fs::DeleteSingleFileOrEmptyDirectory(path);
+
+	UASSERT(!fs::IsFile(path));
+	UASSERT(!fs::IsDir(path));
+	UASSERT(!fs::IsExecutable(path));
+
+	std::string s;
+	UASSERT(!fs::ReadFile(path, s));
+	UASSERT(s.empty());
+
+	UASSERT(!fs::Rename(path, getTestTempFile()));
+
+	std::filebuf buf;
+	// with logging enabled to test that code path
+	UASSERT(!fs::OpenStream(buf, path.c_str(), std::ios::in, false, true));
+	UASSERT(!buf.is_open());
+
+	auto ifs = open_ifstream(path.c_str(), false);
+	UASSERT(!ifs.good());
 }

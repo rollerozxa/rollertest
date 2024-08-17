@@ -25,6 +25,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "filesys.h"
 #include "server/player_sao.h"
 #include "util/string.h"
+#include <json/json.h>
 #include <cassert>
 
 ModStorageDatabaseFiles::ModStorageDatabaseFiles(const std::string &savedir):
@@ -178,8 +179,7 @@ Json::Value *ModStorageDatabaseFiles::getOrCreateJson(const std::string &modname
 
 	std::string path = m_storage_dir + DIR_DELIM + modname;
 	if (fs::PathExists(path)) {
-		std::ifstream is(path.c_str(), std::ios_base::binary);
-
+		auto is = open_ifstream(path.c_str(), true);
 		Json::CharReaderBuilder builder;
 		builder.settings_["collectComments"] = false;
 		std::string errs;

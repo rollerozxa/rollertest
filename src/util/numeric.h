@@ -250,6 +250,16 @@ int myrand_range(int min, int max);
 float myrand_range(float min, float max);
 float myrand_float();
 
+// Implements a C++11 UniformRandomBitGenerator using the above functions
+struct MyRandGenerator {
+	typedef u32 result_type;
+	static constexpr result_type min() { return 0; }
+	static constexpr result_type max() { return MYRAND_RANGE; }
+	inline result_type operator()() {
+		return myrand();
+	}
+};
+
 /*
 	Miscellaneous functions
 */
@@ -350,12 +360,10 @@ class IntervalLimiter
 public:
 	IntervalLimiter() = default;
 
-	/*
-		dtime: time from last call to this method
-		wanted_interval: interval wanted
-		return value:
-			true: action should be skipped
-			false: action should be done
+	/**
+		@param dtime time from last call to this method
+		@param wanted_interval interval wanted
+		@return true if action should be done
 	*/
 	bool step(float dtime, float wanted_interval)
 	{
@@ -431,6 +439,17 @@ inline u32 npot2(u32 orig) {
 	return orig + 1;
 }
 
+// Distance between two values in a wrapped (circular) system
+template<typename T>
+inline unsigned wrappedDifference(T a, T b, const T maximum)
+{
+	if (a > b)
+		std::swap(a, b);
+	// now b >= a
+	unsigned s = b - a, l = static_cast<unsigned>(maximum - b) + a + 1;
+	return std::min(s, l);
+}
+
 // Gradual steps towards the target value in a wrapped (circular) system
 // using the shorter of both ways
 template<typename T>
@@ -450,18 +469,18 @@ inline void wrappedApproachShortest(T &current, const T target, const T stepsize
 	}
 }
 
-void setPitchYawRollRad(core::matrix4 &m, const v3f &rot);
+void setPitchYawRollRad(core::matrix4 &m, v3f rot);
 
-inline void setPitchYawRoll(core::matrix4 &m, const v3f &rot)
+inline void setPitchYawRoll(core::matrix4 &m, v3f rot)
 {
-	setPitchYawRollRad(m, rot * core::DEGTORAD64);
+	setPitchYawRollRad(m, rot * core::DEGTORAD);
 }
 
 v3f getPitchYawRollRad(const core::matrix4 &m);
 
 inline v3f getPitchYawRoll(const core::matrix4 &m)
 {
-	return getPitchYawRollRad(m) * core::RADTODEG64;
+	return getPitchYawRollRad(m) * core::RADTODEG;
 }
 
 // Muliply the RGB value of a color linearly, and clamp to black/white

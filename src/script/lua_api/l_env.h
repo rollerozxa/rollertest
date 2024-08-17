@@ -74,13 +74,10 @@ private:
 	// pos = {x=num, y=num, z=num}
 	static int l_swap_node(lua_State *L);
 
-	// get_node(pos)
-	// pos = {x=num, y=num, z=num}
-	static int l_get_node(lua_State *L);
-
-	// get_node_or_nil(pos)
-	// pos = {x=num, y=num, z=num}
-	static int l_get_node_or_nil(lua_State *L);
+	// get_node_raw(x, y, z) -> content, param1, param2, pos_ok
+	// Used to implement get_node and get_node_or_nil in lua.
+	// This is still faster than doing it from C++ even with optimized pushnode.
+	static int l_get_node_raw(lua_State *L);
 
 	// get_node_light(pos, timeofday)
 	// pos = {x=num, y=num, z=num}
@@ -92,15 +89,15 @@ private:
 	// timeofday: nil = current time, 0 = night, 0.5 = day
 	static int l_get_natural_light(lua_State *L);
 
-	// place_node(pos, node)
+	// place_node(pos, node, [placer])
 	// pos = {x=num, y=num, z=num}
 	static int l_place_node(lua_State *L);
 
-	// dig_node(pos)
+	// dig_node(pos, [digger])
 	// pos = {x=num, y=num, z=num}
 	static int l_dig_node(lua_State *L);
 
-	// punch_node(pos)
+	// punch_node(pos, [puncher])
 	// pos = {x=num, y=num, z=num}
 	static int l_punch_node(lua_State *L);
 
@@ -245,10 +242,13 @@ public:
 
 /*
  * Duplicates of certain env APIs that operate not on the global
- * map but on a VoxelManipulator. This is for emerge scripting. 
+ * map but on a VoxelManipulator. This is for emerge scripting.
  */
 class ModApiEnvVM : public ModApiEnvBase {
 private:
+
+	// get_node_or_nil(pos)
+	static int l_get_node_or_nil(lua_State *L);
 
 	// get_node_max_level(pos)
 	static int l_get_node_max_level(lua_State *L);
