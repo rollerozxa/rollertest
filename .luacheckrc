@@ -11,7 +11,6 @@ read_globals = {
 	"ItemStack",
 	"INIT",
 	"DIR_DELIM",
-	"TOUCHSCREEN_GUI",
 	"dump", "dump2",
 	"fgettext", "fgettext_ne",
 	"vector",

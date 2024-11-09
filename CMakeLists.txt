@@ -239,9 +239,6 @@ if(RUN_IN_PLACE)
 	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/textures/texture_packs_here.txt" DESTINATION "${SHAREDIR}/textures")
 endif()
 
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/games/minetest_game" DESTINATION "${SHAREDIR}/games/"
-	COMPONENT "SUBGAME_MINETEST_GAME" OPTIONAL PATTERN ".git*" EXCLUDE )
-
 set(INSTALL_DEVTEST FALSE CACHE BOOL "Install Development Test")
 
 if(INSTALL_DEVTEST)
@@ -271,9 +268,6 @@ if(UNIX AND NOT APPLE)
 	install(FILES "misc/net.minetest.minetest.desktop" DESTINATION "${XDG_APPS_DIR}")
 	install(FILES "misc/net.minetest.minetest.metainfo.xml" DESTINATION "${METAINFODIR}")
 	install(FILES "misc/luanti.svg" DESTINATION "${ICONDIR}/hicolor/scalable/apps")
-	install(FILES "misc/luanti-xorg-icon-128.png"
-		DESTINATION "${ICONDIR}/hicolor/128x128/apps"
-		RENAME "luanti.png")
 endif()
 
 if(APPLE)
@@ -285,7 +279,6 @@ endif()
 find_package(GMP REQUIRED)
 find_package(Json 1.0.0 REQUIRED)
 find_package(Lua REQUIRED)
-find_package(DiscordRPC REQUIRED)
 if(NOT USE_LUAJIT)
 	add_subdirectory(lib/bitop)
 endif()
@@ -309,6 +302,13 @@ set(CPACK_PACKAGE_VERSION_MINOR ${VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${VERSION_PATCH})
 set(CPACK_PACKAGE_VENDOR "celeron55")
 set(CPACK_PACKAGE_CONTACT "Perttu Ahola <celeron55@gmail.com>")
+
+include(CPackComponent)
+
+cpack_add_component(Docs
+	DISPLAY_NAME "Documentation"
+	DESCRIPTION "Documentation about ${PROJECT_NAME_CAPITALIZED} and ${PROJECT_NAME_CAPITALIZED} modding"
+)
 
 if(WIN32)
 	# Include all dynamically linked runtime libraries such as MSVCRxxx.dll

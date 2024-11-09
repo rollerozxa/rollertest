@@ -556,7 +556,6 @@ include_directories(SYSTEM
 	${GMP_INCLUDE_DIR}
 	${JSON_INCLUDE_DIR}
 	${LUA_BIT_INCLUDE_DIR}
-	${DISCORD_INCLUDE_DIR}
 	# on Android, Luanti depends on SDL2 directly
 	# on other platforms, only IrrlichtMt depends on SDL2
 	"$<$<PLATFORM_ID:Android>:${SDL2_INCLUDE_DIRS}>"
@@ -628,7 +627,6 @@ if(BUILD_CLIENT)
 		${GMP_LIBRARY}
 		${JSON_LIBRARY}
 		${LUA_BIT_LIBRARY}
-		${DISCORD_LIBRARY}
 		sha256
 		${FREETYPE_LIBRARY}
 		${PLATFORM_LIBS}
@@ -674,9 +672,6 @@ if(BUILD_CLIENT)
 	endif()
 	if (USE_REDIS)
 		target_link_libraries(${PROJECT_NAME} ${REDIS_LIBRARY})
-	endif()
-	if (USE_DISCORD)
-		target_link_libraries(${PROJECT_NAME} ${DISCORD_LIBRARY})
 	endif()
 	if (USE_PROMETHEUS)
 		target_link_libraries(${PROJECT_NAME} ${PROMETHEUS_LIBRARIES})
@@ -918,18 +913,6 @@ else()
 	endif()
 endif()
 
-# Precompiled headers
-
-option(USE_PCH "Use precompiled headers (experimental!)" FALSE)
-if(USE_PCH)
-	if(BUILD_CLIENT)
-		add_precompiled_header(${PROJECT_NAME} pch/pch.h)
-	endif()
-
-	if(BUILD_SERVER)
-		add_precompiled_header(${PROJECT_NAME}server pch/pch.h)
-	endif()
-endif()
 
 # Installation
 

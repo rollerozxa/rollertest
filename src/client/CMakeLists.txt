@@ -23,10 +23,6 @@ if(USE_SOUND)
 		PARENT_SCOPE)
 endif()
 
-if (USE_DISCORD)
-	set(DISCORD_SRC ${CMAKE_CURRENT_SOURCE_DIR}/discord.cpp)
-endif()
-
 set(client_SRCS
 	${sound_SRCS}
 	${CMAKE_CURRENT_SOURCE_DIR}/meshgen/collector.cpp
@@ -79,6 +75,5 @@ set(client_SRCS
 	${CMAKE_CURRENT_SOURCE_DIR}/shadows/dynamicshadowsrender.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/shadows/shadowsshadercallbacks.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/shadows/shadowsScreenQuad.cpp
-	${DISCORD_SRC}
 	PARENT_SCOPE
 )

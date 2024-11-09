@@ -25,10 +25,6 @@
 #include <ICameraSceneNode.h>
 #include <unordered_map>
 
-#if USE_DISCORD
-	#include "discord.h"
-#endif
-
 #if USE_SOUND
 	#include "sound/sound_openal.h"
 #endif
@@ -81,9 +77,6 @@ ClientLauncher::~ClientLauncher()
 	g_sound_manager_singleton.reset();
 #endif
 
-#if USE_DISCORD
-	g_discord.reset();
-#endif
 }
 
 
@@ -143,14 +136,6 @@ bool ClientLauncher::run(GameStartData &start_data, const Settings &cmd_args)
 	scene::ICameraSceneNode* camera;
 	camera = g_menucloudsmgr->addCameraSceneNode(NULL, v3f(0, 0, 0), v3f(0, 60, 100));
 	camera->setFarValue(10000);
-
-	/*
-		Discord Rich Presence
-	*/
-#if USE_DISCORD
-	g_discord = Discord::createDiscordSingleton();
-	g_discord->init();
-#endif
 
 	/*
 		GUI stuff
@@ -496,23 +481,8 @@ bool ClientLauncher::launch_game(std::string &error_message,
 		start_data.name = "singleplayer";
 		start_data.password = "";
 		start_data.socket_port = myrand_range(49152, 65535);
-
-	#if USE_DISCORD
-		g_discord->setDetails("Playing in Singleplayer");
-		g_discord->setState("World: "+start_data.world_spec.name);
-		g_discord->updatePresence();
-	#endif
 	} else {
 		g_settings->set("name", start_data.name);
-
-	#if USE_DISCORD
-		//g_discord->setDetails("Playing on " + menudata.address + ":" +
-		//		      menudata.port + " server");
-		g_discord->setDetails("Playing on a server");
-		//g_discord->setState(menudata.serverdescription);
-		g_discord->setState("");
-		g_discord->updatePresence();
-	#endif
 	}
 
 	if (start_data.name.length() > PLAYERNAME_SIZE - 1) {
@@ -560,11 +530,6 @@ bool ClientLauncher::launch_game(std::string &error_message,
 
 void ClientLauncher::main_menu(MainMenuData *menudata)
 {
-#if USE_DISCORD
-	g_discord->setDetails("In Main Menu");
-	g_discord->setState("");
-	g_discord->updatePresence();
-#endif
 	bool *kill = porting::signal_handler_killstatus();
 	video::IVideoDriver *driver = m_rendering_engine->get_video_driver();
 
