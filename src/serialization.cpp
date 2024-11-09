@@ -23,6 +23,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <zlib.h>
 #include <zstd.h>
+#include <memory>
 
 /* report a zlib or i/o error */
 static void zerr(int ret)
@@ -262,6 +263,8 @@ void decompressZstd(std::istream &is, std::ostream &os)
 			is.read(input_buffer, bufsize);
 			input.size = is.gcount();
 			input.pos = 0;
+			if (input.size == 0)
+				throw SerializationError("decompressZstd: data ended too early");
 		}
 
 		ret = ZSTD_decompressStream(stream.get(), &output, &input);

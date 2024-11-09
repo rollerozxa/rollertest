@@ -66,35 +66,38 @@ local function get_formspec(self)
 
 	local content, prepend = tab.get_formspec(self, tab.name, tab.tabdata, tab.tabsize)
 
-	local tsize = tab.tabsize or { width = self.width, height = self.height }
+	local TOUCH_GUI = core.settings:get_bool("touch_gui")
+
+	local orig_tsize = tab.tabsize or { width = self.width, height = self.height }
+	local tsize = { width = orig_tsize.width, height = orig_tsize.height }
+	tsize.height = tsize.height
+		+ TABHEADER_H -- tabheader included in formspec size
+		+ (TOUCH_GUI and GAMEBAR_OFFSET_TOUCH or GAMEBAR_OFFSET_DESKTOP)
+		+ GAMEBAR_H -- gamebar included in formspec size
+
 	if self.parent == nil and not prepend then
-		--[[prepend = string.format("size[%f,%f,%s]", tsize.width, tsize.height,
-				dump(self.fixed_size))]]
+		prepend = string.format("size[%f,%f,%s]", tsize.width, tsize.height,
+				dump(self.fixed_size))
 
-		local padding = core.settings:get_bool("enable_touch") and "0.05,0.05" or "0,0"
+		local anchor_pos = TABHEADER_H + orig_tsize.height / 2
+		prepend = prepend .. ("anchor[0.5,%f]"):format(anchor_pos / tsize.height)
 
-		prepend = string.format([[
-			formspec_version[6]
-			size[%f,%f,%s]
-			position[0.5,0.55]
-			padding[%s]
-			style_type[box;noclip=true]
-		]], tsize.width, tsize.height,
-				dump(self.fixed_size),
-				padding)
+		if tab.formspec_version then
+			prepend = ("formspec_version[%d]"):format(tab.formspec_version) .. prepend
+		end
 	end
 
+	local end_button_size = 0.75
 
-	return (prepend or "") .. self:tab_header() .. content
-
-	--[[local end_button_size = 0.75
-
-	local tab_header_size = { width = tsize.width, height = 0.85 }
+	local tab_header_size = { width = tsize.width, height = TABHEADER_H }
 	if self.end_button then
 		tab_header_size.width = tab_header_size.width - end_button_size - 0.1
 	end
 
-	local formspec = (prepend or "") .. self:tab_header(tab_header_size) .. content
+	local formspec = (prepend or "")
+	formspec = formspec .. ("bgcolor[;neither]container[0,%f]box[0,0;%f,%f;#0000008C]"):format(
+			TABHEADER_H, orig_tsize.width, orig_tsize.height)
+	formspec = formspec .. self:tab_header(tab_header_size) .. content
 
 	if self.end_button then
 		formspec = formspec ..
@@ -109,7 +112,9 @@ local function get_formspec(self)
 						self.end_button.name)
 	end
 
-	return formspec]]
+	formspec = formspec .. "container_end[]"
+
+	return formspec
 end
 
 --------------------------------------------------------------------------------
@@ -175,10 +180,10 @@ local function tab_header(self, size)
 			caption = caption(self)
 		end
 
-		toadd = toadd .. "  " .. caption .. "  "
+		toadd = toadd .. caption
 	end
-	return string.format("tabheader[%f,%f;%s;%s;%i;true;false]",
-			self.header_x, self.header_y, self.name, toadd, self.last_tab_index) -- size.width, size.height
+	return string.format("tabheader[%f,%f;%f,%f;%s;%s;%i;true;false]",
+			self.header_x, self.header_y, size.width, size.height, self.name, toadd, self.last_tab_index)
 end
 
 --------------------------------------------------------------------------------

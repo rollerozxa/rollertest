@@ -274,7 +274,7 @@ Accepted formats are:
 
     images: .png, .jpg, .tga, (deprecated:) .bmp
     sounds: .ogg vorbis
-    models: .x, .b3d, .obj
+    models: .x, .b3d, .obj, (since version 5.10:) .gltf, .glb
 
 Other formats won't be sent to the client (e.g. you can store .blend files
 in a folder for convenience, without the risk that such files are transferred)
@@ -290,6 +290,49 @@ in one of its parents, the parent's file is used.
 
 Although it is discouraged, a mod can overwrite a media file of any mod that it
 depends on by supplying a file with an equal name.
+
+Only a subset of model file format features is supported:
+
+Simple textured meshes (with multiple textures), optionally with normals.
+The .x, .b3d and .gltf formats additionally support (a single) animation.
+
+#### glTF
+
+The glTF model file format for now only serves as a
+more modern alternative to the other static model file formats;
+it unlocks no special rendering features.
+
+Binary glTF (`.glb`) files are supported and recommended over `.gltf` files
+due to their space savings.
+
+This means that many glTF features are not supported *yet*, including:
+
+* Animations
+  * Only a single animation is supported,
+    use frame ranges within this animation.
+  * Only integer frames are supported.
+* Cameras
+* Materials
+  * Only base color textures are supported
+  * Backface culling is overridden
+  * Double-sided materials don't work
+* Alternative means of supplying data
+  * Embedded images
+  * References to files via URIs
+
+Textures are supplied solely via the same means as for the other model file formats:
+The `textures` object property, the `tiles` node definition field and
+the list of textures used in the `model[]` formspec element.
+
+The order in which textures are to be supplied
+is that in which they appear in the `textures` array in the glTF file.
+
+Do not rely on glTF features not being supported; they may be supported in the future.
+The backwards compatibility guarantee does not extend to ignoring unsupported features.
+
+For example, if your model used an emissive material,
+you should expect that a future version of Minetest may respect this,
+and thus cause your model to render differently there.
 
 Naming conventions
 ------------------
@@ -453,6 +496,11 @@ to let the client generate textures on-the-fly.
 The modifiers are applied directly in sRGB colorspace,
 i.e. without gamma-correction.
 
+### Notes
+
+ * `TEXMOD_UPSCALE`: The texture with the lower resolution will be automatically
+   upscaled to the higher resolution texture.
+
 ### Texture overlaying
 
 Textures can be overlaid by putting a `^` between them.
@@ -466,8 +514,9 @@ Example:
     default_dirt.png^default_grass_side.png
 
 `default_grass_side.png` is overlaid over `default_dirt.png`.
-The texture with the lower resolution will be automatically upscaled to
-the higher resolution texture.
+
+*See notes: `TEXMOD_UPSCALE`*
+
 
 ### Texture grouping
 
@@ -664,6 +713,8 @@ Apply a mask to the base image.
 
 The mask is applied using binary AND.
 
+*See notes: `TEXMOD_UPSCALE`*
+
 #### `[sheet:<w>x<h>:<x>,<y>`
 
 Retrieves a tile at position x, y (in tiles, 0-indexed)
@@ -761,6 +812,8 @@ in GIMP. Overlay is the same as Hard light but with the role of the two
 textures swapped, see the `[hardlight` modifier description for more detail
 about these blend modes.
 
+*See notes: `TEXMOD_UPSCALE`*
+
 #### `[hardlight:<file>`
 
 Applies a Hard light blend with the two textures, like the Hard light layer
@@ -775,6 +828,8 @@ increase contrast without clipping.
 
 Hard light is the same as Overlay but with the roles of the two textures
 swapped, i.e. `A.png^[hardlight:B.png` is the same as `B.png^[overlay:A.png`
+
+*See notes: `TEXMOD_UPSCALE`*
 
 #### `[png:<base64>`
 
@@ -793,6 +848,8 @@ that you could instead achieve by just using a file.
 In particular consider `minetest.dynamic_add_media` and test whether
 using other texture modifiers could result in a shorter string than
 embedding a whole image, this may vary by use case.
+
+*See notes: `TEXMOD_UPSCALE`*
 
 Hardware coloring
 -----------------
@@ -1357,16 +1414,19 @@ The function of `param2` is determined by `paramtype2` in node definition.
       The palette should have 256 pixels.
 * `paramtype2 = "colorfacedir"`
     * Same as `facedir`, but with colors.
-    * The first three bits of `param2` tells which color is picked from the
+    * The three most significant bits of `param2` tells which color is picked from the
       palette. The palette should have 8 pixels.
+    * The five least significant bits contain the `facedir` value.
 * `paramtype2 = "color4dir"`
-    * Same as `facedir`, but with colors.
-    * The first six bits of `param2` tells which color is picked from the
+    * Same as `4dir`, but with colors.
+    * The six most significant bits of `param2` tells which color is picked from the
       palette. The palette should have 64 pixels.
+    * The two least significant bits contain the `4dir` rotation.
 * `paramtype2 = "colorwallmounted"`
     * Same as `wallmounted`, but with colors.
-    * The first five bits of `param2` tells which color is picked from the
+    * The five most significant bits of `param2` tells which color is picked from the
       palette. The palette should have 32 pixels.
+    * The three least significant bits contain the `wallmounted` value.
 * `paramtype2 = "glasslikeliquidlevel"`
     * Only valid for "glasslike_framed" or "glasslike_framed_optional"
       drawtypes. "glasslike_framed_optional" nodes are only affected if the
@@ -1380,9 +1440,9 @@ The function of `param2` is determined by `paramtype2` in node definition.
     * Liquid texture is defined using `special_tiles = {"modname_tilename.png"}`
 * `paramtype2 = "colordegrotate"`
     * Same as `degrotate`, but with colors.
-    * The first (most-significant) three bits of `param2` tells which color
-      is picked from the palette. The palette should have 8 pixels.
-    * Remaining 5 bits store rotation in range 0–23 (i.e. in 15° steps)
+    * The three most significant bits of `param2` tells which color is picked
+      from the palette. The palette should have 8 pixels.
+    * The five least significant bits store rotation in range 0–23 (i.e. in 15° steps)
 * `paramtype2 = "none"`
     * `param2` will not be used by the engine and can be used to store
       an arbitrary value
@@ -1433,7 +1493,8 @@ Look for examples in `games/devtest` or `games/minetest_game`.
       'Connected Glass'.
 * `allfaces`
     * Often used for partially-transparent nodes.
-    * External and internal sides of textures are visible.
+    * External sides of textures, and unlike other drawtypes, the external sides
+      of other blocks, are visible from the inside.
 * `allfaces_optional`
     * Often used for leaves nodes.
     * This switches between `normal`, `glasslike` and `allfaces` according to
@@ -1744,6 +1805,13 @@ Displays a horizontal bar made up of half-images with an optional background.
 * `item`: Position of item that is selected.
 * `direction`: Direction the list will be displayed in
 * `offset`: offset in pixels from position.
+* `alignment`: The alignment of the inventory. Aligned at the top left corner if not specified.
+
+### `hotbar`
+
+* `direction`: Direction the list will be displayed in
+* `offset`: offset in pixels from position.
+* `alignment`: The alignment of the inventory.
 
 ### `waypoint`
 
@@ -1802,6 +1870,11 @@ Displays a minimap on the HUD.
 
 * `size`: Size of the minimap to display. Minimap should be a square to avoid
   distortion.
+  * Negative values represent percentages of the screen. If either `x` or `y`
+    is specified as a percentage, the resulting pixel size will be used for
+    both `x` and `y`. Example: On a 1920x1080 screen, `{x = 0, y = -25}` will
+    result in a 270x270 minimap.
+  * Negative values are supported starting with protocol version 45.
 * `alignment`: The alignment of the minimap.
 * `offset`: offset in pixels from position.
 
@@ -2625,6 +2698,9 @@ background elements are drawn before all other elements.
 **WARNING**: do _not_ use an element name starting with `key_`; those names are
 reserved to pass key press events to formspec!
 
+**WARNING**: names and values of elements cannot contain binary data such as ASCII
+control characters. For values, escape sequences used by the engine are an exception to this.
+
 **WARNING**: Minetest allows you to add elements to every single formspec instance
 using `player:set_formspec_prepend()`, which may be the reason backgrounds are
 appearing when you don't expect them to, or why things are styled differently
@@ -2677,6 +2753,8 @@ Version History
 * Formspec version 7 (5.8.0):
   * style[]: Add focused state for buttons
   * Add field_enter_after_edit[] (experimental)
+* Formspec version 8 (5.10.0)
+  * scroll_container[]: content padding parameter
 
 Elements
 --------
@@ -2760,7 +2838,7 @@ Elements
 * End of a container, following elements are no longer relative to this
   container.
 
-### `scroll_container[<X>,<Y>;<W>,<H>;<scrollbar name>;<orientation>;<scroll factor>]`
+### `scroll_container[<X>,<Y>;<W>,<H>;<scrollbar name>;<orientation>;<scroll factor>;<content padding>]`
 
 * Start of a scroll_container block. All contained elements will ...
   * take the scroll_container coordinate as position origin,
@@ -2769,6 +2847,12 @@ Elements
   * be clipped to the rectangle defined by `X`, `Y`, `W` and `H`.
 * `orientation`: possible values are `vertical` and `horizontal`.
 * `scroll factor`: optional, defaults to `0.1`.
+* `content padding`: (optional), in formspec coordinate units
+  * If specified, the scrollbar properties `max` and `thumbsize` are calculated automatically
+    based on the content size plus `content padding` at the end of the container. `min` is set to 0.
+  * Negative `scroll factor` is not supported.
+  * When active, `scrollbaroptions[]` has no effect on the affected properties.
+  * Defaults to empty value (= disabled).
 * Nesting is possible.
 * Some elements might work a little different if they are in a scroll_container.
 * Note: If you want the scroll_container to actually work, you also need to add a
@@ -3847,12 +3931,20 @@ vectors are written like this: `(x, y, z)`:
     * If `v` has zero length, returns `(0, 0, 0)`.
 * `vector.floor(v)`:
     * Returns a vector, each dimension rounded down.
+* `vector.ceil(v)`:
+    * Returns a vector, each dimension rounded up.
 * `vector.round(v)`:
     * Returns a vector, each dimension rounded to nearest integer.
     * At a multiple of 0.5, rounds away from zero.
-* `vector.apply(v, func)`:
+* `vector.sign(v, tolerance)`:
+    * Returns a vector where `math.sign` was called for each component.
+    * See [Helper functions] for details.
+* `vector.abs(v)`:
+    * Returns a vector with absolute values for each component.
+* `vector.apply(v, func, ...)`:
     * Returns a vector where the function `func` has been applied to each
       component.
+    * `...` are optional arguments passed to `func`.
 * `vector.combine(v, w, func)`:
     * Returns a vector where the function `func` has combined both components of `v` and `w`
       for each component
@@ -3876,6 +3968,10 @@ vectors are written like this: `(x, y, z)`:
     * Returns a boolean value indicating if `pos` is inside area formed by `min` and `max`.
     * `min` and `max` are inclusive.
     * If `min` is bigger than `max` on some axis, function always returns false.
+    * You can use `vector.sort` if you have two vectors and don't know which are the minimum and the maximum.
+* `vector.random_in_area(min, max)`:
+    * Returns a random integer position in area formed by `min` and `max`
+    * `min` and `max` are inclusive.
     * You can use `vector.sort` if you have two vectors and don't know which are the minimum and the maximum.
 
 For the following functions `x` can be either a vector or a number:
@@ -4082,10 +4178,6 @@ Translations
 Texts can be translated client-side with the help of `minetest.translate` and
 translation files.
 
-Consider using the script `mod_translation_updater.py` in the Minetest
-[modtools](https://github.com/minetest/modtools) repository to generate and
-update translation files automatically from the Lua sources.
-
 Translating a string
 --------------------
 
@@ -4093,13 +4185,15 @@ Two functions are provided to translate strings: `minetest.translate` and
 `minetest.get_translator`.
 
 * `minetest.get_translator(textdomain)` is a simple wrapper around
-  `minetest.translate`, and `minetest.get_translator(textdomain)(str, ...)` is
-  equivalent to `minetest.translate(textdomain, str, ...)`.
+  `minetest.translate` and `minetest.translate_n`.
+  After `local S, NS = minetest.get_translator(textdomain)`, we have
+  `S(str, ...)` equivalent to `minetest.translate(textdomain, str, ...)`, and
+  `NS(str, str_plural, n, ...)` to `minetest.translate_n(textdomain, str, str_plural, n, ...)`.
   It is intended to be used in the following way, so that it avoids verbose
   repetitions of `minetest.translate`:
 
   ```lua
-  local S = minetest.get_translator(textdomain)
+  local S, NS = minetest.get_translator(textdomain)
   S(str, ...)
   ```
 
@@ -4116,29 +4210,102 @@ Two functions are provided to translate strings: `minetest.translate` and
   arguments the translated string expects.
   Arguments are literal strings -- they will not be translated.
 
-For instance, suppose we want to greet players when they join. We can do the
+* `minetest.translate_n(textdomain, str, str_plural, n, ...)` translates the
+  string `str` with the given `textdomain` for disambiguaion. The value of
+  `n`, which must be a nonnegative integer, is used to decide whether to use
+  the singular or the plural version of the string. Depending on the locale of
+  the client, the choice between singular and plural might be more complicated,
+  but the choice will be done automatically using the value of `n`.
+
+  You can read https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html
+  for more details on the differences of plurals between languages.
+
+  Also note that plurals are only handled in .po or .mo files, and not in .tr files.
+
+For instance, suppose we want to greet players when they join and provide a
+command that shows the amount of time since the player joined. We can do the
 following:
 
 ```lua
-local S = minetest.get_translator("hello")
+local S, NS = minetest.get_translator("hello")
 minetest.register_on_joinplayer(function(player)
     local name = player:get_player_name()
     minetest.chat_send_player(name, S("Hello @1, how are you today?", name))
 end)
+minetest.register_chatcommand("playtime", {
+    func = function(name)
+        local last_login = core.get_auth_handler().get_auth(name).last_login
+        local playtime = math.floor((last_login-os.time())/60)
+        return true, NS(
+            "You have been playing for @1 minute.",
+            "You have been playing for @1 minutes.",
+            minutes, tostring(minutes))
+    end,
+})
 ```
 
 When someone called "CoolGuy" joins the game with an old client or a client
 that does not have localization enabled, they will see `Hello CoolGuy, how are
-you today?`
+you today?`. If they use the `/playtime` command, they will see `You have been
+playing for 1 minute` or (for example) `You have been playing for 4 minutes.`
 
-However, if we have for instance a translation file named `hello.de.tr`
+However, if we have for instance a translation file named `hello.de.po`
 containing the following:
 
-    # textdomain: hello
-    Hello @1, how are you today?=Hallo @1, wie geht es dir heute?
+```po
+msgid ""
+msgstr ""
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Hello @1, how are you today?"
+msgstr "Hallo @1, wie geht es dir heute?"
+
+msgid "You have been playing for @1 minute."
+msgid_plural "You have been playing for @1 minutes."
+msgstr[0] "Du spielst seit @1 Minute."
+msgstr[1] "Du spielst seit @1 Minuten."
+```
 
 and CoolGuy has set a German locale, they will see `Hallo CoolGuy, wie geht es
-dir heute?`
+dir heute?` when they join, and the `/playtime` command will show them `Du
+spielst seit 1 Minute.` or (for example) `Du spielst seit 4 Minuten.`
+
+Creating and updating translation files
+---------------------------------------
+
+As an alternative to writing translation files by hand (as shown in the above
+example), it is also possible to generate translation files based on the source
+code.
+
+It is recommended to first generate a translation template. The translation
+template includes translatable strings that translators can directly work on.
+After creating the `locale` directory, a translation template for the above
+example using the following command:
+
+```sh
+xgettext -L lua -kS -kNS:1,2 -kminetest.translate:1c,2 -kminetest.translate_n:1c,2,3 \
+  -d hello -o locale/hello.pot *.lua
+```
+
+The above command can also be used to update the translation template when new
+translatable strings are added.
+
+The German translator can then create the translation file with
+
+```sh
+msginit -l de -i locale/hello.pot -o locale/hello.de.po
+```
+
+and provide the translations by editing `locale/hello.de.po`.
+
+The translation file can be updated using
+
+```sh
+msgmerge -U locale/hello.de.po locale/hello.pot
+```
+
+Refer to the [Gettext manual](https://www.gnu.org/software/gettext/manual/) for
+further information on creating and updating translation files.
 
 Operations on translated strings
 --------------------------------
@@ -4152,8 +4319,8 @@ expected manner. However, string concatenation will still work as expected
 sentences by breaking them into parts; arguments should be used instead), and
 operations such as `minetest.colorize` which are also concatenation.
 
-Translation file format
------------------------
+Old translation file format
+---------------------------
 
 A translation file has the suffix `.[lang].tr`, where `[lang]` is the language
 it corresponds to. It must be put into the `locale` subdirectory of the mod.
@@ -4167,6 +4334,34 @@ The file should be a text file, with the following format:
   arguments, literal `@`, `=` or newline (See [Escapes] below).
   There must be no extraneous whitespace around the `=` or at the beginning or
   the end of the line.
+
+Using the earlier example of greeting the player, the translation file would be
+
+```
+# textdomain: hello
+Hello @1, how are you today?=Hallo @1, wie geht es dir heute?
+```
+
+For old translation files, consider using the script `mod_translation_updater.py`
+in the Minetest [modtools](https://github.com/minetest/modtools) repository to
+generate and update translation files automatically from the Lua sources.
+
+Gettext translation file format
+-------------------------------
+
+Gettext files can also be used as translations. A translation file has the suffix
+`.[lang].po` or `.[lang].mo`, depending on whether it is compiled or not, and must
+also be placed in the `locale` subdirectory of the mod. The value of `textdomain`
+is `msgctxt` in the gettext files. If `msgctxt` is not provided, the name of the
+translation file is used instead.
+
+A typical entry in a `.po` file would look like:
+
+```po
+msgctxt "textdomain"
+msgid "Hello world!"
+msgstr "Bonjour le monde!"
+```
 
 Escapes
 -------
@@ -4914,8 +5109,7 @@ Methods
   the `VoxelManip`.
 * `calc_lighting([p1, p2], [propagate_shadow])`:  Calculate lighting within the
   `VoxelManip`.
-    * To be used only by a `VoxelManip` object from
-      `minetest.get_mapgen_object`.
+    * To be used only with a `VoxelManip` object from `minetest.get_mapgen_object`.
     * (`p1`, `p2`) is the area in which lighting is set, defaults to the whole
       area if left out or nil. For almost all uses these should be left out
       or nil to use the default.
@@ -4923,9 +5117,11 @@ Methods
       generated mapchunk above are propagated down into the mapchunk, defaults
       to `true` if left out.
 * `update_liquids()`: Update liquid flow
-* `was_modified()`: Returns `true` or `false` if the data in the voxel
-  manipulator had been modified since the last read from map, due to a call to
-  `minetest.set_data()` on the loaded area elsewhere.
+* `was_modified()`: Returns `true` if the data in the voxel manipulator has been modified
+   since it was last read from the map. This means you have to call `get_data` again.
+   This only applies to a `VoxelManip` object from `minetest.get_mapgen_object`,
+   where the engine will keep the map and the VM in sync automatically.
+   * Note: this doesn't do what you think it does and is subject to removal. Don't use it!
 * `get_emerged_area()`: Returns actual emerged minimum and maximum positions.
 
 `VoxelArea`
@@ -5456,6 +5652,12 @@ Utilities
       moveresult_new_pos = true,
       -- Allow removing definition fields in `minetest.override_item` (5.9.0)
       override_item_remove_fields = true,
+      -- The predefined hotbar is a Lua HUD element of type `hotbar` (5.10.0)
+      hotbar_hud_element = true,
+      -- Bulk LBM support (5.10.0)
+      bulk_lbms = true,
+      -- ABM supports field without_neighbors (5.10.0)
+      abm_without_neighbors = true,
   }
   ```
 
@@ -5514,8 +5716,8 @@ Utilities
       },
 
       -- Estimated maximum formspec size before Minetest will start shrinking the
-      -- formspec to fit. For a fullscreen formspec, use a size 10-20% larger than
-      -- this and `padding[-0.01,-0.01]`.
+      -- formspec to fit. For a fullscreen formspec, use this formspec size and
+      -- `padding[0,0]`. `bgcolor[;true]` is also recommended.
       max_formspec_size = {
           x = 20,
           y = 11.25
@@ -5589,6 +5791,13 @@ Utilities
 * `minetest.colorspec_to_bytes(colorspec)`: Converts a ColorSpec to a raw
   string of four bytes in an RGBA layout, returned as a string.
   * `colorspec`: The ColorSpec to convert
+* `minetest.colorspec_to_table(colorspec)`: Converts a ColorSpec into RGBA table
+  form. If the ColorSpec is invalid, returns `nil`. You can use this to parse
+  ColorStrings.
+    * `colorspec`: The ColorSpec to convert
+* `minetest.time_to_day_night_ratio(time_of_day)`: Returns a "day-night ratio" value
+  (as accepted by `ObjectRef:override_day_night_ratio`) that is equivalent to
+  the given "time of day" value (as returned by `minetest.get_timeofday`).
 * `minetest.encode_png(width, height, data, [compression])`: Encode a PNG
   image and return it in string form.
     * `width`: Width of the image
@@ -5772,8 +5981,13 @@ Call these functions only at load time!
     * `clicker`: ObjectRef - Object that acted upon `player`, may or may not be a player
 * `minetest.register_on_player_hpchange(function(player, hp_change, reason), modifier)`
     * Called when the player gets damaged or healed
+    * When `hp == 0`, damage doesn't trigger this callback.
+    * When `hp == hp_max`, healing does still trigger this callback.
     * `player`: ObjectRef of the player
     * `hp_change`: the amount of change. Negative when it is damage.
+      * Historically, the new HP value was clamped to [0, 65535] before
+        calculating the HP change. This clamping has been removed as of
+        Minetest 5.10.0
     * `reason`: a PlayerHPChangeReason table.
         * The `type` field will have one of the following values:
             * `set_hp`: A mod or the engine called `set_hp` without
@@ -5794,6 +6008,7 @@ Call these functions only at load time!
 * `minetest.register_on_dieplayer(function(ObjectRef, reason))`
     * Called when a player dies
     * `reason`: a PlayerHPChangeReason table, see register_on_player_hpchange
+    * For customizing the death screen, see `minetest.show_death_screen`.
 * `minetest.register_on_respawnplayer(function(ObjectRef))`
     * Called when player is to be respawned
     * Called _before_ repositioning of player occurs
@@ -6070,6 +6285,8 @@ Environment access
 * `minetest.swap_node(pos, node)`
     * Swap node at position with another.
     * This keeps the metadata intact and will not run con-/destructor callbacks.
+* `minetest.bulk_swap_node({pos1, pos2, pos3, ...}, node)`
+    * Equivalent to `minetest.swap_node` but in bulk.
 * `minetest.remove_node(pos)`: Remove a node
     * Equivalent to `minetest.set_node(pos, {name="air"})`, but a bit faster.
 * `minetest.get_node(pos)`
@@ -6463,7 +6680,8 @@ Formspec
     * `playername`: name of player to show formspec
     * `formname`: name passed to `on_player_receive_fields` callbacks.
       It should follow the `"modname:<whatever>"` naming convention.
-      `formname` must not be empty.
+    * `formname` must not be empty, unless you want to reshow
+      the inventory formspec without updating it for future opens.
     * `formspec`: formspec to display
 * `minetest.close_formspec(playername, formname)`
     * `playername`: name of player to close formspec
@@ -6477,6 +6695,9 @@ Formspec
 * `minetest.formspec_escape(string)`: returns a string
     * escapes the characters "[", "]", "\", "," and ";", which cannot be used
       in formspecs.
+* `minetest.hypertext_escape(string)`: returns a string
+    * escapes the characters "\", "<", and ">" to show text in a hypertext element.
+    * not safe for use with tag attributes.
 * `minetest.explode_table_event(string)`: returns a table
     * returns e.g. `{type="CHG", row=1, column=2}`
     * `type` is one of:
@@ -6495,6 +6716,13 @@ Formspec
         * `"INV"`: something failed
         * `"CHG"`: has been changed
         * `"VAL"`: not changed
+* `minetest.show_death_screen(player, reason)`
+    * Called when the death screen should be shown.
+    * `player` is an ObjectRef, `reason` is a PlayerHPChangeReason table or nil.
+    * By default, this shows a simple formspec with the option to respawn.
+      Respawning is done via `ObjectRef:respawn`.
+    * You can override this to show a custom death screen.
+    * For general death handling, use `minetest.register_on_dieplayer` instead.
 
 Item handling
 -------------
@@ -6727,17 +6955,6 @@ This allows you easy interoperability for delegating work to jobs.
     * Register a path to a Lua file to be imported when an async environment
       is initialized. You can use this to preload code which you can then call
       later using `minetest.handle_async()`.
-* `minetest.register_portable_metatable(name, mt)`:
-    * Register a metatable that should be preserved when data is transferred
-    between the main thread and the async environment.
-    * `name` is a string that identifies the metatable. It is recommended to
-      follow the `modname:name` convention for this identifier.
-    * `mt` is the metatable to register.
-    * Note that it is allowed to register the same metatable under multiple
-      names, but it is not allowed to register multiple metatables under the
-      same name.
-    * You must register the metatable in both the main environment
-      and the async environment for this mechanism to work.
 
 
 ### List of APIs available in an async environment
@@ -6767,7 +6984,8 @@ Functions:
 
 * Standalone helpers such as logging, filesystem, encoding,
   hashing or compression APIs
-* `minetest.register_portable_metatable` (see above)
+* `minetest.register_portable_metatable`
+* IPC
 
 Variables:
 
@@ -6845,6 +7063,7 @@ Functions:
 * `minetest.get_node`, `set_node`, `find_node_near`, `find_nodes_in_area`,
   `spawn_tree` and similar
     * these only operate on the current chunk (if inside a callback)
+* IPC
 
 Variables:
 
@@ -6922,6 +7141,52 @@ Server
       this can make transfer of bigger files painless (if set up). Nevertheless
       it is advised not to use dynamic media for big media files.
 
+IPC
+---
+
+The engine provides a generalized mechanism to enable sharing data between the
+different Lua environments (main, mapgen and async).
+It is essentially a shared in-memory key-value store.
+
+* `minetest.ipc_get(key)`:
+  * Read a value from the shared data area.
+  * `key`: string, should use the `"modname:thing"` convention to avoid conflicts.
+  * returns an arbitrary Lua value, or `nil` if this key does not exist
+* `minetest.ipc_set(key, value)`:
+  * Write a value to the shared data area.
+  * `key`: as above
+  * `value`: an arbitrary Lua value, cannot be or contain userdata.
+
+Interacting with the shared data will perform an operation comparable to
+(de)serialization on each access.
+For that reason modifying references will not have any effect, as in this example:
+```lua
+minetest.ipc_set("test:foo", {})
+minetest.ipc_get("test:foo").subkey = "value" -- WRONG!
+minetest.ipc_get("test:foo") -- returns an empty table
+```
+
+**Advanced**:
+
+* `minetest.ipc_cas(key, old_value, new_value)`:
+  * Write a value to the shared data area, but only if the previous value
+    equals what was given.
+    This operation is called Compare-and-Swap and can be used to implement
+    synchronization between threads.
+  * `key`: as above
+  * `old_value`: value compared to using `==` (`nil` compares equal for non-existing keys)
+  * `new_value`: value that will be set
+  * returns: true on success, false otherwise
+* `minetest.ipc_poll(key, timeout)`:
+  * Do a blocking wait until a value (other than `nil`) is present at the key.
+  * **IMPORTANT**: You usually don't need this function. Use this as a last resort
+    if nothing else can satisfy your use case! None of the Lua environments the
+    engine has are safe to block for extended periods, especially on the main
+    thread any delays directly translate to lag felt by players.
+  * `key`: as above
+  * `timeout`: maximum wait time, in milliseconds (positive values only)
+  * returns: true on success, false on timeout
+
 Bans
 ----
 
@@ -6932,10 +7197,11 @@ Bans
     * Returns boolean indicating success
 * `minetest.unban_player_or_ip(ip_or_name)`: remove ban record matching
   IP address or name
-* `minetest.kick_player(name, [reason])`: disconnect a player with an optional
+* `minetest.kick_player(name[, reason[, reconnect]])`: disconnect a player with an optional
   reason.
     * Returns boolean indicating success (false if player nonexistent)
-* `minetest.disconnect_player(name, [reason])`: disconnect a player with an
+    * If `reconnect` is true, allow the user to reconnect.
+* `minetest.disconnect_player(name[, reason[, reconnect]])`: disconnect a player with an
   optional reason, this will not prefix with 'Kicked: ' like kick_player.
   If no reason is given, it will default to 'Disconnected.'
     * Returns boolean indicating success (false if player nonexistent)
@@ -7101,7 +7367,7 @@ Misc.
   could be used as a player name (regardless of whether said player exists).
 * `minetest.hud_replace_builtin(name, hud_definition)`
     * Replaces definition of a builtin hud element
-    * `name`: `"breath"`, `"health"` or `"minimap"`
+    * `name`: `"breath"`, `"health"`, `"minimap"` or `"hotbar"`
     * `hud_definition`: definition to replace builtin definition
 * `minetest.parse_relative_number(arg, relative_to)`: returns number or nil
     * Helper function for chat commands.
@@ -7138,11 +7404,13 @@ Misc.
     * Gets the internal content ID of `name`
 * `minetest.get_name_from_content_id(content_id)`: returns a string
     * Gets the name of the content with that content ID
-* `minetest.parse_json(string[, nullvalue])`: returns something
+* `minetest.parse_json(string[, nullvalue, return_error])`: returns something
     * Convert a string containing JSON data into the Lua equivalent
     * `nullvalue`: returned in place of the JSON null; defaults to `nil`
     * On success returns a table, a string, a number, a boolean or `nullvalue`
-    * On failure outputs an error message and returns `nil`
+    * On failure: If `return_error` is not set or is `false`,
+      outputs an error message and returns `nil`.
+      Otherwise returns `nil, err` (error message).
     * Example: `parse_json("[10, {\"a\":false}]")`, returns `{10, {a = false}}`
 * `minetest.write_json(data[, styled])`: returns a string or `nil` and an error
   message.
@@ -7319,6 +7587,17 @@ Misc.
 
 * `minetest.global_exists(name)`
     * Checks if a global variable has been set, without triggering a warning.
+
+* `minetest.register_portable_metatable(name, mt)`:
+    * Register a metatable that should be preserved when Lua data is transferred
+      between environments (via IPC or `handle_async`).
+    * `name` is a string that identifies the metatable. It is recommended to
+      follow the `modname:name` convention for this identifier.
+    * `mt` is the metatable to register.
+    * Note that the same metatable can be registered under multiple names,
+      but multiple metatables must not be registered under the same name.
+    * You must register the metatable in both the main environment
+      and the async environment for this mechanism to work.
 
 Global objects
 --------------
@@ -7930,8 +8209,7 @@ child will follow movement and rotation of that bone.
        * Animation interpolates towards the end frame but stops when it is reached
        * If looped, there is no interpolation back to the start frame
        * If looped, the model should look identical at start and end
-       * Only integer numbers are supported
-       * default: `{x=1, y=1}`
+       * default: `{x=1.0, y=1.0}`
     * `frame_speed`: How fast the animation plays, in frames per second (number)
        * default: `15.0`
     * `frame_blend`: number, default: `0.0`
@@ -8154,12 +8432,18 @@ child will follow movement and rotation of that bone.
       bgcolor[], any non-style elements (eg: label) may result in weird behavior.
     * Only affects formspecs shown after this is called.
 * `get_formspec_prepend()`: returns a formspec string.
-* `get_player_control()`: returns table with player pressed keys
-    * The table consists of fields with the following boolean values
-      representing the pressed keys: `up`, `down`, `left`, `right`, `jump`,
-      `aux1`, `sneak`, `dig`, `place`, `LMB`, `RMB`, and `zoom`.
+* `get_player_control()`: returns table with player input
+    * The table contains the following boolean fields representing the pressed
+      keys: `up`, `down`, `left`, `right`, `jump`, `aux1`, `sneak`, `dig`,
+      `place`, `LMB`, `RMB` and `zoom`.
     * The fields `LMB` and `RMB` are equal to `dig` and `place` respectively,
       and exist only to preserve backwards compatibility.
+    * The table also contains the fields `movement_x` and `movement_y`.
+        * They represent the movement of the player. Values are numbers in the
+          range [-1.0,+1.0].
+        * They take both keyboard and joystick input into account.
+        * You should prefer them over `up`, `down`, `left` and `right` to
+          support different input methods correctly.
     * Returns an empty table `{}` if the object is not a player.
 * `get_player_control_bits()`: returns integer with bit packed player pressed
   keys.
@@ -8441,12 +8725,15 @@ child will follow movement and rotation of that bone.
           if set to zero the clouds are rendered flat.
         * `speed`: 2D cloud speed + direction in nodes per second
           (default `{x=0, z=-2}`).
+        * `shadow`: shadow color, applied to the base of the cloud
+          (default `#cccccc`).
 * `get_clouds()`: returns a table with the current cloud parameters as in
   `set_clouds`.
 * `override_day_night_ratio(ratio or nil)`
     * `0`...`1`: Overrides day-night ratio, controlling sunlight to a specific
       amount.
     * Passing no arguments disables override, defaulting to sunlight based on day-night cycle
+    * See also `minetest.time_to_day_night_ratio`,
 * `get_day_night_ratio()`: returns the ratio or nil if it isn't overridden
 * `set_local_animation(idle, walk, dig, walk_while_dig, frame_speed)`:
   set animation for player model in third person view.
@@ -8473,27 +8760,67 @@ child will follow movement and rotation of that bone.
     * Passing no arguments resets lighting to its default values.
     * `light_definition` is a table with the following optional fields:
       * `saturation` sets the saturation (vividness; default: `1.0`).
-        * values > 1 increase the saturation
-        * values in [0,1] decrease the saturation
+        * It is applied according to the function `result = b*(1-s) + c*s`, where:
+          * `c` is the original color
+          * `b` is the greyscale version of the color with the same luma
+          * `s` is the saturation set here
+        * The resulting color always has the same luma (perceived brightness) as the original.
+        * This means that:
+          * values > 1 oversaturate
+          * values < 1 down to 0 desaturate, 0 being entirely greyscale
+          * values < 0 cause an effect similar to inversion,
+            but keeping original luma and being symmetrical in terms of saturation
+            (eg. -1 and 1 is the same saturation and luma, but different hues)
+        * This value has no effect on clients who have shaders or post-processing disabled.
       * `shadows` is a table that controls ambient shadows
+        * This has no effect on clients who have the "Dynamic Shadows" effect disabled.
         * `intensity` sets the intensity of the shadows from 0 (no shadows, default) to 1 (blackness)
-            * This value has no effect on clients who have the "Dynamic Shadows" shader disabled.
+        * `tint` tints the shadows with the provided color, with RGB values ranging from 0 to 255.
+          (default `{r=0, g=0, b=0}`)
       * `exposure` is a table that controls automatic exposure.
         The basic exposure factor equation is `e = 2^exposure_correction / clamp(luminance, 2^luminance_min, 2^luminance_max)`
+        * This has no effect on clients who have the "Automatic Exposure" effect disabled.
         * `luminance_min` set the lower luminance boundary to use in the calculation (default: `-3.0`)
         * `luminance_max` set the upper luminance boundary to use in the calculation (default: `-3.0`)
         * `exposure_correction` correct observed exposure by the given EV value (default: `0.0`)
         * `speed_dark_bright` set the speed of adapting to bright light (default: `1000.0`)
         * `speed_bright_dark` set the speed of adapting to dark scene (default: `1000.0`)
         * `center_weight_power` set the power factor for center-weighted luminance measurement (default: `1.0`)
+      * `bloom` is a table that controls bloom.
+        * This has no effect on clients with protocol version < 46 or clients who
+          have the "Bloom" effect disabled.
+        * `intensity` defines much bloom is applied to the rendered image.
+          * Recommended range: from 0.0 to 1.0, default: 0.05
+          * If set to 0, bloom is disabled.
+          * The default value is to be changed from 0.05 to 0 in the future.
+            If you wish to keep the current default value, you should set it
+            explicitly.
+        * `strength_factor` defines the magnitude of bloom overexposure.
+          * Recommended range: from 0.1 to 10.0, default: 1.0
+        * `radius` is a logical value that controls how far the bloom effect
+          spreads from the bright objects.
+          * Recommended range: from 0.1 to 8.0, default: 1.0
+        * The behavior of values outside the recommended range is unspecified.
       * `volumetric_light`: is a table that controls volumetric light (a.k.a. "godrays")
-        * `strength`: sets the strength of the volumetric light effect from 0 (off, default) to 1 (strongest)
-           * This value has no effect on clients who have the "Volumetric Lighting" or "Bloom" shaders disabled.
+        * This has no effect on clients who have the "Volumetric Lighting" or "Bloom" effects disabled.
+        * `strength`: sets the strength of the volumetric light effect from 0 (off, default) to 1 (strongest).
+            * `0.2` is a reasonable standard value.
+            * Currently, bloom `intensity` and `strength_factor` affect volumetric
+              lighting `strength` and vice versa. This behavior is to be changed
+              in the future, do not rely on it.
 
 * `get_lighting()`: returns the current state of lighting for the player.
     * Result is a table with the same fields as `light_definition` in `set_lighting`.
 * `respawn()`: Respawns the player using the same mechanism as the death screen,
   including calling `on_respawnplayer` callbacks.
+* `get_flags()`: returns a table of player flags (the following boolean fields):
+  * `breathing`: Whether breathing (regaining air) is enabled, default `true`.
+  * `drowning`: Whether drowning (losing air) is enabled, default `true`.
+  * `node_damage`: Whether the player takes damage from nodes, default `true`.
+* `set_flags(flags)`: sets flags
+  * takes a table in the same format as returned by `get_flags`
+  * absent fields are left unchanged
+
 
 `PcgRandom`
 -----------
@@ -8669,7 +8996,7 @@ In multiplayer mode, the error may be arbitrarily large.
 
 Interface for the operating system's crypto-secure PRNG.
 
-It can be created via `SecureRandom()`.  The constructor returns nil if a
+It can be created via `SecureRandom()`.  The constructor throws an error if a
 secure random device cannot be found on the system.
 
 ### Methods
@@ -8940,7 +9267,7 @@ Player properties need to be saved manually.
 Entity definition
 -----------------
 
-Used by `minetest.register_entity`.  
+Used by `minetest.register_entity`.
 The entity definition table becomes a metatable of a newly created per-entity
 luaentity table, meaning its fields (e.g. `initial_properties`) will be shared
 between all instances of an entity.
@@ -8996,6 +9323,11 @@ Used by `minetest.register_abm`.
     -- If left out or empty, any neighbor will do.
     -- `group:groupname` can also be used here.
 
+    without_neighbors = {"default:lava_source", "default:lava_flowing"},
+    -- Only apply `action` to nodes that have no one of these neighbors.
+    -- If left out or empty, it has no effect.
+    -- `group:groupname` can also be used here.
+
     interval = 10.0,
     -- Operation interval in seconds
 
@@ -9031,7 +9363,12 @@ Used by `minetest.register_lbm`.
 
 A loading block modifier (LBM) is used to define a function that is called for
 specific nodes (defined by `nodenames`) when a mapblock which contains such nodes
-gets activated (not loaded!)
+gets activated (not loaded!).
+
+Note: LBMs operate on a "snapshot" of node positions taken once before they are triggered.
+That means if an LBM callback adds a node, it won't be taken into account.
+However the engine guarantees that when the callback is called that all given position(s)
+contain a matching node.
 
 ```lua
 {
@@ -9055,7 +9392,13 @@ gets activated (not loaded!)
     action = function(pos, node, dtime_s) end,
     -- Function triggered for each qualifying node.
     -- `dtime_s` is the in-game time (in seconds) elapsed since the block
-    -- was last active
+    -- was last active.
+
+    bulk_action = function(pos_list, dtime_s) end,
+    -- Function triggered with a list of all applicable node positions at once.
+    -- This can be provided as an alternative to `action` (not both).
+    -- Available since `minetest.features.bulk_lbms` (5.10.0)
+    -- `dtime_s`: as above
 }
 ```
 
@@ -9262,9 +9605,17 @@ Used by `minetest.register_node`, `minetest.register_craftitem`, and
       -- If specified as a table, the field to be used is selected according to
       -- the current `pointed_thing`.
       -- There are three possible TouchInteractionMode values:
-      -- * "user"                 (meaning depends on client-side settings)
       -- * "long_dig_short_place" (long tap  = dig, short tap = place)
       -- * "short_dig_long_place" (short tap = dig, long tap  = place)
+      -- * "user":
+      --   * For `pointed_object`: Equivalent to "short_dig_long_place" if the
+      --     client-side setting "touch_punch_gesture" is "short_tap" (the
+      --     default value) and the item is able to punch (i.e. has no on_use
+      --     callback defined).
+      --     Equivalent to "long_dig_short_place" otherwise.
+      --   * For `pointed_node` and `pointed_nothing`:
+      --     Equivalent to "long_dig_short_place".
+      --   * The behavior of "user" may change in the future.
       -- The default value is "user".
 
     sound = {
@@ -9386,12 +9737,18 @@ Used by `minetest.register_node`.
 
     use_texture_alpha = ...,
     -- Specifies how the texture's alpha channel will be used for rendering.
-    -- possible values:
-    -- * "opaque": Node is rendered opaque regardless of alpha channel
-    -- * "clip": A given pixel is either fully see-through or opaque
-    --           depending on the alpha channel being below/above 50% in value
-    -- * "blend": The alpha channel specifies how transparent a given pixel
-    --            of the rendered node is
+    -- Possible values:
+    -- * "opaque":
+    --   Node is rendered opaque regardless of alpha channel.
+    -- * "clip":
+    --   A given pixel is either fully see-through or opaque
+    --   depending on the alpha channel being below/above 50% in value.
+    --   Use this for nodes with fully transparent and fully opaque areas.
+    -- * "blend":
+    --   The alpha channel specifies how transparent a given pixel
+    --   of the rendered node is. This comes at a performance cost.
+    --   Only use this when correct rendering
+    --   among semitransparent nodes is necessary.
     -- The default is "opaque" for drawtypes normal, liquid and flowingliquid,
     -- mesh and nodebox or "clip" otherwise.
     -- If set to a boolean value (deprecated): true either sets it to blend
@@ -10640,8 +10997,9 @@ Used by `ObjectRef:hud_add`. Returned by `ObjectRef:hud_get`.
 ```lua
 {
     type = "image",
-    -- Type of element, can be "image", "text", "statbar", "inventory",
-    -- "waypoint", "image_waypoint", "compass" or "minimap"
+    -- Type of element, can be "compass", "hotbar" (46 ¹), "image", "image_waypoint",
+    -- "inventory", "minimap" (44 ¹), "statbar", "text" or "waypoint"
+    -- ¹: minimal protocol version for client-side support
     -- If undefined "text" will be used.
 
     hud_elem_type = "image",
@@ -10987,7 +11345,7 @@ Types used are defined in the previous section.
 * vec3 range `acc`: the direction and speed with which the particle
   accelerates
 
-* vec3 range `size`: scales the visual size of the particle texture.
+* float range `size`: scales the visual size of the particle texture.
   if `node` is set, this can be set to 0 to spawn randomly-sized particles
   (just like actual node dig particles).
 
@@ -11291,6 +11649,16 @@ Bit Library
 Functions: bit.tobit, bit.tohex, bit.bnot, bit.band, bit.bor, bit.bxor, bit.lshift, bit.rshift, bit.arshift, bit.rol, bit.ror, bit.bswap
 
 See http://bitop.luajit.org/ for advanced information.
+
+Tracy Profiler
+--------------
+
+Minetest can be built with support for the Tracy profiler, which can also be
+useful for profiling mods and is exposed to Lua as the global `tracy`.
+
+See doc/developing/misc.md for details.
+
+Note: This is a development feature and not covered by compatibility promises.
 
 Error Handling
 --------------

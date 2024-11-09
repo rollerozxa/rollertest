@@ -28,7 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "gui/guiInventoryList.h"
 #include "porting.h"
 #include "settings.h"
-#include "touchscreengui.h"
+#include "touchcontrols.h"
 
 PointerAction PointerAction::fromEvent(const SEvent &event) {
 	switch (event.EventType) {
@@ -111,8 +111,8 @@ void GUIModalMenu::quitMenu()
 	Environment->removeFocus(this);
 	m_menumgr->deletingMenu(this);
 	this->remove();
-	if (g_touchscreengui)
-		g_touchscreengui->show();
+	if (g_touchcontrols)
+		g_touchcontrols->show();
 }
 
 static bool isChild(gui::IGUIElement *tocheck, gui::IGUIElement *parent)
@@ -187,6 +187,7 @@ bool GUIModalMenu::simulateMouseEvent(ETOUCH_INPUT_EVENT touch_event, bool secon
 	mouse_event.EventType = EET_MOUSE_INPUT_EVENT;
 	mouse_event.MouseInput.X = m_pointer.X;
 	mouse_event.MouseInput.Y = m_pointer.Y;
+	mouse_event.MouseInput.Simulated = true;
 	switch (touch_event) {
 	case ETIE_PRESSED_DOWN:
 		mouse_event.MouseInput.Event = EMIE_LMOUSE_PRESSED_DOWN;
@@ -210,7 +211,6 @@ bool GUIModalMenu::simulateMouseEvent(ETOUCH_INPUT_EVENT touch_event, bool secon
 	}
 
 	bool retval;
-	m_simulated_mouse = true;
 	do {
 		if (preprocessEvent(mouse_event)) {
 			retval = true;
@@ -222,7 +222,6 @@ bool GUIModalMenu::simulateMouseEvent(ETOUCH_INPUT_EVENT touch_event, bool secon
 		}
 		retval = target->OnEvent(mouse_event);
 	} while (false);
-	m_simulated_mouse = false;
 
 	if (!retval && !second_try)
 		return simulateMouseEvent(touch_event, true);
@@ -330,7 +329,6 @@ bool GUIModalMenu::preprocessEvent(const SEvent &event)
 		holder.grab(this); // keep this alive until return (it might be dropped downstream [?])
 
 		if (event.TouchInput.touchedCount == 1) {
-			m_pointer_type = PointerType::Touch;
 			m_pointer = v2s32(event.TouchInput.X, event.TouchInput.Y);
 
 			gui::IGUIElement *hovered = Environment->getRootGUIElement()->getElementFromPoint(core::position2d<s32>(m_pointer));
@@ -373,9 +371,8 @@ bool GUIModalMenu::preprocessEvent(const SEvent &event)
 	}
 
 	if (event.EventType == EET_MOUSE_INPUT_EVENT) {
-		if (!m_simulated_mouse) {
-			// Only set the pointer type to mouse if this is a real mouse event.
-			m_pointer_type = PointerType::Mouse;
+		if (!event.MouseInput.Simulated) {
+			// Only process if this is a real mouse event.
 			m_pointer = v2s32(event.MouseInput.X, event.MouseInput.Y);
 			m_touch_hovered.reset();
 		}

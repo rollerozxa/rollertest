@@ -8,11 +8,12 @@ android {
 		compileSdk 34
 		targetSdkVersion 34
 		versionName "${versionMajor}.${versionMinor}.${versionPatch}"
-		versionCode project.versionCode
 
 		ndk {
 			abiFilters "arm64-v8a"
 		}
+
+		versionCode versionMajor * 1000000 + versionMinor * 10000 + versionPatch * 100 + versionBuild
 	}
 
 	buildFeatures {

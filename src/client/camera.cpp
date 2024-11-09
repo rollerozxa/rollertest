@@ -38,6 +38,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "script/scripting_client.h"
 #include "gettext.h"
 #include <SViewFrustum.h>
+#include <IVideoDriver.h>
 
 #define CAMERA_OFFSET_STEP 200
 #define WIELDMESH_OFFSET_X 55.0f
@@ -62,7 +63,7 @@ Camera::Camera(MapDrawControl &draw_control, Client *client, RenderingEngine *re
 	// all other 3D scene nodes and before the GUI.
 	m_wieldmgr = smgr->createNewSceneManager();
 	m_wieldmgr->addCameraSceneNode();
-	m_wieldnode = new WieldMeshSceneNode(m_wieldmgr, -1, false);
+	m_wieldnode = new WieldMeshSceneNode(m_wieldmgr, -1);
 	m_wieldnode->setItem(ItemStack(), m_client);
 	m_wieldnode->drop(); // m_wieldmgr grabbed it
 
@@ -404,10 +405,11 @@ void Camera::update(LocalPlayer* player, f32 frametime, f32 tool_reload_ratio)
 
 	// Compute absolute camera position and target
 	m_headnode->getAbsoluteTransformation().transformVect(m_camera_position, rel_cam_pos);
-	m_headnode->getAbsoluteTransformation().rotateVect(m_camera_direction, rel_cam_target - rel_cam_pos);
+	m_camera_direction = m_headnode->getAbsoluteTransformation()
+			.rotateAndScaleVect(rel_cam_target - rel_cam_pos);
 
-	v3f abs_cam_up;
-	m_headnode->getAbsoluteTransformation().rotateVect(abs_cam_up, rel_cam_up);
+	v3f abs_cam_up = m_headnode->getAbsoluteTransformation()
+			.rotateAndScaleVect(rel_cam_up);
 
 	// Separate camera position for calculation
 	v3f my_cp = m_camera_position;

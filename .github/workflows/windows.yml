@@ -54,4 +54,3 @@ jobs:
         with:
           name: "mingw${{ matrix.bits }}"
           path: B/build/*.7z
-          if-no-files-found: error

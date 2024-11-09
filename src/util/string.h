@@ -32,6 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <sstream>
 #include <iomanip>
 #include <cctype>
+#include <cwctype>
 #include <unordered_map>
 
 class Translations;
@@ -86,6 +87,8 @@ struct FlagDesc {
 // input/output stuff via Irrlicht
 std::wstring utf8_to_wide(std::string_view input);
 std::string wide_to_utf8(std::wstring_view input);
+
+void wide_add_codepoint(std::wstring &result, char32_t codepoint);
 
 std::string urlencode(std::string_view str);
 std::string urldecode(std::string_view str);
@@ -325,19 +328,30 @@ inline std::string lowercase(std::string_view str)
 }
 
 
+inline bool my_isspace(const char c)
+{
+	return std::isspace(c);
+}
+
+inline bool my_isspace(const wchar_t c)
+{
+	return std::iswspace(c);
+}
+
 /**
  * @param str
  * @return A view of \p str with leading and trailing whitespace removed.
  */
-inline std::string_view trim(std::string_view str)
+template<typename T>
+inline std::basic_string_view<T> trim(const std::basic_string_view<T> &str)
 {
 	size_t front = 0;
 	size_t back = str.size();
 
-	while (front < back && std::isspace(str[front]))
+	while (front < back && my_isspace(str[front]))
 		++front;
 
-	while (back > front && std::isspace(str[back - 1]))
+	while (back > front && my_isspace(str[back - 1]))
 		--back;
 
 	return str.substr(front, back - front);
@@ -351,16 +365,24 @@ inline std::string_view trim(std::string_view str)
  * @param str
  * @return A copy of \p str with leading and trailing whitespace removed.
  */
-inline std::string trim(std::string &&str)
+template<typename T>
+inline std::basic_string<T> trim(std::basic_string<T> &&str)
 {
-	std::string ret(trim(std::string_view(str)));
+	std::basic_string<T> ret(trim(std::basic_string_view<T>(str)));
 	return ret;
 }
 
-// The above declaration causes ambiguity with char pointers so we have to fix that:
-inline std::string_view trim(const char *str)
+template<typename T>
+inline std::basic_string_view<T> trim(const std::basic_string<T> &str)
 {
-	return trim(std::string_view(str));
+	return trim(std::basic_string_view<T>(str));
+}
+
+// The above declaration causes ambiguity with char pointers so we have to fix that:
+template<typename T>
+inline std::basic_string_view<T> trim(const T *str)
+{
+	return trim(std::basic_string_view<T>(str));
 }
 
 
@@ -631,11 +653,11 @@ std::vector<std::basic_string<T> > split(const std::basic_string<T> &s, T delim)
 	return tokens;
 }
 
-std::wstring translate_string(const std::wstring &s, Translations *translations);
+std::wstring translate_string(std::wstring_view s, Translations *translations);
 
-std::wstring translate_string(const std::wstring &s);
+std::wstring translate_string(std::wstring_view s);
 
-inline std::wstring unescape_translate(const std::wstring &s) {
+inline std::wstring unescape_translate(std::wstring_view s) {
 	return unescape_enriched(translate_string(s));
 }
 
@@ -760,6 +782,16 @@ inline irr::core::stringw utf8_to_stringw(std::string_view input)
  * 2. Remove 'unsafe' characters from the name by replacing them with '_'
  */
 std::string sanitizeDirName(std::string_view str, std::string_view optional_prefix);
+
+/**
+ * Sanitize an untrusted string (e.g. from the network). This will get strip
+ * control characters and (optionally) any MT-style escape sequences too.
+ * Note that they won't be removed cleanly but rather just broken, unlike with
+ * unescape_enriched.
+ * Line breaks and UTF-8 is permitted.
+ */
+[[nodiscard]]
+std::string sanitize_untrusted(std::string_view str, bool keep_escapes = true);
 
 /**
  * Prints a sanitized version of a string without control characters.

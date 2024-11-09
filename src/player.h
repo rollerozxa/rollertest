@@ -22,13 +22,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "irrlichttypes_bloated.h"
 #include "inventory.h"
 #include "constants.h"
-#include "network/networkprotocol.h"
 #include "util/basic_macros.h"
 #include "util/string.h"
-#include <list>
 #include <mutex>
 #include <functional>
-#include <tuple>
 #include <string>
 
 #define PLAYERNAME_SIZE 20
@@ -89,6 +86,11 @@ struct PlayerControl
 		movement_direction = a_movement_direction;
 	}
 
+	// Sets movement_speed and movement_direction according to direction_keys
+	// if direction_keys != 0, otherwise leaves them unchanged to preserve
+	// joystick input.
+	void setMovementFromKeys();
+
 #ifndef SERVER
 	// For client use
 	u32 getKeysPressed() const;
@@ -97,6 +99,7 @@ struct PlayerControl
 
 	// For server use
 	void unpackKeysPressed(u32 keypress_bits);
+	v2f getMovement() const;
 
 	u8 direction_keys = 0;
 	bool jump = false;
@@ -105,7 +108,7 @@ struct PlayerControl
 	bool zoom = false;
 	bool dig = false;
 	bool place = false;
-	// Note: These four are NOT available on the server
+	// Note: These two are NOT available on the server
 	float pitch = 0.0f;
 	float yaw = 0.0f;
 	float movement_speed = 0.0f;
@@ -134,23 +137,10 @@ struct PlayerPhysicsOverride
 	float acceleration_fast = 1.f;
 	float speed_walk = 1.f;
 
-private:
-	auto tie() const {
-		// Make sure to add new members to this list!
-		return std::tie(
-		speed, jump, gravity, sneak, sneak_glitch, new_move, speed_climb, speed_crouch,
-		liquid_fluidity, liquid_fluidity_smooth, liquid_sink, acceleration_default,
-		acceleration_air, speed_fast, acceleration_fast, speed_walk
-		);
-	}
-
-public:
-	bool operator==(const PlayerPhysicsOverride &other) const {
-		return tie() == other.tie();
-	};
+	bool operator==(const PlayerPhysicsOverride &other) const;
 	bool operator!=(const PlayerPhysicsOverride &other) const {
-		return tie() != other.tie();
-	};
+		return !(*this == other);
+	}
 };
 
 class Map;
@@ -213,7 +203,7 @@ public:
 	f32 movement_liquid_sink;
 	f32 movement_gravity;
 
-	v2s32 local_animations[4];
+	v2f local_animations[4];
 	float local_animation_speed;
 
 	std::string inventory_formspec;

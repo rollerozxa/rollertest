@@ -36,13 +36,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "inputhandler.h"
 #include "gettext.h"
 #include "filesys.h"
-#include "../gui/guiSkin.h"
 #include "irrlicht_changes/static_text.h"
 #include "irr_ptr.h"
 
 RenderingEngine *RenderingEngine::s_singleton = nullptr;
 const video::SColor RenderingEngine::MENU_SKY_COLOR = video::SColor(255, 140, 186, 250);
-const float RenderingEngine::BASE_BLOOM_STRENGTH = 1.0f;
 
 /* Helper classes */
 
@@ -126,27 +124,6 @@ IShaderConstantSetter *FogShaderConstantSetterFactory::create()
 
 /* Other helpers */
 
-static gui::GUISkin *createSkin(gui::IGUIEnvironment *environment,
-		gui::EGUI_SKIN_TYPE type, video::IVideoDriver *driver)
-{
-	gui::GUISkin *skin = new gui::GUISkin(type, driver);
-
-	gui::IGUIFont *builtinfont = environment->getBuiltInFont();
-	gui::IGUIFontBitmap *bitfont = nullptr;
-	if (builtinfont && builtinfont->getType() == gui::EGFT_BITMAP)
-		bitfont = (gui::IGUIFontBitmap*)builtinfont;
-
-	gui::IGUISpriteBank *bank = 0;
-	skin->setFont(builtinfont);
-
-	if (bitfont)
-		bank = bitfont->getSpriteBank();
-
-	skin->setSpriteBank(bank);
-
-	return skin;
-}
-
 static std::optional<video::E_DRIVER_TYPE> chooseVideoDriver()
 {
 	auto &&configured_name = g_settings->get("video_driver");
@@ -195,7 +172,7 @@ static irr::IrrlichtDevice *createDevice(SIrrlichtCreationParameters params, std
 
 /* RenderingEngine class */
 
-RenderingEngine::RenderingEngine(IEventReceiver *receiver)
+RenderingEngine::RenderingEngine(MyEventReceiver *receiver)
 {
 	sanity_check(!s_singleton);
 
@@ -248,12 +225,9 @@ RenderingEngine::RenderingEngine(IEventReceiver *receiver)
 	// This changes the minimum allowed number of vertices in a VBO. Default is 500.
 	driver->setMinHardwareBufferVertexCount(4);
 
-	s_singleton = this;
+	m_receiver = receiver;
 
-	auto skin = createSkin(m_device->getGUIEnvironment(),
-			gui::EGST_WINDOWS_METALLIC, driver);
-	m_device->getGUIEnvironment()->setSkin(skin);
-	skin->drop();
+	s_singleton = this;
 
 	g_settings->registerChangedCallback("fullscreen", settingChangedCallback, this);
 	g_settings->registerChangedCallback("window_maximized", settingChangedCallback, this);
@@ -418,7 +392,6 @@ std::vector<video::E_DRIVER_TYPE> RenderingEngine::getSupportedVideoDrivers()
 		video::EDT_OPENGL,
 		video::EDT_OPENGL3,
 		video::EDT_OGLES2,
-		video::EDT_OGLES1,
 		video::EDT_NULL,
 	};
 	std::vector<video::E_DRIVER_TYPE> drivers;
@@ -454,7 +427,6 @@ const VideoDriverInfo &RenderingEngine::getVideoDriverInfo(irr::video::E_DRIVER_
 		{(int)video::EDT_NULL,   {"null",   "NULL Driver"}},
 		{(int)video::EDT_OPENGL, {"opengl", "OpenGL"}},
 		{(int)video::EDT_OPENGL3, {"opengl3", "OpenGL 3+"}},
-		{(int)video::EDT_OGLES1, {"ogles1", "OpenGL ES1"}},
 		{(int)video::EDT_OGLES2, {"ogles2", "OpenGL ES2"}},
 	};
 	return driver_info_map.at((int)type);

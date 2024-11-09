@@ -32,6 +32,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "client/client.h"
 #endif
 
+#if BUILD_WITH_TRACY
+	#include "tracy/TracyLua.hpp"
+#endif
 
 extern "C" {
 #include "lualib.h"
@@ -94,6 +97,11 @@ ScriptApiBase::ScriptApiBase(ScriptingType type):
 	lua_pushcfunction(m_luastack, luaopen_bit);
 	lua_pushstring(m_luastack, LUA_BITLIBNAME);
 	lua_call(m_luastack, 1, 0);
+
+#if BUILD_WITH_TRACY
+	// Load tracy lua bindings
+	tracy::LuaRegister(m_luastack);
+#endif
 
 	// Make the ScriptApiBase* accessible to ModApiBase
 #if INDIRECT_SCRIPTAPI_RIDX
@@ -466,7 +474,7 @@ void ScriptApiBase::addObjectReference(ServerActiveObject *cobj)
 	int objectstable = lua_gettop(L);
 
 	// object_refs[id] = object
-	lua_pushnumber(L, cobj->getId()); // Push id
+	lua_pushinteger(L, cobj->getId()); // Push id
 	lua_pushvalue(L, object); // Copy object to top of stack
 	lua_settable(L, objectstable);
 }
@@ -483,24 +491,29 @@ void ScriptApiBase::removeObjectReference(ServerActiveObject *cobj)
 	int objectstable = lua_gettop(L);
 
 	// Get object_refs[id]
-	lua_pushnumber(L, cobj->getId()); // Push id
+	lua_pushinteger(L, cobj->getId()); // Push id
 	lua_gettable(L, objectstable);
 	// Set object reference to NULL
-	ObjectRef::set_null(L);
+	ObjectRef::set_null(L, cobj);
 	lua_pop(L, 1); // pop object
 
 	// Set object_refs[id] = nil
-	lua_pushnumber(L, cobj->getId()); // Push id
+	lua_pushinteger(L, cobj->getId()); // Push id
 	lua_pushnil(L);
 	lua_settable(L, objectstable);
 }
 
-// Creates a new anonymous reference if cobj=NULL or id=0
-void ScriptApiBase::objectrefGetOrCreate(lua_State *L,
-		ServerActiveObject *cobj)
+void ScriptApiBase::objectrefGetOrCreate(lua_State *L, ServerActiveObject *cobj)
 {
 	assert(getType() == ScriptingType::Server);
-	if (cobj == NULL || cobj->getId() == 0) {
+	if (!cobj) {
+		ObjectRef::create(L, nullptr); // dummy reference
+	} else if (cobj->getId() == 0) {
+		// TODO after 5.10.0: convert this to a FATAL_ERROR
+		errorstream << "ScriptApiBase::objectrefGetOrCreate(): "
+				<< "Pushing orphan ObjectRef. Please open a bug report for this."
+				<< std::endl;
+		assert(0);
 		ObjectRef::create(L, cobj);
 	} else {
 		push_objectRef(L, cobj->getId());

@@ -153,6 +153,42 @@ local function test_urlencode()
 end
 unittests.register("test_urlencode", test_urlencode)
 
+local function test_parse_json()
+	local raw = "{\"how\\u0000weird\":\n\"yes\\u0000really\",\"n\":-1234567891011,\"z\":null}"
+	do
+		local data = core.parse_json(raw)
+		assert(data["how\000weird"] == "yes\000really")
+		assert(data.n == -1234567891011)
+		assert(data.z == nil)
+	end
+	do
+		local null = {}
+		local data = core.parse_json(raw, null)
+		assert(data.z == null)
+	end
+	do
+		local data, err = core.parse_json('"ceci n\'est pas un json', nil, true)
+		assert(data == nil)
+		assert(type(err) == "string")
+	end
+end
+unittests.register("test_parse_json", test_parse_json)
+
+local function test_write_json()
+	-- deeply nested structures should be preserved
+	local leaf = 42
+	local data = leaf
+	for i = 1, 1000 do
+		data = {data}
+	end
+	local roundtripped = minetest.parse_json(minetest.write_json(data))
+	for i = 1, 1000 do
+		roundtripped = roundtripped[1]
+	end
+	assert(roundtripped == 42)
+end
+unittests.register("test_write_json", test_write_json)
+
 local function test_game_info()
 	local info = minetest.get_game_info()
 	local game_conf = Settings(info.path .. "/game.conf")
@@ -254,3 +290,43 @@ local function test_gennotify_api()
 	assert(#custom == 0, "custom ids not empty")
 end
 unittests.register("test_gennotify_api", test_gennotify_api)
+
+-- <=> inside_mapgen_env.lua
+local function test_mapgen_env(cb)
+	-- emerge threads start delayed so this can take a second
+	local res = core.ipc_get("unittests:mg")
+	if res == nil then
+		return core.after(0, test_mapgen_env, cb)
+	end
+	-- handle error status
+	if res[1] then
+		cb()
+	else
+		cb(res[2])
+	end
+end
+unittests.register("test_mapgen_env", test_mapgen_env, {async=true})
+
+local function test_ipc_vector_preserve(cb)
+	-- the IPC also uses register_portable_metatable
+	core.ipc_set("unittests:v", vector.new(4, 0, 4))
+	local v = core.ipc_get("unittests:v")
+	assert(type(v) == "table")
+	assert(vector.check(v))
+end
+unittests.register("test_ipc_vector_preserve", test_ipc_vector_preserve)
+
+local function test_ipc_poll(cb)
+	core.ipc_set("unittests:flag", nil)
+	assert(core.ipc_poll("unittests:flag", 1) == false)
+
+	-- Note that unlike the async result callback - which has to wait for the
+	-- next server step - the IPC is instant
+	local t0 = core.get_us_time()
+	core.handle_async(function()
+		core.ipc_set("unittests:flag", true)
+	end, function() end)
+	assert(core.ipc_poll("unittests:flag", 1000) == true, "Wait failed (or slow machine?)")
+	print("delta: " .. (core.get_us_time() - t0) .. "us")
+end
+unittests.register("test_ipc_poll", test_ipc_poll)
