@@ -54,7 +54,7 @@ jobs:
           mkdir nowrite
           chmod a-w nowrite
           cd nowrite
-          ../bin/minetest --run-unittests
+          ../bin/luanti --run-unittests
 
   # Current clang version
   clang_18:
@@ -75,7 +75,7 @@ jobs:
 
       - name: Test
         run: |
-          ./bin/minetest --run-unittests
+          ./bin/luanti --run-unittests
 
       - name: Integration test + devtest
         run: |

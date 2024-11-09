@@ -50,7 +50,7 @@ jobs:
     - name: Save AAB artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Minetest-release.aab
+        name: Luanti-release.aab
         path: android/app/build/outputs/bundle/release/app-release.aab
     - name: Save APK artifact
       uses: actions/upload-artifact@v4

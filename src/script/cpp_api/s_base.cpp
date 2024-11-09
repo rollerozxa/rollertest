@@ -1,21 +1,6 @@
-/*
-Minetest
-Copyright (C) 2013 celeron55, Perttu Ahola <celeron55@gmail.com>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 2.1 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/
+// Luanti
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2013 celeron55, Perttu Ahola <celeron55@gmail.com>
 
 #include "cpp_api/s_base.h"
 #include "cpp_api/s_internal.h"
@@ -28,7 +13,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "porting.h"
 #include "util/string.h"
 #include "server.h"
-#ifndef SERVER
+#if CHECK_CLIENT_BUILD()
 #include "client/client.h"
 #endif
 
@@ -185,7 +170,7 @@ int ScriptApiBase::luaPanic(lua_State *L)
 	return 0;
 }
 
-#ifndef SERVER
+#if CHECK_CLIENT_BUILD()
 void ScriptApiBase::clientOpenLibs(lua_State *L)
 {
 	static const std::vector<std::pair<std::string, lua_CFunction>> m_libs = {
@@ -305,7 +290,7 @@ void ScriptApiBase::loadScript(const std::string &script_path)
 	lua_pop(L, 1); // Pop error handler
 }
 
-#ifndef SERVER
+#if CHECK_CLIENT_BUILD()
 void ScriptApiBase::loadModFromMemory(const std::string &mod_name)
 {
 	ModNameStorer mod_name_storer(getStack(), mod_name);
@@ -351,7 +336,7 @@ void ScriptApiBase::loadModFromMemory(const std::string &mod_name)
 void ScriptApiBase::runCallbacksRaw(int nargs,
 		RunCallbacksMode mode, const char *fxn)
 {
-#ifndef SERVER
+#if CHECK_CLIENT_BUILD()
 	// Hard fail for bad guarded callbacks
 	// Only run callbacks when the scripting enviroment is loaded
 	FATAL_ERROR_IF(m_type == ScriptingType::Client &&
@@ -565,7 +550,7 @@ Server* ScriptApiBase::getServer()
 	return dynamic_cast<Server *>(m_gamedef);
 }
 
-#ifndef SERVER
+#if CHECK_CLIENT_BUILD()
 Client* ScriptApiBase::getClient()
 {
 	return dynamic_cast<Client *>(m_gamedef);

@@ -1,21 +1,6 @@
-/*
-Minetest
-Copyright (C) 2010-2014 sapier <sapier at gmx dot net>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 2.1 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/
+// Luanti
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2010-2014 sapier <sapier at gmx dot net>
 
 #include "fontengine.h"
 #include <cmath>
@@ -24,8 +9,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "porting.h"
 #include "filesys.h"
 #include "gettext.h"
+#include "settings.h"
 #include "irrlicht_changes/CGUITTFont.h"
 #include "util/numeric.h" // rangelim
+#include <IGUIEnvironment.h>
+#include <IGUIFont.h>
 
 /** reference to access font engine, has to be initialized by main */
 FontEngine *g_fontengine = nullptr;
@@ -68,8 +56,7 @@ FontEngine::FontEngine(gui::IGUIEnvironment* env) :
 /******************************************************************************/
 FontEngine::~FontEngine()
 {
-	for (auto name : settings)
-		g_settings->deregisterChangedCallback(name, font_setting_changed, this);
+	g_settings->deregisterAllChangedCallbacks(this);
 
 	cleanCache();
 }

@@ -1,26 +1,11 @@
-/*
-Minetest
-Copyright (C) 2010-2013 celeron55, Perttu Ahola <celeron55@gmail.com>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 2.1 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/
+// Luanti
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2010-2013 celeron55, Perttu Ahola <celeron55@gmail.com>
 
 #include "game.h"
 
-#include <iomanip>
 #include <cmath>
+#include "IAttributes.h"
 #include "client/renderingengine.h"
 #include "camera.h"
 #include "client.h"
@@ -44,7 +29,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "itemdef.h"
 #include "log.h"
 #include "log_internal.h"
-#include "filesys.h"
 #include "gameparams.h"
 #include "gettext.h"
 #include "gui/guiChatConsole.h"
@@ -55,7 +39,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "gui/guiVolumeChange.h"
 #include "gui/mainmenumanager.h"
 #include "gui/profilergraph.h"
-#include "mapblock.h"
 #include "minimap.h"
 #include "nodedef.h"         // Needed for determining pointing to nodes
 #include "nodemetadata.h"
@@ -73,7 +56,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "util/directiontables.h"
 #include "util/pointedthing.h"
 #include "util/quicktune_shortcutter.h"
-#include "irrlicht_changes/static_text.h"
 #include "irr_ptr.h"
 #include "version.h"
 #include "script/scripting_client.h"
@@ -451,8 +433,7 @@ public:
 
 	~GameGlobalShaderConstantSetter()
 	{
-		for (auto &name : SETTING_CALLBACKS)
-			g_settings->deregisterChangedCallback(name, settingsCallback, this);
+		g_settings->deregisterAllChangedCallbacks(this);
 	}
 
 	void onSetConstants(video::IMaterialRendererServices *services) override
@@ -1046,48 +1027,8 @@ Game::~Game()
 
 	clearTextureNameCache();
 
-	g_settings->deregisterChangedCallback("chat_log_level",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("disable_escape_sequences",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("doubletap_jump",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("enable_clouds",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("enable_joysticks",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("enable_particles",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("enable_fog",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("mouse_sensitivity",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("joystick_frustum_sensitivity",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("repeat_place_time",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("repeat_dig_time",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("noclip",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("free_move",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("fog_start",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("cinematic",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("cinematic_camera_smoothing",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("camera_smoothing",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("invert_mouse",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("enable_hotbar_mouse_wheel",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("invert_hotbar_mouse_wheel",
-		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("pause_on_lost_focus",
-		&settingChangedCallback, this);
+	g_settings->deregisterAllChangedCallbacks(this);
+
 	if (m_rendering_engine)
 		m_rendering_engine->finalize();
 }
@@ -1576,6 +1517,9 @@ bool Game::createClient(const GameStartData &start_data)
 
 bool Game::shouldShowTouchControls()
 {
+	if (!device->supportsTouchEvents())
+		return false;
+
 	const std::string &touch_controls = g_settings->get("touch_controls");
 	if (touch_controls == "auto")
 		return RenderingEngine::getLastPointerType() == PointerType::Touch;
@@ -2855,7 +2799,7 @@ static void pauseNodeAnimation(PausedNodesList &paused, scene::ISceneNode *node)
 	float speed = animated_node->getAnimationSpeed();
 	if (!speed)
 		return;
-	paused.push_back({grab(animated_node), speed});
+	paused.emplace_back(grab(animated_node), speed);
 	animated_node->setAnimationSpeed(0.0f);
 }
 
@@ -3547,7 +3491,7 @@ PointedThing Game::updatePointedThing(
 		if (show_entity_selectionbox && runData.selected_object->doShowSelectionBox() &&
 				runData.selected_object->getSelectionBox(&selection_box)) {
 			v3f pos = runData.selected_object->getPosition();
-			selectionboxes->push_back(aabb3f(selection_box));
+			selectionboxes->push_back(selection_box);
 			hud->setSelectionPos(pos, camera_offset);
 			GenericCAO* gcao = dynamic_cast<GenericCAO*>(runData.selected_object);
 			if (gcao != nullptr && gcao->getProperties().rotate_selectionbox)

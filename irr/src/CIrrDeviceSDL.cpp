@@ -341,7 +341,7 @@ CIrrDeviceSDL::CIrrDeviceSDL(const SIrrlichtCreationParameters &param) :
 		SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
 
 #if defined(SDL_HINT_APP_NAME)
-		SDL_SetHint(SDL_HINT_APP_NAME, "Minetest");
+		SDL_SetHint(SDL_HINT_APP_NAME, "Luanti");
 #endif
 
 		// Set IME hints
@@ -1291,6 +1291,12 @@ bool CIrrDeviceSDL::setFullscreen(bool fullscreen)
 bool CIrrDeviceSDL::isWindowVisible() const
 {
 	return !IsInBackground;
+}
+
+//! Checks if the Irrlicht device supports touch events.
+bool CIrrDeviceSDL::supportsTouchEvents() const
+{
+	return true;
 }
 
 //! returns if window is active. if not, nothing need to be drawn
